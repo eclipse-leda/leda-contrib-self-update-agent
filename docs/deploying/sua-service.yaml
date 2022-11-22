@@ -1,0 +1,54 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: suaservice
+  labels:
+    app: suaservice
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: suaservice
+  template:
+    metadata:
+      labels:
+        app: suaservice
+    spec:
+      containers:
+        - name: suaservice
+          image: ghcr.io/softwaredefinedvehicle/sdv-self-update-agent/sua:v0.1.16
+          command: ["/app/sdv-self-update-agent"]
+          args: ["-p", "/data/selfupdates"]
+          imagePullPolicy: IfNotPresent
+          volumeMounts:
+          - mountPath: /var/run/dbus/system_bus_socket
+            name: system-dbus-socket
+            readOnly: true
+          - mountPath: /RaucUpdate
+            name: shared-rauc-vol
+          ports:
+          - name: default
+            containerPort: 50052
+            protocol: TCP
+      imagePullSecrets:
+        - name: ghcr-user
+      volumes:
+      - hostPath:
+          path: /var/run/dbus/system_bus_socket
+        name: system-dbus-socket
+      - hostPath:
+          path: /data/selfupdates
+        name: shared-rauc-vol
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: suaservice-nodeport
+spec:
+  type: NodePort
+  selector:
+    app: suaservice
+  ports:
+    - port: 50052
+      targetPort: 50052
+      nodePort: 30052
