@@ -27,19 +27,18 @@ COPY CMakeLists.txt /work/CMakeLists.txt
 
 # Build the Self Update Agent binaries and dependencies
 RUN cd /work \
-    && mkdir -p build_amd64/3rdparty/openssl \
-    && mkdir -p dist_amd64 \
-    && ./scripts/build_glib_amd64.sh > /dev/null \
     && ./scripts/build_openssl_amd64.sh > /dev/null \
+    && ./scripts/build_glib_amd64.sh > /dev/null \
     && cd build_amd64 \
     && cmake \
         -DCMAKE_INSTALL_PREFIX=../dist_amd64 \
         -DCMAKE_TOOLCHAIN_FILE=../cmake/linux/amd64/toolchain.cmake \
         -DOPENSSL_ROOT_DIR=../build_amd64 \
         -DOPENSSL_CRYPTO_LIBRARY=../build_amd64/lib/libcrypto.so \
-        -DCMAKE_BUILD_TYPE="Release" \
+        -DCMAKE_BUILD_TYPE=Release \
         .. \
-    && make install;
+		&& make \
+    && make install
 
 #Define RUNTIME environment, the final image
 FROM --platform=${TARGETPLATFORM} scratch as runtime
