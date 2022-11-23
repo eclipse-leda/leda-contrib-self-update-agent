@@ -1,0 +1,70 @@
+# Dockerfile for building multi-arch images and for runtime of the SDV Self Update Agent
+
+FROM --platform=${BUILDPLATFORM} ubuntu AS build
+
+ARG TARGETPLATFORM
+
+#uncomment when building on OSD6 environment
+#ENV http_proxy "http://172.17.0.1:3128"
+#ENV https_proxy "http://172.17.0.1:3128"
+
+RUN apt-get update && apt-get -y install \ 
+    autoconf binutils cmake file \
+    gcc g++ git libtool make \
+    build-essential libcurl4-openssl-dev \
+    binutils-aarch64-linux-gnu gcc-9-aarch64-linux-gnu g++-9-aarch64-linux-gnu \
+    python3 python3-pip python3-setuptools python3-wheel ninja-build meson \
+    libselinux1-dev libmount-dev libmount1 libblkid-dev \
+    ca-certificates
+
+# Copy the sources to the build container
+COPY src /work/src
+COPY cmake /work/cmake
+COPY 3rdparty /work/3rdparty
+COPY utest /work/utest
+COPY scripts /work/scripts
+COPY CMakeLists.txt /work/CMakeLists.txt
+
+# Build the Self Update Agent binaries and dependencies
+RUN cd /work \
+    && ./scripts/build_openssl_arm64.sh > /dev/null \
+    && ./scripts/build_glib_arm64.sh > /dev/null \
+    && cd build_arm64 \
+    && cmake \
+        -DCMAKE_INSTALL_PREFIX=../dist_arm64 \
+        -DCMAKE_TOOLCHAIN_FILE=../cmake/linux/arm64/toolchain.cmake \
+        -DOPENSSL_ROOT_DIR=../build_arm64 \
+        -DOPENSSL_CRYPTO_LIBRARY=../build_arm64/lib/libcrypto.so \
+        -DCMAKE_BUILD_TYPE=Release \
+        .. \
+    && make \
+    && make install
+
+#Define RUNTIME environment, the final image
+#FROM --platform=${TARGETPLATFORM} scratch as runtime
+#ARG TARGETPLATFORM
+#COPY --from=build /work/dist_arm64/bin/sdv-self-update-agent /sua/bin/sdv-self-update-agent
+#COPY --from=build /work/dist_arm64/lib/libpaho-mqttpp3.so.1 /sua/lib/
+#COPY --from=build /work/dist_arm64/lib/libpaho-mqtt3a.so.1 /sua/lib/
+#COPY --from=build /work/dist_arm64/lib/libpaho-mqtt3c.so.1 /sua/lib/
+#COPY --from=build /work/dist_arm64/lib/libmini-yaml.so /sua/lib/
+#COPY --from=build /work/dist_arm64/lib/libcurl.so     /sua/lib/
+#COPY --from=build /work/dist_arm64/lib/libcrypto.so.3 /sua/lib/
+#COPY --from=build /work/dist_arm64/lib/libssl.so.3    /sua/lib/
+#COPY --from=build /work/build_arm64/glib/gio/libgio-2.0.so.0        /sua/lib/
+#COPY --from=build /work/build_arm64/glib/gobject/libgobject-2.0.so.0        /sua/lib/
+#COPY --from=build /work/build_arm64/glib/glib/libglib-2.0.so.0        /sua/lib/
+#COPY --from=build /work/build_arm64/glib/gmodule/libgmodule-2.0.so.0        /sua/lib/
+#COPY --from=build /work/build_arm64/glib/subprojects/libffi/src/libffi.so.7     /sua/lib
+#COPY --from=build /work/build_arm64/glib/subprojects/zlib-1.2.11/libz.so /sua/lib/
+#COPY --from=build /etc/ssl/certs /etc/ssl/certs/
+#COPY --from=build /usr/share/ca-certificates /usr/share/ca-certificates
+#COPY --from=build /usr/aarch64-linux-gnu/lib/ld-linux-aarch64.so.1 /lib/ld-linux-aarch64.so.1
+#COPY --from=build /usr/aarch64-linux-gnu/lib/libstdc++.so.6 /lib/
+#COPY --from=build /usr/aarch64-linux-gnu/lib/libgcc_s.so.1 /lib/
+#COPY --from=build /usr/aarch64-linux-gnu/lib/libc.so.6 /lib/
+#COPY --from=build /usr/aarch64-linux-gnu/lib/libm.so.6 /lib/
+
+#WORKDIR /sua/bin
+#ENV LD_LIBRARY_PATH ../lib
+#CMD ["./sdv-self-update-agent"]

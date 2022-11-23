@@ -1,0 +1,17 @@
+[host_machine]
+system = 'linux'
+cpu_family = 'aarch64'
+cpu = 'aarch64'
+endian = 'little'
+
+[properties]
+c_args = []
+c_link_args = []
+
+[binaries]
+c = 'aarch64-linux-gnu-gcc-9'
+cpp = 'aarch64-linux-gnu-g++-9'
+ar = 'aarch64-linux-gnu-ar'
+ld = 'aarch64-linux-gnu-ld'
+objcopy = 'aarch64-linux-gnu-objcopy'
+strip = 'aarch64-linux-gnu-strip'
