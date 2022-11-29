@@ -95,7 +95,7 @@ jobs:
    
       - name: Create merged manifest and push
         env:
-          REPO: ghcr.io/SoftwareDefinedVehicle/leda-contrib-self-update-agent-fork
+          REPO: ghcr.io/SoftwareDefinedVehicle/leda-contrib-self-update-agent
         run: |
           docker buildx imagetools create -t  ${{ env.REGISTRY }}/${{ steps.repo_name.outputs.lowercase }}/${{ env.IMAGE_NAME }}:testing ${{ env.REGISTRY }}/${{ steps.repo_name.outputs.lowercase }}/${{ env.IMAGE_NAME }}:testing_arm64  ${{ env.REGISTRY }}/${{ steps.repo_name.outputs.lowercase }}/${{ env.IMAGE_NAME }}:testing_amd64
   
