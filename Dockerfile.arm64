@@ -4,10 +4,6 @@ FROM --platform=${BUILDPLATFORM} ubuntu AS build
 
 ARG TARGETPLATFORM
 
-#uncomment when building on OSD6 environment
-#ENV http_proxy "http://172.17.0.1:3128"
-#ENV https_proxy "http://172.17.0.1:3128"
-
 RUN apt-get update && apt-get -y install \ 
     autoconf binutils cmake file \
     gcc g++ git libtool make \
@@ -41,30 +37,30 @@ RUN cd /work \
     && make install
 
 #Define RUNTIME environment, the final image
-#FROM --platform=${TARGETPLATFORM} scratch as runtime
-#ARG TARGETPLATFORM
-#COPY --from=build /work/dist_arm64/bin/sdv-self-update-agent /sua/bin/sdv-self-update-agent
-#COPY --from=build /work/dist_arm64/lib/libpaho-mqttpp3.so.1 /sua/lib/
-#COPY --from=build /work/dist_arm64/lib/libpaho-mqtt3a.so.1 /sua/lib/
-#COPY --from=build /work/dist_arm64/lib/libpaho-mqtt3c.so.1 /sua/lib/
-#COPY --from=build /work/dist_arm64/lib/libmini-yaml.so /sua/lib/
-#COPY --from=build /work/dist_arm64/lib/libcurl.so     /sua/lib/
-#COPY --from=build /work/dist_arm64/lib/libcrypto.so.3 /sua/lib/
-#COPY --from=build /work/dist_arm64/lib/libssl.so.3    /sua/lib/
-#COPY --from=build /work/build_arm64/glib/gio/libgio-2.0.so.0        /sua/lib/
-#COPY --from=build /work/build_arm64/glib/gobject/libgobject-2.0.so.0        /sua/lib/
-#COPY --from=build /work/build_arm64/glib/glib/libglib-2.0.so.0        /sua/lib/
-#COPY --from=build /work/build_arm64/glib/gmodule/libgmodule-2.0.so.0        /sua/lib/
-#COPY --from=build /work/build_arm64/glib/subprojects/libffi/src/libffi.so.7     /sua/lib
-#COPY --from=build /work/build_arm64/glib/subprojects/zlib-1.2.11/libz.so /sua/lib/
-#COPY --from=build /etc/ssl/certs /etc/ssl/certs/
-#COPY --from=build /usr/share/ca-certificates /usr/share/ca-certificates
-#COPY --from=build /usr/aarch64-linux-gnu/lib/ld-linux-aarch64.so.1 /lib/ld-linux-aarch64.so.1
-#COPY --from=build /usr/aarch64-linux-gnu/lib/libstdc++.so.6 /lib/
-#COPY --from=build /usr/aarch64-linux-gnu/lib/libgcc_s.so.1 /lib/
-#COPY --from=build /usr/aarch64-linux-gnu/lib/libc.so.6 /lib/
-#COPY --from=build /usr/aarch64-linux-gnu/lib/libm.so.6 /lib/
+FROM --platform=${TARGETPLATFORM} scratch as runtime
+ARG TARGETPLATFORM
+COPY --from=build /work/dist_arm64/bin/sdv-self-update-agent /sua/bin/sdv-self-update-agent
+COPY --from=build /work/dist_arm64/lib/libpaho-mqttpp3.so.1 /sua/lib/
+COPY --from=build /work/dist_arm64/lib/libpaho-mqtt3a.so.1 /sua/lib/
+COPY --from=build /work/dist_arm64/lib/libpaho-mqtt3c.so.1 /sua/lib/
+COPY --from=build /work/dist_arm64/lib/libmini-yaml.so /sua/lib/
+COPY --from=build /work/dist_arm64/lib/libcurl.so     /sua/lib/
+COPY --from=build /work/dist_arm64/lib/libcrypto.so.3 /sua/lib/
+COPY --from=build /work/dist_arm64/lib/libssl.so.3    /sua/lib/
+COPY --from=build /work/build_arm64/glib/gio/libgio-2.0.so.0        /sua/lib/
+COPY --from=build /work/build_arm64/glib/gobject/libgobject-2.0.so.0        /sua/lib/
+COPY --from=build /work/build_arm64/glib/glib/libglib-2.0.so.0        /sua/lib/
+COPY --from=build /work/build_arm64/glib/gmodule/libgmodule-2.0.so.0        /sua/lib/
+COPY --from=build /work/build_arm64/glib/subprojects/libffi/src/libffi.so.7     /sua/lib
+COPY --from=build /work/build_arm64/glib/subprojects/zlib-1.2.11/libz.so /sua/lib/
+COPY --from=build /etc/ssl/certs /etc/ssl/certs/
+COPY --from=build /usr/share/ca-certificates /usr/share/ca-certificates
+COPY --from=build /usr/aarch64-linux-gnu/lib/ld-linux-aarch64.so.1 /lib/ld-linux-aarch64.so.1
+COPY --from=build /usr/aarch64-linux-gnu/lib/libstdc++.so.6 /lib/
+COPY --from=build /usr/aarch64-linux-gnu/lib/libgcc_s.so.1 /lib/
+COPY --from=build /usr/aarch64-linux-gnu/lib/libc.so.6 /lib/
+COPY --from=build /usr/aarch64-linux-gnu/lib/libm.so.6 /lib/
 
-#WORKDIR /sua/bin
-#ENV LD_LIBRARY_PATH ../lib
-#CMD ["./sdv-self-update-agent"]
+WORKDIR /sua/bin
+ENV LD_LIBRARY_PATH ../lib
+CMD ["./sdv-self-update-agent"]
