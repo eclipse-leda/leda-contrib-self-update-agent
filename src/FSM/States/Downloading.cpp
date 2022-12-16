@@ -16,108 +16,62 @@
 
 #include "FSM/States/Downloading.h"
 #include "Download/Downloader.h"
-#include "FSM/States/Failed.h"
-#include "FSM/States/Idle.h"
-#include "FSM/States/Installing.h"
-#include "FSM/States/Uninitialized.h"
-#include "Utils/BundleChecker.h"
+#include "Mqtt/IMqttMessagingProtocol.h"
+#include "TechCodes.h"
+#include "Context.h"
+#include "FotaEvent.h"
 #include "Logger.h"
 
 namespace sua {
-    void cleanUpDownload()
+
+    Downloading::Downloading()
+        : State("Downloading")
+    { }
+
+    void Downloading::onEnter(Context& ctx)
     {
-        // TODO, add logic to clean up the download, move the cleanup logic to the donwloader
-        Logger::info("Cleaning up download");
+        ctx.desiredState.downloadBytesTotal         = 0;
+        ctx.desiredState.downloadBytesDownloaded    = 0;
+        ctx.desiredState.downloadProgressPercentage = 0;
+        ctx.stateMachine->handleEvent(FotaEvent::DownloadStart);
     }
 
-    Downloading::Downloading(std::shared_ptr<FSM>& context, const MessageState payload)
-        : State(context, payload)
+    FotaEvent Downloading::body(Context& ctx)
     {
-        subscribe(Downloader::EVENT_DOWNLOADED, [this](const std::string& payload) {
-            Logger::info("New state for Downloading: Downloaded, payload = {}", payload);
-            _payload.stateTechCode = std::stoi(payload);
-            _payload.stateMessage  = "Downloaded completed";
-            _payload.stateProgress = 100;
-            handle(FotaEvent::DownloadReady, _payload);
+        subscribe(Downloader::EVENT_DOWNLOADING, [this, &ctx](const std::map<std::string, std::string>& payload) {
+            ctx.desiredState.downloadBytesTotal         = std::stoll(payload.at("total"));
+            ctx.desiredState.downloadBytesDownloaded    = std::stoll(payload.at("downloaded"));
+            ctx.desiredState.downloadProgressPercentage = std::stoi(payload.at("percentage"));
+
+            Logger::info("Download progress: {}", ctx.desiredState.downloadProgressPercentage);
+            send(ctx, IMqttProcessor::TOPIC_FEEDBACK, "downloading");
         });
 
-        subscribe(Downloader::EVENT_FAILED, [this](const std::string& payload) {
-            Logger::info("New state for Downloading: Failed, payload = {}", payload);
-            _payload.stateTechCode = std::stoi(payload);
-            _payload.stateProgress = 0;
-            _payload.stateMessage  = "Downloading failed with error code = " + payload;
-            handle(FotaEvent::DownloadError, _payload);
-        });
+        Logger::info("Downloading bundle: '{}'", ctx.desiredState.bundleDownloadUrl);
+        const auto result = ctx.downloaderAgent->start(ctx.desiredState.bundleDownloadUrl);
 
-        subscribe(Downloader::EVENT_DOWNLOADING, [this](const std::string& payload) {
-            Logger::info("New state for Downloading: Downloading, payload = {}", payload);
-            _payload.stateProgress = std::stoi(payload);
-            _payload.stateTechCode = 0;
-            _payload.stateMessage  = "Downloading, progress = " + payload;
-            handle(FotaEvent::DownloadProgress, _payload);
-        });
-    }
+        if(result == TechCode::OK) {
+            Logger::info("Download progress: 100");
+            send(ctx, IMqttProcessor::TOPIC_FEEDBACK, "downloaded");
 
-    void Downloading::onEntryTemplate()
-    {
-        _downloader = std::make_unique<Downloader>();
-        _downloader->start(_payload.bundleDownloadUrl);
-    }
+            const auto bundleVersion = ctx.installerAgent->getBundleVersion(ctx.updatesDirectory + "/temp_file");
+            Logger::info("Bundle version (spec): '{}'", ctx.desiredState.bundleVersion);
+            Logger::info("Bundle version (file): '{}'", bundleVersion);
 
-    void Downloading::adjustEntryPayloadTemplate()
-    {
-        _payload.stateMessage  = "Entered Downloading state";
-        _payload.stateProgress = 0;
-        _payload.stateTechCode = 0;
-    }
-
-    void Downloading::handleTemplate(const FotaEvent event, const MessageState payload)
-    {
-        std::shared_ptr<State> nextState;
-
-        switch(event) {
-        case FotaEvent::DownloadReady:
-            if(BundleChecker().isBundleVersionConsistent(payload.bundleVersion,
-                                                              _context->_installerAgent, 
-                                                              _context->_selfupdatesFilePath)) {   
-                Logger::info("Downloaded bundle is valid, conntinue..");
-                setPayload(payload);
-                nextState = std::make_shared<Installing>(_context, payload);
+            if(ctx.bundleChecker->isBundleVersionConsistent(
+                   ctx.desiredState.bundleVersion, ctx.installerAgent, ctx.updatesDirectory + "/temp_file")) {
+                Logger::info("Bundle version matches spec");
+                return FotaEvent::BundleVersionOK;
             } else {
-                // declared in yaml version shall be same as the downloaded one, if not then prevent installation
-                Logger::info("Bundle version declared in yaml != downloaded bundle version, Reject update request with error 2001");
-                MessageState msg  = payload;
-                msg.stateProgress = 0;
-                msg.stateTechCode = 2001;
-                msg.stateMessage = "Invalid Bundle";
-                nextState        = std::make_shared<Failed>(_context, msg);
+                Logger::info("Bundle version does not match spec");
+                send(ctx, IMqttProcessor::TOPIC_FEEDBACK, "rejected");
+                return FotaEvent::BundleVersionInconsistent;
             }
-            transitTo(nextState);
-            break;
-        case FotaEvent::DownloadError:
-            cleanUpDownload();
-            setPayload(payload);
-            nextState = std::make_shared<Failed>(_context, payload);
-            transitTo(nextState);
-            break;
-        case FotaEvent::DownloadProgress:
-            setPayload(payload);
-            publishCurrentState();
-            break;
-        case FotaEvent::ConnectivityLost:
-            cleanUpDownload();
-            setPayload(payload);
-            nextState = std::make_shared<Uninitialized>(_context, payload);
-            transitTo(nextState);
-            break;
-        default:
-            handleBadEvent(event, payload); // TODO, put reject, not only log
-            break;
         }
+
+        Logger::error("Download failed");
+        send(ctx, IMqttProcessor::TOPIC_FEEDBACK, "downloadFailed");
+        return FotaEvent::DownloadFailed;
     }
 
-    FotaState Downloading::getState() const
-    {
-        return FotaState::Downloading;
-    }
 } // namespace sua

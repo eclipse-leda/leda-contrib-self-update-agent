@@ -15,41 +15,21 @@
 //    SPDX-License-Identifier: Apache-2.0
 
 #include "FSM/States/Installed.h"
-#include "FSM/States/Idle.h"
-#include "FSM/States/Uninitialized.h"
+#include "FSM/FSM.h"
+#include "Context.h"
+#include "FotaEvent.h"
+#include "Logger.h"
 
 namespace sua {
-    void Installed::onEntryTemplate()
+
+    void Installed::onEnter(Context& ctx)
     {
-        std::shared_ptr<State> nextState = std::make_shared<Idle>(_context);
-        transitTo(nextState);
+        ctx.currentState.version = ctx.desiredState.bundleVersion;
+
+        Logger::info("System version (slot): '{}'", ctx.currentState.version);
+        send(ctx, IMqttProcessor::TOPIC_FEEDBACK, "currentState");
+
+        ctx.stateMachine->handleEvent(FotaEvent::Waiting);
     }
 
-    void Installed::adjustEntryPayloadTemplate()
-    {
-        _payload.stateMessage  = "Entered Installed state";
-        _payload.stateProgress = 0;
-        _payload.stateTechCode = 0;
-    }
-
-    void Installed::handleTemplate(const FotaEvent event, const MessageState payload)
-    {
-        std::shared_ptr<State> nextState;
-
-        switch(event) {
-        case FotaEvent::ConnectivityLost:
-            // TODO, this is edge case, here the installation can maybe proceed
-            nextState = std::make_shared<Uninitialized>(_context, payload);
-            transitTo(nextState);
-            break;
-        default:
-            handleBadEvent(event, payload);
-            break;
-        }
-    }
-
-    FotaState Installed::getState() const
-    {
-        return FotaState::Installed;
-    }
 } // namespace sua

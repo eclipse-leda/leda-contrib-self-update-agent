@@ -59,4 +59,5 @@ namespace sua {
     {
         return _log_level;
     }
+
 } // namespace sua

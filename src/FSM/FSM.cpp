@@ -18,40 +18,73 @@
 #include "FSM/States/Uninitialized.h"
 #include "Logger.h"
 
-#include <memory>
-
 namespace sua {
-    FSM::FSM(const std::shared_ptr<IRaucInstaller> installerAgent,
-             const std::string                     hostPathToUpdatesDir)
-        : _installerAgent(installerAgent)
+
+    FSM::FSM(Context & context)
+        : _context(context)
+    { }
+
+    void FSM::transitTo(const std::string& name)
     {
-        _selfupdatesDirPath = hostPathToUpdatesDir;
-    }
+        assert(_factory != nullptr);
 
-    void FSM::start()
-    {
-        Logger::trace("FSM::start()");
-
-        // set initial state
-        auto                   thisPtr          = shared_from_this();
-        std::shared_ptr<State> unitializedState = std::make_shared<Uninitialized>(thisPtr);
-
-        // info: issue with current design is that the onEntry for the very first state is not executed
-        // this can be easily changed, by making onEntry method public, however need to think about better design
-        transitTo(unitializedState);
-    }
-
-    void FSM::handle(FotaEvent event, const MessageState payload)
-    {
         if(_currentState) {
-            _currentState->handle(event, payload);
-        } else {
-            throw std::runtime_error("FSM was not initialized! Not allowed to use it.");
+            Logger::trace("Leave state '{}'", _currentState->name());
+            _currentState->onLeave(_context);
+        }
+
+        _currentState = _factory->createState(name);
+
+        Logger::trace("Enter state '{}'", _currentState->name());
+        _currentState->onEnter(_context);
+    }
+
+    std::string FSM::activeState() const
+    {
+        return _currentState->name();
+    }
+
+    void FSM::setFactory(std::shared_ptr<StateFactory> factory)
+    {
+        _factory = factory;
+    }
+
+    void FSM::setTransitions(std::initializer_list<FSMTransition> table)
+    {
+        _transitions = table;
+    }
+
+    void FSM::handleEvent(const FotaEvent e)
+    {
+        Logger::trace("Received event '{}'", toString(e));
+
+        FotaEvent output = FotaEvent::NotUsed;
+        bool output_set  = false;
+
+        for(const auto& t : _transitions) {
+            if(t.from != activeState()) {
+                continue;
+            }
+
+            if(t.when != e) {
+                continue;
+            }
+
+            if(t.output == FotaEvent::NotUsed) {
+                transitTo(t.to);
+                break;
+            }
+
+            if(!output_set) {
+                output     = _currentState->body(_context);
+                output_set = true;
+            }
+
+            if(t.output == output) {
+                transitTo(t.to);
+                break;
+            }
         }
     }
 
-    void FSM::transitTo(std::shared_ptr<State>& nextState)
-    {
-        _currentState = nextState;
-    }
 } // namespace sua

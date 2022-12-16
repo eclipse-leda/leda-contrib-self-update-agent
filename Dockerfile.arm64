@@ -23,6 +23,8 @@ COPY CMakeLists.txt /work/CMakeLists.txt
 
 # Build the Self Update Agent binaries and dependencies
 RUN cd /work \
+    && mkdir -p build_arm64/3rdparty/openssl \
+    && mkdir -p dist_arm64 \
     && ./scripts/build_openssl_arm64.sh > /dev/null \
     && ./scripts/build_glib_arm64.sh > /dev/null \
     && cd build_arm64 \
@@ -31,7 +33,7 @@ RUN cd /work \
         -DCMAKE_TOOLCHAIN_FILE=../cmake/linux/arm64/toolchain.cmake \
         -DOPENSSL_ROOT_DIR=../build_arm64 \
         -DOPENSSL_CRYPTO_LIBRARY=../build_arm64/lib/libcrypto.so \
-        -DCMAKE_BUILD_TYPE=Release \
+        -DCMAKE_BUILD_TYPE="Release" \
         .. \
     && make \
     && make install
@@ -47,12 +49,13 @@ COPY --from=build /work/dist_arm64/lib/libmini-yaml.so /sua/lib/
 COPY --from=build /work/dist_arm64/lib/libcurl.so     /sua/lib/
 COPY --from=build /work/dist_arm64/lib/libcrypto.so.3 /sua/lib/
 COPY --from=build /work/dist_arm64/lib/libssl.so.3    /sua/lib/
-COPY --from=build /work/build_arm64/glib/gio/libgio-2.0.so.0        /sua/lib/
-COPY --from=build /work/build_arm64/glib/gobject/libgobject-2.0.so.0        /sua/lib/
+COPY --from=build /work/dist_arm64/lib/libsua.so      /sua/lib/
+COPY --from=build /work/build_arm64/glib/gio/libgio-2.0.so.0          /sua/lib/
+COPY --from=build /work/build_arm64/glib/gobject/libgobject-2.0.so.0  /sua/lib/
 COPY --from=build /work/build_arm64/glib/glib/libglib-2.0.so.0        /sua/lib/
 COPY --from=build /work/build_arm64/glib/gmodule/libgmodule-2.0.so.0        /sua/lib/
-COPY --from=build /work/build_arm64/glib/subprojects/libffi/src/libffi.so.7     /sua/lib
-COPY --from=build /work/build_arm64/glib/subprojects/zlib-1.2.11/libz.so /sua/lib/
+COPY --from=build /work/build_arm64/glib/subprojects/libffi/src/libffi.so.7 /sua/lib/
+COPY --from=build /work/build_arm64/glib/subprojects/zlib-1.2.11/libz.so    /sua/lib/
 COPY --from=build /etc/ssl/certs /etc/ssl/certs/
 COPY --from=build /usr/share/ca-certificates /usr/share/ca-certificates
 COPY --from=build /usr/aarch64-linux-gnu/lib/ld-linux-aarch64.so.1 /lib/ld-linux-aarch64.so.1

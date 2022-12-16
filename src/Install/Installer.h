@@ -17,24 +17,25 @@
 #ifndef SDV_SUA_INSTALLER_H
 #define SDV_SUA_INSTALLER_H
 
+#include "Install/IRaucInstaller.h"
+#include "TechCodes.h"
+
 #include <memory>
 
-#include "Install/IRaucInstaller.h"
-#include "Patterns/Worker.h"
-
 namespace sua {
-    class Installer : public Worker {
+
+    class Installer {
     public:
         static const std::string EVENT_INSTALLING;
-        static const std::string EVENT_INSTALLED;
-        static const std::string EVENT_FAILED;
 
         Installer(std::shared_ptr<IRaucInstaller> installerAgent);
-        bool start(const std::string input) override;
+
+        TechCode start(const std::string input);
 
     protected:
         std::shared_ptr<IRaucInstaller> _installerAgent;
     };
+
 } // namespace sua
 
 #endif

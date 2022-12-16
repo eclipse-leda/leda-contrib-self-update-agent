@@ -14,17 +14,22 @@
 //
 //    SPDX-License-Identifier: Apache-2.0
 
-#ifndef SDV_SUA_MQTTMESSAGESERIALIZER_H
-#define SDV_SUA_MQTTMESSAGESERIALIZER_H
+#ifndef SDV_SUA_IMQTTMESSAGINGPROTOCOL_H
+#define SDV_SUA_IMQTTMESSAGINGPROTOCOL_H
 
 #include <string>
 
 namespace sua {
-    class MqttMessageSerializer {
+
+    class IMqttMessagingProtocol {
     public:
-        std::string serialize(const class MessageState& m) const;
-        std::string serialize(const class MessageCurrentState& m) const;
+        virtual ~IMqttMessagingProtocol() = default;
+
+        virtual class DesiredState readDesiredState(const std::string & input) = 0;
+
+        virtual std::string createMessage(const class Context& ctx, const std::string& name) = 0;
     };
+
 } // namespace sua
 
 #endif

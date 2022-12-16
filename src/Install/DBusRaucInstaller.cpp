@@ -17,8 +17,8 @@
 #include "Install/DBusRaucInstaller.h"
 #include "Logger.h"
 
-#include <fstream>
 #include <algorithm>
+#include <fstream>
 #include <sstream>
 
 #include <gio/gio.h>
@@ -28,6 +28,7 @@ namespace {
 }
 
 namespace sua {
+
     DBusRaucInstaller::DBusRaucInstaller()
     {
         Logger::trace("DBusRaucInstaller::DBusRaucInstaller()");
@@ -42,10 +43,10 @@ namespace sua {
         }
     }
 
-    void DBusRaucInstaller::installBundle(const std::string input)
+    TechCode DBusRaucInstaller::installBundle(const std::string& input)
     {
         Logger::info("Installing rauc bundle {}", input);
-        installDBusRaucBundle(input);
+        return installDBusRaucBundle(input);
     }
 
     int32_t DBusRaucInstaller::getInstallProgress()
@@ -58,7 +59,7 @@ namespace sua {
         return getDBusRaucBundleVersion();
     }
 
-    std::string DBusRaucInstaller::getBundleVersion(const std::string input)
+    std::string DBusRaucInstaller::getBundleVersion(const std::string& input)
     {
         return getDBusRaucBundleVersion(input);
     }
@@ -77,7 +78,7 @@ namespace sua {
         }
     }
 
-    void DBusRaucInstaller::installDBusRaucBundle(const std::string bundleName)
+    TechCode DBusRaucInstaller::installDBusRaucBundle(const std::string& bundleName)
     {
         GError*   connectionError = nullptr;
         GVariant* result          = g_dbus_connection_call_sync(connection,
@@ -98,7 +99,10 @@ namespace sua {
             Logger::error("Install call to Rauc via DBus failed, code = {}, message = {}",
                           connectionError->code,
                           connectionError->message);
+            return TechCode::InstallationFailed;
         }
+
+        return TechCode::OK;
     }
 
     int32_t DBusRaucInstaller::getDBusRaucInstallProgress() const
@@ -187,7 +191,7 @@ namespace sua {
         if(bundleVersion == VERSION_UNAVAILABLE) {
             std::ifstream f("/etc/os-release");
             if(f) {
-               std::string keyValue;
+                std::string keyValue;
 
                 while(std::getline(f, keyValue)) {
                     std::stringstream ss(keyValue);
@@ -211,73 +215,39 @@ namespace sua {
         return bundleVersion;
     }
 
-    std::string DBusRaucInstaller::getDBusRaucBundleVersion(const std::string input) const
+    std::string DBusRaucInstaller::getDBusRaucBundleVersion(const std::string& input) const
     {
         Logger::info("getDBusRaucBundleVersion, input={}", input);
         std::string bundleVersion   = "bundle_version_not_available";
         GError*     connectionError = nullptr;
-        GVariant*   result      = g_dbus_connection_call_sync(connection,
-                                                           "de.pengutronix.rauc",
-                                                           "/",
-                                                           "de.pengutronix.rauc.Installer",
-                                                           "Info",
-                                                           g_variant_new("(s)", input.c_str()),
-                                                           NULL,
-                                                           G_DBUS_CALL_FLAGS_NONE,
-                                                           -1,
-                                                           NULL,
-                                                           &connectionError);
-
-
-
+        GVariant*   result          = g_dbus_connection_call_sync(connection,
+                                                       "de.pengutronix.rauc",
+                                                       "/",
+                                                       "de.pengutronix.rauc.Installer",
+                                                       "Info",
+                                                       g_variant_new("(s)", input.c_str()),
+                                                       NULL,
+                                                       G_DBUS_CALL_FLAGS_NONE,
+                                                       -1,
+                                                       NULL,
+                                                       &connectionError);
 
         if(nullptr != result) {
             Logger::info("Retrieved the version data, processing...");
-            gchar*    compatible;
-            gchar*    version;
+            gchar* compatible;
+            gchar* version;
             g_variant_get(result, "(ss)", &compatible, &version);
             bundleVersion = std::string(version);
             Logger::info("Version of downloaded bundle: {}", bundleVersion);
             g_free(compatible);
             g_free(version);
         } else {
-            Logger::info("Retrieval of bundle version was not succesfull, error {}", connectionError->message);
+            Logger::info("Retrieval of bundle version was not succesfull, error {}",
+                         connectionError->message);
         }
 
         Logger::info("Retrieved version of the incoming bundle is: " + bundleVersion);
         return bundleVersion;
     }
 
-    DummyRaucInstaller::DummyRaucInstaller()
-    {
-        Logger::trace("DummyRaucInstaller::DummyRaucInstaller()");
-    };
-
-    DummyRaucInstaller::~DummyRaucInstaller()
-    {
-        Logger::trace("DummyRaucInstaller::~DummyRaucInstaller()");
-    };
-
-    void DummyRaucInstaller::installBundle(const std::string input)
-    {
-        Logger::trace("DummyRaucInstaller::installBundle({})", input);
-    };
-
-    int32_t DummyRaucInstaller::getInstallProgress()
-    {
-        Logger::trace("DummyRaucInstaller::getInstallProgress()");
-        return 0;
-    };
-
-    std::string DummyRaucInstaller::getBundleVersion()
-    {
-        Logger::trace("DummyRaucInstaller::getBundleVersion()");
-        return "dummy_version";
-    };
-
-    std::string DummyRaucInstaller::getBundleVersion(const std::string input)
-    {
-        Logger::trace("DummyRaucInstaller::getBundleVersion({})", input);
-        return "dummy_version";
-    };
 } // namespace sua

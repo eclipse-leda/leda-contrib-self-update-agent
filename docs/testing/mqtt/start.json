@@ -1,0 +1,23 @@
+{
+    "activityId": "random-uuid-as-string",
+    "timestamp": 123456789,
+    "payload": {
+        "domains": [
+            {
+                "id": "self-update",
+                "components": [
+                    {
+                        "id": "os-image",
+                        "version": "v1beta3",
+                        "config": [
+                            {
+                                "key": "image",
+                                "value": "http://127.0.0.1:5555/bundle"
+                            }
+                        ]
+                    }
+                ]
+            }
+        ]
+    }
+}

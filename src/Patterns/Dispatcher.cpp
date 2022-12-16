@@ -35,7 +35,7 @@ namespace sua {
                            _subscribers.end());
     }
 
-    void Dispatcher::dispatch(const std::string& topic, const std::string& payload)
+    void Dispatcher::dispatch(const std::string& topic, const std::map<std::string, std::string>& payload)
     {
         for(const auto& s : _subscribers) {
             if(s.topic == topic) {

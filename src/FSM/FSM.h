@@ -17,32 +17,41 @@
 #ifndef SDV_SUA_FSM_H
 #define SDV_SUA_FSM_H
 
-#include "Install/IRaucInstaller.h"
-#include "PayloadMessages.h"
+#include "StateFactory.h"
+#include "FotaEvent.h"
 
 #include <memory>
 #include <string>
+#include <vector>
+#include <optional>
 
 namespace sua {
-    enum class FotaEvent;
-    enum class FotaState;
-    class State;
 
-    class FSM : public std::enable_shared_from_this<FSM> {
+    struct FSMTransition {
+        FotaEvent   when;
+        std::string from;
+        std::string to;
+        FotaEvent   output = FotaEvent::NotUsed;
+    };
+
+    class FSM {
     public:
-        FSM(const std::shared_ptr<IRaucInstaller> installerAgent,
-            const std::string                     hostPathToUpdatesDir);
+        FSM(class Context & context);
 
-        void start();
-        void handle(FotaEvent event, const MessageState payload = MessageState());
-        void transitTo(std::shared_ptr<State>& nextState);
+        void handleEvent(FotaEvent e);
 
-        std::shared_ptr<IRaucInstaller> _installerAgent;
-        std::string                     _selfupdatesDirPath{"/data/selfupdates"};
-        std::string                     _selfupdatesFilePath{_selfupdatesDirPath+"/temp_file"};
+        virtual void transitTo(const std::string& name);
+        std::string activeState() const;
 
-    protected:
-        std::shared_ptr<State> _currentState;
+        void setFactory(std::shared_ptr<StateFactory> factory);
+        void setTransitions(std::initializer_list<FSMTransition> table);
+
+    private:
+        Context & _context;
+
+        std::shared_ptr<State>        _currentState;
+        std::shared_ptr<StateFactory> _factory;
+        std::vector<FSMTransition>    _transitions;
     };
 } // namespace sua
 

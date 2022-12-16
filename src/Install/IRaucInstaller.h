@@ -17,17 +17,22 @@
 #ifndef SDV_SUA_IRAUCINSTALLER_H
 #define SDV_SUA_IRAUCINSTALLER_H
 
+#include "TechCodes.h"
+
 #include <string>
 
 namespace sua {
+
     class IRaucInstaller {
     public:
-        virtual ~IRaucInstaller(){};
-        virtual void        installBundle(const std::string input)    = 0;
-        virtual int32_t     getInstallProgress()                      = 0;
-        virtual std::string getBundleVersion()                        = 0;
-        virtual std::string getBundleVersion(const std::string input) = 0;
+        virtual ~IRaucInstaller() = default;
+
+        virtual TechCode    installBundle(const std::string & input)    = 0;
+        virtual int32_t     getInstallProgress()                        = 0;
+        virtual std::string getBundleVersion()                          = 0;
+        virtual std::string getBundleVersion(const std::string & input) = 0;
     };
+
 } // namespace sua
 
 #endif // SDV_SUA_IRAUCINSTALLER_H

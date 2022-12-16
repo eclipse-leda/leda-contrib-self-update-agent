@@ -20,14 +20,14 @@
 #include "FSM/State.h"
 
 namespace sua {
-    class Uninitialized : public State {
-        using State::State;
 
+    class Uninitialized : public State {
     public:
-        void      handleTemplate(FotaEvent event, const MessageState payload) override;
-        FotaState getState() const override;
-        void      adjustEntryPayloadTemplate() override;
+        Uninitialized();
+
+        void onEnter(Context& ctx) override;
     };
+
 } // namespace sua
 
 #endif
