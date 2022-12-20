@@ -1,3 +1,17 @@
+if(NOT DEFINED SUA_COMMIT_HASH)
+    execute_process(
+        COMMAND git describe --always --abbrev=40 --dirty
+        WORKING_DIRECTORY ${CMAKE_SOURCE_DIR} OUTPUT_VARIABLE SUA_COMMIT_HASH
+        ERROR_QUIET OUTPUT_STRIP_TRAILING_WHITESPACE
+    )
+endif()
+
+if(NOT DEFINED SUA_BUILD_NUMBER)
+    set(SUA_BUILD_NUMBER "local")
+endif()
+
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/version.h.in ${CMAKE_CURRENT_BINARY_DIR}/include/version.h @ONLY)
+
 include_directories(
     ${CMAKE_SOURCE_DIR}/src
     ${CMAKE_SOURCE_DIR}/3rdparty/spdlog/include
@@ -13,6 +27,7 @@ include_directories(
     ${CMAKE_BINARY_DIR}/3rdparty/curl/lib
     ${CMAKE_BINARY_DIR}/glib
     ${CMAKE_BINARY_DIR}/glib/glib
+    ${CMAKE_BINARY_DIR}/src/include
 )
 
 file(GLOB_RECURSE SRCS *.cpp *.h)
@@ -49,3 +64,4 @@ install(
         ${CMAKE_BINARY_DIR}/lib/libcrypto.so.3
     DESTINATION ${CMAKE_INSTALL_PREFIX}/lib
 )
+

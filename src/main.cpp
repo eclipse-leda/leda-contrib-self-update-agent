@@ -22,6 +22,7 @@
 #include "Utils/BundleChecker.h"
 #include "SelfUpdateAgent.h"
 #include "Logger.h"
+#include "version.h"
 
 #include <iostream>
 #include <memory>
@@ -34,11 +35,12 @@ The system needs to be restarted manually for the update to take effect.
 Usage: sdv-self-update-agent [OPTIONS]
 
 Options:
--h, --help  display this help and exit
--p, --path  path where downloaded update bundles will be stored (default is '/data/selfupdates')
--a, --api   use 'k8s' or 'bfb' format for mqtt communication (default is 'bfb')
-    --host  MQTT broker host to connect (default is 'mosquitto')
-    --port  MQTT broker port to conenct (default is '1883')
+-h, --help    display this help and exit
+-v, --version display version (git hash and build number) used to build sua
+-p, --path    path where downloaded update bundles will be stored (default is '/data/selfupdates')
+-a, --api     use 'k8s' or 'bfb' format for mqtt communication (default is 'bfb')
+    --host    MQTT broker host to connect (default is 'mosquitto')
+    --port    MQTT broker port to conenct (default is '1883')
 )";
 
 int main(int argc, char* argv[])
@@ -54,6 +56,12 @@ int main(int argc, char* argv[])
 
             if(("-h" == opt) || ("--help" == opt)) {
                 std::cout << help_string;
+                return 0;
+            }
+
+            if(("-v" == opt) || ("--version" == opt)) {
+                std::cout << "Build number    : " << SUA_BUILD_NUMBER << std::endl;
+                std::cout << "Git commit hash : " << SUA_COMMIT_HASH  << std::endl;
                 return 0;
             }
 
@@ -120,6 +128,8 @@ int main(int argc, char* argv[])
     ctx.updatesDirectory  = hostPathToSelfupdateDir;
     ctx.bundleChecker     = std::make_shared<sua::BundleChecker>();
 
+    sua::Logger::info("SUA build number       : '{}'", SUA_BUILD_NUMBER );
+    sua::Logger::info("SUA commit hash        : '{}'", SUA_COMMIT_HASH  );
     sua::Logger::info("Communication protocol : '{}'", api);
     sua::Logger::info("Updates directory      : '{}'", ctx.updatesDirectory);
     sua::Logger::info("MQTT broker address    : '{}:{}'", conf.brokerHost, conf.brokerPort);

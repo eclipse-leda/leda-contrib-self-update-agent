@@ -3,6 +3,8 @@
 FROM --platform=${BUILDPLATFORM} ubuntu AS build
 
 ARG TARGETPLATFORM
+ARG GITHUB_RUN_NUMBER
+ARG GITHUB_COMMIT_HASH
 
 RUN apt-get update && apt-get -y install \ 
     autoconf binutils cmake file \
@@ -14,6 +16,7 @@ RUN apt-get update && apt-get -y install \
     ca-certificates
 
 # Copy the sources to the build container
+COPY .git /work/.git
 COPY src /work/src
 COPY cmake /work/cmake
 COPY 3rdparty /work/3rdparty
@@ -34,6 +37,8 @@ RUN cd /work \
         -DOPENSSL_ROOT_DIR=../build_amd64 \
         -DOPENSSL_CRYPTO_LIBRARY=../build_amd64/lib/libcrypto.so \
         -DCMAKE_BUILD_TYPE="Release" \
+        -DSUA_BUILD_NUMBER=$GITHUB_RUN_NUMBER \
+        -DSUA_COMMIT_HASH=$GITHUB_COMMIT_HASH \
         .. \
     && make \
     && make install

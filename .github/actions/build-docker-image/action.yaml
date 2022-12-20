@@ -1,0 +1,65 @@
+name: Build and push docker container
+
+inputs:
+  arch:
+    required: true
+    description: "Architecture amd64/arm64"
+  run_number:
+    required: true
+    description: "Workflow run number"
+  commit_hash:
+    required: true
+    description: "Git commit hash"
+  username:
+    required: true
+    description: "User name"
+  token:
+    required: true
+    description: "Auth token"
+
+runs:
+  using: "composite"
+  steps:
+    - id: repo_name
+      uses: ASzc/change-string-case-action@v1
+      with:
+        string: ${{ github.repository }}
+
+    - name: Checkout repository
+      uses: actions/checkout@v3
+      with:
+        submodules: recursive
+
+    # Workaround: https://github.com/docker/build-push-action/issues/461
+    - name: Setup Docker buildx
+      uses: docker/setup-buildx-action@79abd3f86f79a9d68a23c75a09a9a85889262adf
+
+    # Login against a Docker registry except on PR
+    - name: Log into registry ghcr.io
+      uses: docker/login-action@28218f9b04b4f3f62068d7b6ce6ca5b26e35336c
+      with:
+        registry: ghcr.io
+        username: ${{ inputs.username }}
+        password: ${{ inputs.token }}
+
+    - name: Print run number
+      run: |
+        echo "Run number for docker file = ${{ github.run_number }}"
+      shell: bash
+
+    # https://github.com/docker/build-push-action
+    - name: Build and push docker container to ghcr.io
+      id: build-and-push
+      uses: docker/build-push-action@ac9327eae2b366085ac7f6a2d02df8aa8ead720a
+      with:
+        push: true
+        context: .
+        platforms: linux/${{ inputs.arch }}
+        file: Dockerfile.${{ inputs.arch }}
+        labels: ${{ steps.meta.outputs.labels }}
+        build-args: |
+          GITHUB_RUN_NUMBER=${{ inputs.run_number }}
+          GITHUB_COMMIT_HASH=${{ inputs.commit_hash }}
+        tags: |
+          ghcr.io/${{ steps.repo_name.outputs.lowercase }}/sua:latest_${{ inputs.arch }}
+

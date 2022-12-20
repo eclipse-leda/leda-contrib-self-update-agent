@@ -1,0 +1,102 @@
+name: CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build-docker-image:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+      id-token: write
+    strategy:
+      matrix:
+        arch: [ amd64, arm64 ]
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          submodules: recursive
+  
+      - name: Build Docker image
+        uses: ./.github/actions/build-docker-image
+        with:
+          arch: ${{ matrix.arch }}
+          run_number: ${{ github.run_number }}
+          commit_hash: ${{ github.sha }}
+          username: ${{ github.actor }}
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+  push-docker-image:
+    runs-on: ubuntu-latest
+    needs: build-docker-image
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          submodules: recursive
+
+      - id: repo_name
+        uses: ASzc/change-string-case-action@v1
+        with:
+          string: ${{ github.repository }}
+  
+      - name: Log into registry ghcr.io
+        uses: docker/login-action@28218f9b04b4f3f62068d7b6ce6ca5b26e35336c
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+ 
+      - name: Create merged manifest and push
+        env:
+          REPO: ghcr.io/softwaredefinedvehicle/sdv-self-update-agent
+        run: |
+          docker buildx imagetools create -t ghcr.io/${{ steps.repo_name.outputs.lowercase }}/sua:latest ghcr.io/${{ steps.repo_name.outputs.lowercase }}/sua:latest_arm64 ghcr.io/${{ steps.repo_name.outputs.lowercase }}/sua:latest_amd64
+
+  build-native-binary:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        arch: [ arm64, amd64 ]
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          submodules: recursive
+          
+      - name: Build native binary
+        id: build-native-binary
+        uses: ./.github/actions/build-native-binary
+        with:
+          arch: ${{ matrix.arch }}
+          run_number: ${{ github.run_number }}
+
+      - name: Upload ${{ matrix.arch }} artifact to workspace
+        uses: actions/upload-artifact@v3
+        with:
+          name: sua_${{ matrix.arch }}.tar.gz
+          path: sua_${{ matrix.arch }}.tar.gz
+      
+  upload-native-binary:
+    runs-on: ubuntu-latest
+    needs: build-native-binary
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          submodules: recursive
+
+      - name: Download artifacts
+        uses: actions/download-artifact@v2
+
+      - name: Upload artifacts to build results
+        uses: marvinpinto/action-automatic-releases@latest
+        with:
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          draft: false
+          prerelease: true
+          automatic_release_tag: build_${{ github.run_number }}
+          title: "Build ${{ github.run_number }}"
+          files: "**/sua_*.tar.gz"
+
