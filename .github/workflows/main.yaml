@@ -76,9 +76,9 @@ jobs:
       - name: Upload ${{ matrix.arch }} artifact to workspace
         uses: actions/upload-artifact@v3
         with:
-          name: sua_${{ matrix.arch }}.tar.gz
-          path: sua_${{ matrix.arch }}.tar.gz
-      
+          name: sua-${{ matrix.arch }}-build-${{ github.run_number }}.tar.gz
+          path: sua-${{ matrix.arch }}-build-${{ github.run_number }}.tar.gz
+
   upload-native-binary:
     runs-on: ubuntu-latest
     needs: build-native-binary
@@ -98,5 +98,5 @@ jobs:
           prerelease: true
           automatic_release_tag: build_${{ github.run_number }}
           title: "Build ${{ github.run_number }}"
-          files: "**/sua_*.tar.gz"
+          files: "**/sua-${{ matrix.arch }}-build-${{ github.run_number }}.tar.gz"
 

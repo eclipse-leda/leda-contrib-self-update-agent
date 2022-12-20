@@ -42,11 +42,6 @@ runs:
         username: ${{ inputs.username }}
         password: ${{ inputs.token }}
 
-    - name: Print run number
-      run: |
-        echo "Run number for docker file = ${{ github.run_number }}"
-      shell: bash
-
     # https://github.com/docker/build-push-action
     - name: Build and push docker container to ghcr.io
       id: build-and-push

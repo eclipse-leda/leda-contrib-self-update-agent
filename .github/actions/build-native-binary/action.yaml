@@ -35,29 +35,36 @@ runs:
       pip3 install meson
     shell: bash
 
-  - name: Print run number
-    run: |
-      echo "Run number for native = ${{ inputs.run_number }}"
-    shell: bash
-
   - name: Build for ${{ inputs.arch }}
     run: |
       mkdir build_${{ inputs.arch }} 
       ./scripts/build_openssl_${{ inputs.arch }}.sh
       ./scripts/build_glib_${{ inputs.arch }}.sh
       cd build_${{ inputs.arch }}
-      cmake -DCMAKE_INSTALL_PREFIX=../dist_${{ inputs.arch }} -DCMAKE_TOOLCHAIN_FILE=../cmake/linux/${{ matrix.arch }}/toolchain.cmake -DOPENSSL_ROOT_DIR=../build_${{ matrix.arch }} -DOPENSSL_CRYPTO_LIBRARY=../build_${{ matrix.arch }}/lib/libcrypto.so -DSUA_BUILD_NUMBER=${{ inputs.run_number }} ..
+      cmake \
+        -DCMAKE_INSTALL_PREFIX=../dist_${{ inputs.arch }} \
+        -DCMAKE_TOOLCHAIN_FILE=../cmake/linux/${{ matrix.arch }}/toolchain.cmake \
+        -DOPENSSL_ROOT_DIR=../build_${{ matrix.arch }} \
+        -DOPENSSL_CRYPTO_LIBRARY=../build_${{ matrix.arch }}/lib/libcrypto.so \
+        -DSUA_BUILD_NUMBER=${{ inputs.run_number }} ..
       make
       make install
     shell: bash
 
-  #- name: Run unit tests
-  #  if: ${{ inputs.arch=='amd64' }}
-  #  run: |
-  #    cd dist_${{ inputs.arch }}/utest
-  #    ./TestSDVSelfUpdateAgent
+  - name: Run unit tests
+    if: ${{ inputs.arch=='amd64' }}
+    run: |
+      cd dist_${{ inputs.arch }}/utest
+      ./TestSDVSelfUpdateAgent
+    shell: bash
 
   - name: Compress artifacts
-    run: tar -czvf sua_${{ inputs.arch }}.tar.gz --exclude=lib/cmake --exclude=lib/pkgconfig -C dist_${{ matrix.arch }} bin/sdv-self-update-agent lib
+    run: |
+      tar -czvf sua-${{ inputs.arch }}-build-${{ inputs.run_number }}.tar.gz \
+        --transform s/dist_${{ inputs.arch }}/sua-${{ inputs.arch }}-build-${{ inputs.run_number }}/ \
+        --exclude=dist_${{ inputs.arch }}/lib/cmake \
+        --exclude=dist_${{ inputs.arch }}/lib/pkgconfig \
+        dist_${{ inputs.arch }}/bin/sdv-self-update-agent \
+        dist_${{ inputs.arch }}/lib
     shell: bash
 
