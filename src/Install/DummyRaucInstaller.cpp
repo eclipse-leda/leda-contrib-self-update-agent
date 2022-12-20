@@ -31,7 +31,10 @@ namespace sua {
 
     int32_t DummyRaucInstaller::getInstallProgress()
     {
-        return 0;
+        static int progress = 0;
+        progress += 1;
+        progress = std::min(100, progress);
+        return progress;
     }
 
     std::string DummyRaucInstaller::getBundleVersion()

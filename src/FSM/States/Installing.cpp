@@ -38,10 +38,12 @@ namespace sua {
         subscribe(Installer::EVENT_INSTALLING, [this, &ctx](const std::map<std::string, std::string>& payload) {
             const auto percentage = std::stoi(payload.at("percentage"));
             Logger::info("RAUC install progress: {}", percentage);
-            send(ctx, IMqttProcessor::TOPIC_FEEDBACK, "installing");
+						ctx.desiredState.installProgressPercentage = percentage;
+						send(ctx, IMqttProcessor::TOPIC_FEEDBACK, "installing");
         });
 
-        const auto result = ctx.installerAgent->installBundle(ctx.updatesDirectory + "/temp_file");
+        auto installer    = std::make_shared<Installer>(ctx.installerAgent);
+        const auto result = installer->start(ctx.updatesDirectory + "/temp_file");
 
         if(result == TechCode::OK) {
             Logger::info("RAUC install completed");

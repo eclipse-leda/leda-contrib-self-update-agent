@@ -20,6 +20,11 @@
 
 #include <gio/gio.h>
 
+#include <chrono>
+#include <thread>
+
+using namespace std::chrono_literals;
+
 namespace sua {
 
     const std::string Installer::EVENT_INSTALLING = "Installer/Installing";
@@ -41,17 +46,19 @@ namespace sua {
 
         while(installing) {
             progressPercentage = _installerAgent->getInstallProgress();
-            sleep(2);
+						std::this_thread::sleep_for(2000ms);
             count++;
             if(progressPercentage >= 100 || count >= 120) {
                 installing = false;
             }
 
             if(progressPercentage >= progressNotificationLimiter) {
-                std::map<std::string, std::string> payload;
-                payload["percentage"] = std::to_string(progressPercentage);
-                sua::Dispatcher::instance().dispatch(EVENT_INSTALLING, payload);
-                progressNotificationLimiter += 10;
+                if(progressPercentage != 100) {
+                    std::map<std::string, std::string> payload;
+                    payload["percentage"] = std::to_string(progressPercentage);
+                    sua::Dispatcher::instance().dispatch(EVENT_INSTALLING, payload);\
+                }
+								progressNotificationLimiter += 10;
             }
         }
 
