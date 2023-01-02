@@ -76,8 +76,8 @@ runs:
 
   - name: Compress artifacts
     run: |
-      tar -czvf sua-${{ inputs.arch }}-build-${{ inputs.run_number }}.tar.gz \
-        --transform s/dist_${{ inputs.arch }}/sua-${{ inputs.arch }}-build-${{ inputs.run_number }}/ \
+      tar -czvf self-update-agent-${{ inputs.arch }}-build-${{ inputs.run_number }}.tar.gz \
+        --transform s/dist_${{ inputs.arch }}/self-update-agent-${{ inputs.arch }}-build-${{ inputs.run_number }}/ \
         --exclude=dist_${{ inputs.arch }}/lib/cmake \
         --exclude=dist_${{ inputs.arch }}/lib/pkgconfig \
         dist_${{ inputs.arch }}/bin/sdv-self-update-agent \

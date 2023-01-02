@@ -14,7 +14,7 @@
 #
 #    SPDX-License-Identifier: Apache-2.0
 
-name: Build and push docker container
+name: Build and push container image
 
 inputs:
   arch:
@@ -59,7 +59,7 @@ runs:
         password: ${{ inputs.token }}
 
     # https://github.com/docker/build-push-action
-    - name: Build and push docker container to ghcr.io
+    - name: Build and push docker image to ghcr.io
       id: build-and-push
       uses: docker/build-push-action@ac9327eae2b366085ac7f6a2d02df8aa8ead720a
       with:
@@ -72,5 +72,5 @@ runs:
           GITHUB_RUN_NUMBER=${{ inputs.run_number }}
           GITHUB_COMMIT_HASH=${{ inputs.commit_hash }}
         tags: |
-          ghcr.io/${{ steps.repo_name.outputs.lowercase }}/sua:latest_${{ inputs.arch }}
+          ghcr.io/${{ steps.repo_name.outputs.lowercase }}/self-update-agent:latest_${{ inputs.arch }}
 

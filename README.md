@@ -2,7 +2,7 @@
 Apache 2.0
 
 # Contribution
-Follow guidelines from Eclipse Leda: https://github.com/SoftwareDefinedVehicle/sdv-edge-distro-yocto/blob/main/README.md
+Follow guidelines from Eclipse Leda: https://eclipse-leda.github.io/leda/docs/project-info/contribution-guidelines
 
 # Security Policy
 This project implements the Eclipse Foundation Security Policy: https://www.eclipse.org/security
@@ -80,7 +80,7 @@ SUA supports 2 protocols depending on configuration: [link](docs/k8s.md) for Kub
 SUA links to some 3rd party libraries, which are fetched as submodules, therefore the cloning shall be performed with recursive option:
 
 ```
-git clone --recursive https://github.boschdevcloud.com/sdv/sdv-self-update-agent.git
+git clone --recursive https://github.com/eclipse-leda/leda-contrib-self-update-agent.git
 ```
 or if was cloned non recursively
 ```
@@ -96,8 +96,3 @@ Instructions for deploying are available on: [link](docs/deploying/README.md)
 
 # HowTo Test
 Instructions for testing are available on: [link](docs/testing/README.md)
-
-
-
-
-

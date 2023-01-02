@@ -82,36 +82,6 @@ This project provides the `.devcontainer`, which some of required for building t
 
 If the docker and VS proxy settings are correctly set, the .devcontainer environment shall work on windows out of the box.
 
-### Fix for OSD6 Linux distribution
-
-For the case when using local VS Code (on OSD6) and opening in the remote container, the adjustment of proxy settings is necessary:
-
-```
-vim /opt/osd/proxy/config.ini
-```
-
-and then append additional server address for binding:
-
-```
-[server]
-binds = 127.0.0.1:3128,172.17.0.1:3128
-```
-
-After this restart OSD proxy
-
-```
-osd-proxy-restart
-```
-
-Then in the .devcontainer/Dockerfile activate those lines
-
-```
-ENV http_proxy "http://172.17.0.1:3128"
-ENV https_proxy "http://172.17.0.1:3128"
-```
-
-And finally trigger "Rebuild in Container" command from VSCode
-
 # Containerized
 
 SUA can be built as multi-arch image, and run inside of the container. This is preferred way of deployment, as it provides a necessary sandbox runtime environment and also allows to easily adjust the configuration settings (ports, ENV variables) via yaml.
@@ -146,14 +116,4 @@ docker buildx imagetools create -t ghcr.io/softwaredefinedvehicle/sdv-self-updat
 
 ```
 docker run -it sua:latest
-```
-
-## Hint
-
-When running with proxy (corporate for example), it is helpful to uncomment following lines in the Dockerfile to configure the proxy properly
-
-```
-#uncomment when building on OSD6 environment
-ENV http_proxy "http://172.17.0.1:3128"
-ENV https_proxy "http://172.17.0.1:3128"
 ```
