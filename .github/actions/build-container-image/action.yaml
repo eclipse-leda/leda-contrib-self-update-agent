@@ -73,4 +73,4 @@ runs:
           GITHUB_COMMIT_HASH=${{ inputs.commit_hash }}
         tags: |
           ghcr.io/${{ steps.repo_name.outputs.lowercase }}/self-update-agent:latest_${{ inputs.arch }}
-
+          ghcr.io/${{ steps.repo_name.outputs.lowercase }}/self-update-agent:build-${{ inputs.run_number }}_${{ inputs.arch }}
