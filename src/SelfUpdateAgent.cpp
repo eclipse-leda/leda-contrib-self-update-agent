@@ -21,6 +21,7 @@
 #include "FSM/States/Idle.h"
 #include "FSM/States/Installed.h"
 #include "FSM/States/Installing.h"
+#include "FSM/States/SendCurrentState.h"
 #include "FSM/States/Uninitialized.h"
 #include "FotaEvent.h"
 #include "Logger.h"
@@ -35,43 +36,48 @@ namespace sua {
     {
         // clang-format off
         auto factory = std::make_shared<StateFactory>();
-        factory->addStateT<Connected    >("Connected"    );
-        factory->addStateT<Downloading  >("Downloading"  );
-        factory->addStateT<Failed       >("Failed"       );
-        factory->addStateT<Idle         >("Idle"         );
-        factory->addStateT<Installed    >("Installed"    );
-        factory->addStateT<Installing   >("Installing"   );
-        factory->addStateT<Uninitialized>("Uninitialized");
+        factory->addStateT<Connected       >("Connected"       );
+        factory->addStateT<Downloading     >("Downloading"     );
+        factory->addStateT<Failed          >("Failed"          );
+        factory->addStateT<Idle            >("Idle"            );
+        factory->addStateT<Installed       >("Installed"       );
+        factory->addStateT<Installing      >("Installing"      );
+        factory->addStateT<SendCurrentState>("SendCurrentState");
+        factory->addStateT<Uninitialized   >("Uninitialized"   );
         _context.stateMachine->setFactory(factory);
         // clang-format-on
 
         // clang-format off
         _context.stateMachine->setTransitions({
             // from "Uninitialized"
-            { FotaEvent::ConnectivityEstablished   , "Uninitialized", "Connected"      },
+            { FotaEvent::ConnectivityEstablished, "Uninitialized"   , "Connected"       },
             // from "Connected"
-            { FotaEvent::ConnectivityLost          , "Connected"    , "Uninitialized"  },
-            { FotaEvent::Start                     , "Connected"    , "Failed"          , FotaEvent::BundleVersionUnchanged },
-            { FotaEvent::Start                     , "Connected"    , "Downloading"     , FotaEvent::BundleVersionOK        },
+            { FotaEvent::ConnectivityLost       , "Connected"       , "Uninitialized"   },
+            { FotaEvent::Start                  , "Connected"       , "Failed"           , FotaEvent::BundleVersionUnchanged },
+            { FotaEvent::Start                  , "Connected"       , "Downloading"      , FotaEvent::BundleVersionOK        },
+            { FotaEvent::GetCurrentState        , "Connected"       , "SendCurrentState"},
             // from "Failed"
-            { FotaEvent::ConnectivityLost          , "Failed"       , "Uninitialized"  },
-            { FotaEvent::Waiting                   , "Failed"       , "Idle"           },
+            { FotaEvent::ConnectivityLost       , "Failed"          , "Uninitialized"   },
+            { FotaEvent::Waiting                , "Failed"          , "Idle"            },
             // from "Downloading"
-            { FotaEvent::ConnectivityLost          , "Downloading"  , "Uninitialized"  },
-            { FotaEvent::DownloadStart             , "Downloading"  , "Installing"      , FotaEvent::BundleVersionOK           },
-            { FotaEvent::DownloadStart             , "Downloading"  , "Failed"          , FotaEvent::BundleVersionInconsistent },
-            { FotaEvent::DownloadStart             , "Downloading"  , "Failed"          , FotaEvent::DownloadFailed            },
+            { FotaEvent::ConnectivityLost       , "Downloading"     , "Uninitialized"   },
+            { FotaEvent::DownloadStart          , "Downloading"     , "Installing"       , FotaEvent::BundleVersionOK           },
+            { FotaEvent::DownloadStart          , "Downloading"     , "Failed"           , FotaEvent::BundleVersionInconsistent },
+            { FotaEvent::DownloadStart          , "Downloading"     , "Failed"           , FotaEvent::DownloadFailed            },
             // from "Installing"
-            { FotaEvent::ConnectivityLost          , "Installing"   , "Uninitialized"  },
-            { FotaEvent::InstallStart              , "Installing"   , "Installed"       , FotaEvent::InstallCompleted          },
-            { FotaEvent::InstallStart              , "Installing"   , "Failed"          , FotaEvent::InstallFailed             },
+            { FotaEvent::ConnectivityLost       , "Installing"      , "Uninitialized"   },
+            { FotaEvent::InstallStart           , "Installing"      , "Installed"        , FotaEvent::InstallCompleted          },
+            { FotaEvent::InstallStart           , "Installing"      , "Failed"           , FotaEvent::InstallFailed             },
             // from "Installed"
-            { FotaEvent::ConnectivityLost          , "Installed"    , "Uninitialized"  },
-            { FotaEvent::Waiting                   , "Installed"    , "Idle"           },
+            { FotaEvent::ConnectivityLost       , "Installed"       , "Uninitialized"   },
+            { FotaEvent::Waiting                , "Installed"       , "Idle"            },
             // from "Idle"
-            { FotaEvent::ConnectivityLost          , "Idle"         , "Uninitialized"  },
-            { FotaEvent::Start                     , "Idle"         , "Failed"          , FotaEvent::BundleVersionUnchanged },
-            { FotaEvent::Start                     , "Idle"         , "Downloading"     , FotaEvent::BundleVersionOK        },
+            { FotaEvent::ConnectivityLost       , "Idle"            , "Uninitialized"   },
+            { FotaEvent::Start                  , "Idle"            , "Failed"           , FotaEvent::BundleVersionUnchanged },
+            { FotaEvent::Start                  , "Idle"            , "Downloading"      , FotaEvent::BundleVersionOK        },
+            // from "SendCurrentState"
+            { FotaEvent::ConnectivityLost       , "SendCurrentState", "Uninitialized"   },
+            { FotaEvent::Waiting                , "SendCurrentState", "Idle"            },
         });
         _context.stateMachine->transitTo("Uninitialized");
         // clang-format on

@@ -81,6 +81,12 @@ namespace sua {
         // clang-format on
     }
 
+    DesiredState MqttMessagingProtocolYAML::readCurrentStateRequest(const std::string & input)
+    {
+      // ignored, no activity id needed, simply pass empty result and trigger response
+      return {};
+    }
+
     std::string MqttMessagingProtocolYAML::createMessage(const class Context& ctx, const std::string& name)
     {
         Yaml::Node root;

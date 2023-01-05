@@ -66,6 +66,22 @@ namespace {
         EXPECT_EQ(s.bundleVersion, "1.1");
     }
 
+    TEST_F(TestMessagingProtocolJSON, readCurrentStateRequest)
+    {
+        // clang-format off
+        const std::string input = R"(
+            {
+                "activityId": "random-uuid-as-string",
+                "timestamp": 123456789
+            }
+        )";
+        // clang-format on
+
+        const sua::DesiredState s = ProtocolJSON().readCurrentStateRequest(input);
+
+        EXPECT_EQ(s.activityId, "random-uuid-as-string");
+    }
+
     TEST_F(TestMessagingProtocolJSON, createMessage_systemVersion)
     {
         const std::string result = ProtocolJSON().createMessage(ctx, "systemVersion");
@@ -73,7 +89,6 @@ namespace {
         // clang-format off
         const std::string expected = R"(
             {
-                "activityId": "id",
                 "timestamp": 42,
                 "payload": {
                     "domains": [
