@@ -25,6 +25,8 @@ namespace sua {
     public:
         DesiredState readDesiredState(const std::string & input) override;
 
+        DesiredState readCurrentStateRequest(const std::string & input) override;
+
         std::string createMessage(const class Context& ctx, const std::string& name) override;
     };
 

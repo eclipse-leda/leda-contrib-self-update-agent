@@ -14,31 +14,20 @@
 //
 //    SPDX-License-Identifier: Apache-2.0
 
-#ifndef SDV_SUA_FOTAEVENT_H
-#define SDV_SUA_FOTAEVENT_H
+#ifndef SDV_SUA_SENDCURRENTSTATE_H
+#define SDV_SUA_SENDCURRENTSTATE_H
 
-#include <string>
+#include "FSM/State.h"
 
 namespace sua {
 
-    enum FotaEvent {
-        Waiting,
-        ConnectivityEstablished,
-        ConnectivityLost,
-        Start,
-        GetCurrentState,
-        BundleVersionOK,
-        BundleVersionUnchanged,
-        BundleVersionInconsistent,
-        DownloadStart,
-        DownloadFailed,
-        InstallStart,
-        InstallCompleted,
-        InstallFailed,
-        NotUsed,
-    };
+    class SendCurrentState : public State {
+    public:
+        SendCurrentState();
+        SendCurrentState(const std::string& name);
 
-    std::string toString(FotaEvent e);
+        void onEnter(Context& ctx) override;
+    };
 
 } // namespace sua
 

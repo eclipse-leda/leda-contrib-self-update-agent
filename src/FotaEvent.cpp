@@ -28,6 +28,7 @@ namespace sua {
             { ConnectivityEstablished   , "ConnectivityEstablished"   },
             { ConnectivityLost          , "ConnectivityLost"          },
             { Start                     , "Start"                     },
+            { GetCurrentState           , "GetCurrentState"           },
             { BundleVersionOK           , "BundleVersionOK"           },
             { BundleVersionUnchanged    , "BundleVersionUnchanged"    },
             { BundleVersionInconsistent , "BundleVersionInconsistent" },

@@ -67,13 +67,23 @@ namespace sua {
         // clang-format on
     }
 
+    DesiredState MqttMessagingProtocolJSON::readCurrentStateRequest(const std::string & input)
+    {
+        // clang-format off
+        DesiredState s;
+        std::stringstream ss(input);
+        nlohmann::json json = nlohmann::json::parse(ss);
+        s.activityId        = json["activityId"];
+        return s;
+        // clang-format on
+    }
+
     std::string MqttMessagingProtocolJSON::createMessage(const class Context& ctx, const std::string& name)
     {
         if(name == "systemVersion") {
             // clang-format off
             const std::string tpl = jsonTemplate(R"(
                 {
-                    "activityId": "{}",
                     "timestamp": {},
                     "payload": {
                         "domains": [
@@ -92,7 +102,7 @@ namespace sua {
             )");
             // clang-format on
 
-            return fmt::format(tpl, ctx.desiredState.activityId, epochTime(), ctx.currentState.version);
+            return fmt::format(tpl, epochTime(), ctx.currentState.version);
         }
 
         if(name == "identifying") {

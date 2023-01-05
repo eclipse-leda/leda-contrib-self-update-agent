@@ -27,6 +27,8 @@ namespace sua {
 
         virtual class DesiredState readDesiredState(const std::string & input) = 0;
 
+        virtual class DesiredState readCurrentStateRequest(const std::string & input) = 0;
+
         virtual std::string createMessage(const class Context& ctx, const std::string& name) = 0;
     };
 

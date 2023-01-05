@@ -84,6 +84,7 @@ namespace {
         {
             sua::Logger::trace("MqttCallback::connected");
             _mqttClient.subscribe(sua::IMqttProcessor::TOPIC_START, QUALITY, nullptr, _actionListener);
+            _mqttClient.subscribe(sua::IMqttProcessor::TOPIC_STATE_GET, QUALITY, nullptr, _actionListener);
             _context.stateMachine->handleEvent(sua::FotaEvent::ConnectivityEstablished);
         }
 
@@ -100,7 +101,9 @@ namespace {
             if(msg->get_topic() == sua::IMqttProcessor::TOPIC_START) {
                 _context.desiredState = _context.messagingProtocol->readDesiredState(msg->get_payload_str());
                 _context.stateMachine->handleEvent(sua::FotaEvent::Start);
-                return;
+            } if(msg->get_topic() == sua::IMqttProcessor::TOPIC_STATE_GET) {
+                _context.desiredState = _context.messagingProtocol->readCurrentStateRequest(msg->get_payload_str());
+                _context.stateMachine->handleEvent(sua::FotaEvent::GetCurrentState);
             }
         }
 
