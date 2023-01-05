@@ -1,0 +1,61 @@
+#    Copyright 2022 Contributors to the Eclipse Foundation
+#
+#    Licensed under the Apache License, Version 2.0 (the "License");
+#    you may not use this file except in compliance with the License.
+#    You may obtain a copy of the License at
+#
+#        http://www.apache.org/licenses/LICENSE-2.0
+#
+#    Unless required by applicable law or agreed to in writing, software
+#    distributed under the License is distributed on an "AS IS" BASIS,
+#    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#    See the License for the specific language governing permissions and
+#    limitations under the License.
+#
+#    SPDX-License-Identifier: Apache-2.0
+
+name: OCaaS Compliance checks
+ 
+on:
+  workflow_dispatch:
+ 
+jobs:
+  ocaas-scan:
+    runs-on: ubuntu-latest
+    if: github.repository_owner == 'SoftwareDefinedVehicle'
+    steps:
+      - name: setup env variables for OCaaS 
+        run: |
+          echo "VCS_REVISION=${{ github.ref_name }}" >> $GITHUB_ENV        
+      - name: use different VCS_REVISION for pull requests
+        if: github.event_name == 'pull_request'
+        run: |
+          echo "Workflow triggered by pull request. Scanning source branch only as merge revisions are not supported."
+          echo "VCS_REVISION=${{ github.head_ref }}" >> $GITHUB_ENV        
+      - name: OCaaS Scans
+        id: ocaas
+        uses: docker://osmipublic.azurecr.io/ocaas-ci:latest
+        continue-on-error: true # Built artifacts also should also be uploaded if the scan finds violations.
+        with:
+          args: auth generate-token run start download
+        env:
+          OCAAS_USERNAME: ${{ secrets.OCAAS_USERNAME }}
+          OCAAS_PASSWORD: ${{ secrets.OCAAS_PASSWORD }}
+          PROJECT_NAME: "Project LEDA - sdv-self-update-agent"
+          PIPELINE_ID: 377 # Your pipeline ID. Provided by the OSMI team.
+          VCS_URL: ${{ github.server_url }}/${{ github.repository }}.git
+          # VCS_REVISION: is defined before 
+          APPLICATION_CATEGORY: "BT11"
+          BLOCKING: true
+          REPORT_FILES: DISCLOSURE_DOCUMENT_PDF,VULNERABILITY_REPORT_PDF,SCAN_REPORT_WEB_APP_HTML
+          OUTPUT_DIR: reports/
+      - name: Upload reports
+        id: upload
+        uses: actions/upload-artifact@v3
+        with:
+          name: reports
+          path: reports/
+      - name: Check for violations
+        if: steps.ocaas.outcome != 'success' || steps.upload.outcome != 'success'
+        run: exit 1
+

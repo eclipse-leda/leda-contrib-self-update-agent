@@ -15,40 +15,19 @@
 //    SPDX-License-Identifier: Apache-2.0
 
 #include "FSM/States/Failed.h"
-#include "FSM/States/Idle.h"
-#include "FSM/States/Uninitialized.h"
+#include "FSM/FSM.h"
+#include "Context.h"
+#include "FotaEvent.h"
 
 namespace sua {
-    void Failed::onEntryTemplate()
+
+    Failed::Failed()
+        : State("Failed")
+    { }
+
+    void Failed::onEnter(Context& ctx)
     {
-        // TODO, depending on the payload, perform proper cleanup
-        // for example deleting broken file
-        std::shared_ptr<State> nextState = std::make_shared<Idle>(_context);
-        transitTo(nextState);
+        ctx.stateMachine->handleEvent(FotaEvent::Waiting);
     }
 
-    void Failed::adjustEntryPayloadTemplate()
-    {
-        // Empty, use gived payload
-    }
-
-    void Failed::handleTemplate(const FotaEvent event, const MessageState payload)
-    {
-        std::shared_ptr<State> nextState;
-
-        switch(event) {
-        case FotaEvent::ConnectivityLost:
-            nextState = std::make_shared<Uninitialized>(_context, payload);
-            transitTo(nextState);
-            break;
-        default:
-            handleBadEvent(event, payload);
-            break;
-        }
-    }
-
-    FotaState Failed::getState() const
-    {
-        return FotaState::Failed;
-    }
 } // namespace sua

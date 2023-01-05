@@ -17,19 +17,20 @@
 #ifndef SDV_SUA_BUNDLECHECKER_H
 #define SDV_SUA_BUNDLECHECKER_H
 
-#include "Install/IRaucInstaller.h"
-
-#include <memory>
+#include "IBundleChecker.h"
 
 namespace sua {
-    class BundleChecker {
-    public:
-        static bool isUpdateBundleVersionDifferent(const std::string updateBundleVer,
-                                                   const std::shared_ptr<IRaucInstaller> installer);
 
-        static bool isBundleVersionConsistent(const std::string declaredVersion,
-                                                   const std::shared_ptr<IRaucInstaller> installer, const std::string bundlePath);
+    class BundleChecker : public IBundleChecker {
+    public:
+        bool isUpdateBundleVersionDifferent(const std::string &             updateBundleVer,
+                                            std::shared_ptr<IRaucInstaller> installer) override;
+
+        bool isBundleVersionConsistent(const std::string &             declaredVersion,
+                                       std::shared_ptr<IRaucInstaller> installer,
+                                       const std::string &             bundlePath) override;
     };
+
 } // namespace sua
 
 #endif

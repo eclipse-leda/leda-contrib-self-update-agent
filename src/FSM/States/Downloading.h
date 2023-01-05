@@ -17,27 +17,23 @@
 #ifndef SDV_SUA_DOWNLOADING_H
 #define SDV_SUA_DOWNLOADING_H
 
-#include "Download/Downloader.h"
 #include "FSM/State.h"
 #include "Patterns/Dispatcher.h"
 
 namespace sua {
+
     class Downloading
         : public State
-        , public DispatcherSubscriber {
+        , public DispatcherSubscriber
+    {
     public:
-        Downloading(std::shared_ptr<FSM>& context, const MessageState payload = MessageState());
+        Downloading();
 
-        void      handleTemplate(FotaEvent event, const MessageState payload) override;
-        FotaState getState() const override;
+        void onEnter(Context& ctx) override;
 
-    protected:
-        void onEntryTemplate() override;
-        void adjustEntryPayloadTemplate() override;
-
-    private:
-        std::unique_ptr<Downloader> _downloader;
+        FotaEvent body(Context& ctx) override;
     };
+
 } // namespace sua
 
 #endif

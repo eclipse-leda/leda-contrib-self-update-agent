@@ -17,9 +17,8 @@
 #ifndef SDV_SUA_TECHCODES_H
 #define SDV_SUA_TECHCODES_H
 
-#include <type_traits>
-
 namespace sua {
+
     enum class TechCode {
         OK                 = 0,
         DownloadFailed     = 1001,
@@ -29,10 +28,6 @@ namespace sua {
         UnknownError       = 5001
     };
 
-    constexpr auto techCodeValue(TechCode code) noexcept
-    {
-        return static_cast<std::underlying_type_t<TechCode>>(code);
-    }
 } // namespace sua
 
 #endif

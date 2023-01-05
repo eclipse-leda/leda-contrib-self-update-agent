@@ -14,30 +14,16 @@
 //
 //    SPDX-License-Identifier: Apache-2.0
 
-#ifndef SDV_SUA_WORKER_H
-#define SDV_SUA_WORKER_H
+#ifndef SDV_SUA_MOCKDOWNLOADER_H
+#define SDV_SUA_MOCKDOWNLOADER_H
 
-#include <string>
+#include "Download/IDownloader.h"
 
-namespace sua {
-    class Worker {
-    public:
-        Worker()
-            : _isWorking(false)
-        { }
+#include "gmock/gmock.h"
 
-        virtual ~Worker() = default;
-
-        virtual bool start(const std::string input) = 0;
-
-        bool isWorking() const
-        {
-            return _isWorking;
-        }
-
-    protected:
-        mutable bool _isWorking;
-    };
-} // namespace sua
+class MockDownloader : public sua::IDownloader {
+public:
+    MOCK_METHOD(sua::TechCode, start, (const std::string & input), (override));
+};
 
 #endif

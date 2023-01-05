@@ -15,33 +15,19 @@
 //    SPDX-License-Identifier: Apache-2.0
 
 #include "FSM/States/Uninitialized.h"
-#include "FSM/States/Idle.h"
+#include "Context.h"
+#include "Logger.h"
 
 namespace sua {
 
-    void Uninitialized::adjustEntryPayloadTemplate()
+    Uninitialized::Uninitialized()
+        : State("Uninitialized")
+    { }
+
+    void Uninitialized::onEnter(Context& ctx)
     {
-        // use passed values
+        ctx.currentState.version = ctx.installerAgent->getBundleVersion();
+        Logger::info("System version (slot): '{}'", ctx.currentState.version);
     }
 
-    void Uninitialized::handleTemplate(FotaEvent event, const MessageState payload)
-    {
-        std::shared_ptr<State> nextState;
-
-        switch(event) {
-        case FotaEvent::ConnectivityEstablished:
-            nextState = std::make_shared<Idle>(_context, payload);
-            transitTo(nextState);
-            break;
-
-        default:
-            handleBadEvent(event, payload);
-            break;
-        }
-    }
-
-    FotaState Uninitialized::getState() const
-    {
-        return FotaState::Uinitialized;
-    }
 } // namespace sua

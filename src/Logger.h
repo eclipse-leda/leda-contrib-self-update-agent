@@ -24,6 +24,7 @@ namespace sua {
     class Logger {
     public:
         enum Level {
+            None     = 0x0000,
             Trace    = 0x0001,
             Debug    = 0x0002,
             Info     = 0x0004,
@@ -94,6 +95,7 @@ namespace sua {
     private:
         int _log_level;
     };
+
 } // namespace sua
 
 #endif

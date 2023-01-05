@@ -17,20 +17,17 @@
 #ifndef SDV_SUA_IDLE_H
 #define SDV_SUA_IDLE_H
 
-#include "FSM/State.h"
+#include "FSM/States/Connected.h"
 
 namespace sua {
-    class Idle : public State {
-        using State::State;
 
+    class Idle : public Connected {
     public:
-        void      handleTemplate(FotaEvent event, const MessageState payload) override;
-        FotaState getState() const override;
+        Idle();
 
-    protected:
-        void onEntryTemplate() override;
-        void adjustEntryPayloadTemplate() override;
+        void onEnter(Context& /*ctx*/) override;
     };
+
 } // namespace sua
 
 #endif

@@ -17,17 +17,18 @@
 #ifndef SDV_SUA_DOWNLOADER_H
 #define SDV_SUA_DOWNLOADER_H
 
-#include "Patterns/Worker.h"
+#include "IDownloader.h"
 
 namespace sua {
-    class Downloader : public Worker {
+
+    class Downloader : public IDownloader
+    {
     public:
         static const std::string EVENT_DOWNLOADING;
-        static const std::string EVENT_DOWNLOADED;
-        static const std::string EVENT_FAILED;
 
-        bool start(const std::string input) override;
+        TechCode start(const std::string & input) override;
     };
+
 } // namespace sua
 
 #endif

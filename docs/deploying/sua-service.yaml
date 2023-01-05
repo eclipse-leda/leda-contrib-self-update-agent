@@ -16,7 +16,7 @@ spec:
     spec:
       containers:
         - name: suaservice
-          image: ghcr.io/softwaredefinedvehicle/sdv-self-update-agent/sua:v0.1.16
+          image: ghcr.io/SoftwareDefinedVehicle/leda-contrib-self-update-agent-fork/self-update-agent:latest
           command: ["/app/sdv-self-update-agent"]
           args: ["-p", "/data/selfupdates"]
           imagePullPolicy: IfNotPresent

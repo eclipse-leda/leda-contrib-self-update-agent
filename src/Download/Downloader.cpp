@@ -23,19 +23,20 @@
 #include <cstdlib>
 #include <cstring>
 
+#include <dirent.h>
 #include <curl/curl.h>
 #include <sys/stat.h>
 
 namespace {
+
     const int        HTTP_OK                     = 200;
     const char       FILE_DIR[FILENAME_MAX]      = "/RaucUpdate";
     const char       FILE_PATH[FILENAME_MAX]     = "/RaucUpdate/temp_file";
     bool             cancelled                   = false;
     int              progressNotificationLimiter = 0;
-    sua::Downloader* _downloader;
 
-    size_t write_data(void* ptr, size_t size, size_t nmemb, FILE* stream);
-    bool   download(const char* url);
+    size_t        write_data(void* ptr, size_t size, size_t nmemb, FILE* stream);
+    sua::TechCode download(const char* url);
 
     struct progress {
         char*  unused;
@@ -48,12 +49,23 @@ namespace {
         int progress = 0;
         if(dltotal > 0) {
             double progress_d = 100.0 * dlnow / dltotal;
-            progress          = (int)progress_d;
+            progress          = std::max(0, std::min(100, (int)progress_d));
         }
 
+        // Skip 100% progress for DOWNLOADING event
+        if(progress == 100) {
+            return 0;
+        }
+
+        const uint64_t total      = static_cast<uint64_t>(dltotal);
+        const uint64_t downloaded = static_cast<uint64_t>(dlnow);
+
         if(progress >= progressNotificationLimiter) {
-            sua::Dispatcher::instance().dispatch(sua::Downloader::EVENT_DOWNLOADING,
-                                                 std::to_string(progress));
+            std::map<std::string, std::string> payload;
+            payload["downloaded"] = std::to_string(downloaded);
+            payload["total"     ] = std::to_string(total);
+            payload["percentage"] = std::to_string(progress);
+            sua::Dispatcher::instance().dispatch(sua::Downloader::EVENT_DOWNLOADING, payload);
             progressNotificationLimiter += 10;
         }
 
@@ -72,26 +84,38 @@ namespace {
         return written;
     }
 
-    bool download(const char* url)
+    sua::TechCode download(const char* url)
     {
         CURLcode gres = curl_global_init(CURL_GLOBAL_ALL);
         if(gres != 0) {
             sua::Logger::critical("curl_global_init failed with code = {}", gres);
-            return false;
+            return sua::TechCode::DownloadFailed;
         }
 
         CURL* easy_handle = curl_easy_init();
         if(!easy_handle) {
             sua::Logger::critical("curl_easy_init failed");
-            return false;
+            return sua::TechCode::DownloadFailed;
         }
 
-        long      response_code;
-        const int dir_err = mkdir(FILE_DIR, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
-        if(dir_err) {
-            sua::Logger::error("Issue with creating a dir, error: {}", dir_err);
+        DIR* dir = opendir(FILE_DIR);
+        if (dir) {
+            closedir(dir);
+        } else {
+            const int dir_err = mkdir(FILE_DIR, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
+            if(dir_err) {
+                sua::Logger::critical("Issue with creating a dir {}, error: {}", FILE_DIR, dir_err);
+                return sua::TechCode::DownloadFailed;
+            }
         }
+
+        long response_code;
         FILE* fp = fopen(FILE_PATH, "wb");
+        if(!fp) {
+            sua::Logger::critical("Failed to open '{}' for writing", FILE_PATH);
+            return sua::TechCode::DownloadFailed;
+        }
+
         curl_easy_setopt(easy_handle, CURLOPT_URL, url);
         curl_easy_getinfo(easy_handle, CURLINFO_RESPONSE_CODE, &response_code);
         curl_easy_setopt(easy_handle, CURLOPT_WRITEFUNCTION, write_data);
@@ -112,35 +136,22 @@ namespace {
         progressNotificationLimiter = 0;
 
         sua::Logger::debug("CURLINFO_RESPONSE_CODE = {}", http_code);
+        if(http_code != 200) {
+            return sua::TechCode::DownloadFailed;
+        }
 
-        return http_code == HTTP_OK;
+        return sua::TechCode::OK;
     }
+
 } // namespace
 
 namespace sua {
 
     const std::string Downloader::EVENT_DOWNLOADING = "Downloader/Downloading";
-    const std::string Downloader::EVENT_DOWNLOADED  = "Downloader/Downloaded";
-    const std::string Downloader::EVENT_FAILED      = "Downloader/Failed";
 
-    bool Downloader::start(const std::string input)
+    TechCode Downloader::start(const std::string & input)
     {
-        Logger::trace("Downloader::start({})", input);
-        _isWorking  = true;
-        _downloader = this;
-        Dispatcher::instance().dispatch(EVENT_DOWNLOADING, "0");
-
-        const bool isOk = download(input.c_str());
-        if(isOk) {
-            Dispatcher::instance().dispatch(EVENT_DOWNLOADED,
-                                            std::to_string(static_cast<int>(TechCode::OK)));
-        } else {
-            Dispatcher::instance().dispatch(
-                EVENT_FAILED, std::to_string(static_cast<int>(TechCode::DownloadFailed)));
-        }
-
-        _isWorking = false;
-        return _isWorking;
+        return download(input.c_str());
     }
 
 } // namespace sua

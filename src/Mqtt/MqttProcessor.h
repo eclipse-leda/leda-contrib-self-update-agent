@@ -17,33 +17,30 @@
 #ifndef SDV_SUA_MQTTPROCESSOR_H
 #define SDV_SUA_MQTTPROCESSOR_H
 
+#include "Mqtt/IMqttProcessor.h"
 #include "Mqtt/MqttConfiguration.h"
-#include "PayloadMessages.h"
 
 #include "mqtt/async_client.h"
 
 namespace sua {
-    class MqttListener;
 
-    class MqttProcessor {
+    class MqttProcessor : public IMqttProcessor {
     public:
-        static const std::string EVENT_CONNECTING;
-        static const std::string EVENT_CONNECTED;
-        static const std::string EVENT_DISCONNECTED;
+        MqttProcessor(const class MqttConfiguration & configuration, class Context & context);
+        ~MqttProcessor() = default;
 
-        MqttProcessor(MqttConfiguration configuration, MqttListener* listener);
-        ~MqttProcessor();
+        void start() override;
+        void stop() override;
 
-        void start();
-        void stop();
-
-        void sendState(const MessageState& message);
-        void sendCurrentState(const MessageCurrentState& message);
+        void send(const std::string& topic, const std::string& content, bool retained = false) override;
 
     private:
+        Context & _context;
+
+        MqttConfiguration _config;
+
         std::string        _clientId = "sua";
         mqtt::async_client _client;
-        MqttListener*      _listener = nullptr;
     };
 } // namespace sua
 

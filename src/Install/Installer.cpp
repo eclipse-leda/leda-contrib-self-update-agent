@@ -20,36 +20,49 @@
 
 #include <gio/gio.h>
 
+#include <chrono>
+#include <thread>
+
+using namespace std::chrono_literals;
+
 namespace sua {
+
     const std::string Installer::EVENT_INSTALLING = "Installer/Installing";
-    const std::string Installer::EVENT_INSTALLED  = "Installed/Installed";
-    const std::string Installer::EVENT_FAILED     = "Installed/Failed";
-
+        
     Installer::Installer(std::shared_ptr<IRaucInstaller> installerAgent)
-        : _installerAgent(installerAgent){};
+        : _installerAgent(installerAgent)
+    { }
 
-    bool Installer::start(const std::string input)
+    TechCode Installer::start(const std::string input)
     {
         Logger::trace("Installer::start({})", input);
-        _isWorking = true;
 
         _installerAgent->installBundle(input);
 
-        bool     installing         = true;
-        uint32_t count              = 0;
-        int32_t  progressPercentage = 0;
+        bool     installing                  = true;
+        uint32_t count                       = 0;
+        int32_t  progressPercentage          = 0;
+        int32_t  progressNotificationLimiter = 0;
+
         while(installing) {
             progressPercentage = _installerAgent->getInstallProgress();
-            sleep(2);
+						std::this_thread::sleep_for(2000ms);
             count++;
             if(progressPercentage >= 100 || count >= 120) {
                 installing = false;
             }
+
+            if(progressPercentage >= progressNotificationLimiter) {
+                if(progressPercentage != 100) {
+                    std::map<std::string, std::string> payload;
+                    payload["percentage"] = std::to_string(progressPercentage);
+                    sua::Dispatcher::instance().dispatch(EVENT_INSTALLING, payload);\
+                }
+								progressNotificationLimiter += 10;
+            }
         }
 
-        _isWorking = false;
-        Dispatcher::instance().dispatch(EVENT_INSTALLED, "0");
-        return _isWorking;
+        return TechCode::OK;
     }
 
 } // namespace sua

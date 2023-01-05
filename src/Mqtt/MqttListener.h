@@ -17,13 +17,21 @@
 #ifndef SDV_SUA_MQTTLISTENER_H
 #define SDV_SUA_MQTTLISTENER_H
 
+#include "IMqttMessagingProtocol.h"
+
 namespace sua {
+
     class MqttListener {
     public:
         virtual ~MqttListener() = default;
 
-        virtual void handle(const class MessageStart& message) = 0;
+        virtual void handleDesiredStateRequest(const std::string & content) = 0;
+
+        virtual void handleConnectionEstablished() = 0;
+
+        virtual void handleConnectionLost() = 0;
     };
+
 } // namespace sua
 
 #endif

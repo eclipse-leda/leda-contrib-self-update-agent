@@ -3,6 +3,8 @@
 FROM --platform=${BUILDPLATFORM} ubuntu AS build
 
 ARG TARGETPLATFORM
+ARG GITHUB_RUN_NUMBER
+ARG GITHUB_COMMIT_HASH
 
 RUN apt-get update && apt-get -y install \ 
     autoconf binutils cmake file \
@@ -14,6 +16,7 @@ RUN apt-get update && apt-get -y install \
     ca-certificates
 
 # Copy the sources to the build container
+COPY .git /work/.git
 COPY src /work/src
 COPY cmake /work/cmake
 COPY 3rdparty /work/3rdparty
@@ -23,6 +26,8 @@ COPY CMakeLists.txt /work/CMakeLists.txt
 
 # Build the Self Update Agent binaries and dependencies
 RUN cd /work \
+    && mkdir -p build_amd64/3rdparty/openssl \
+    && mkdir -p dist_amd64 \
     && ./scripts/build_openssl_amd64.sh > /dev/null \
     && ./scripts/build_glib_amd64.sh > /dev/null \
     && cd build_amd64 \
@@ -31,9 +36,11 @@ RUN cd /work \
         -DCMAKE_TOOLCHAIN_FILE=../cmake/linux/amd64/toolchain.cmake \
         -DOPENSSL_ROOT_DIR=../build_amd64 \
         -DOPENSSL_CRYPTO_LIBRARY=../build_amd64/lib/libcrypto.so \
-        -DCMAKE_BUILD_TYPE=Release \
+        -DCMAKE_BUILD_TYPE="Release" \
+        -DSUA_BUILD_NUMBER=$GITHUB_RUN_NUMBER \
+        -DSUA_COMMIT_HASH=$GITHUB_COMMIT_HASH \
         .. \
-		&& make \
+    && make \
     && make install
 
 #Define RUNTIME environment, the final image
@@ -47,12 +54,13 @@ COPY --from=build /work/dist_amd64/lib/libmini-yaml.so /sua/lib/
 COPY --from=build /work/dist_amd64/lib/libcurl.so     /sua/lib/
 COPY --from=build /work/dist_amd64/lib/libcrypto.so.3 /sua/lib/
 COPY --from=build /work/dist_amd64/lib/libssl.so.3    /sua/lib/
-COPY --from=build /work/build_amd64/glib/gio/libgio-2.0.so.0        /sua/lib/
-COPY --from=build /work/build_amd64/glib/gobject/libgobject-2.0.so.0        /sua/lib/
+COPY --from=build /work/dist_amd64/lib/libsua.so      /sua/lib/
+COPY --from=build /work/build_amd64/glib/gio/libgio-2.0.so.0          /sua/lib/
+COPY --from=build /work/build_amd64/glib/gobject/libgobject-2.0.so.0  /sua/lib/
 COPY --from=build /work/build_amd64/glib/glib/libglib-2.0.so.0        /sua/lib/
-COPY --from=build /work/build_amd64/glib/gmodule/libgmodule-2.0.so.0        /sua/lib/
-COPY --from=build /work/build_amd64/glib/subprojects/libffi/src/libffi.so.7     /sua/lib/
-COPY --from=build /work/build_amd64/glib/subprojects/zlib-1.2.11/libz.so /sua/lib/
+COPY --from=build /work/build_amd64/glib/gmodule/libgmodule-2.0.so.0         /sua/lib/
+COPY --from=build /work/build_amd64/glib/subprojects/libffi/src/libffi.so.7  /sua/lib/
+COPY --from=build /work/build_amd64/glib/subprojects/zlib-1.2.11/libz.so     /sua/lib/
 COPY --from=build /etc/ssl/certs /etc/ssl/certs/
 COPY --from=build /usr/share/ca-certificates /usr/share/ca-certificates
 COPY --from=build /lib64/ld-linux-x86-64.so.2 /lib64/ld-linux-x86-64.so.2

@@ -14,17 +14,19 @@
 //
 //    SPDX-License-Identifier: Apache-2.0
 
-#ifndef SDV_SUA_MQTTMESSAGEDESERIALIZER_H
-#define SDV_SUA_MQTTMESSAGEDESERIALIZER_H
+#ifndef SDV_SUA_MOCKRAUCINSTALLER_H
+#define SDV_SUA_MOCKRAUCINSTALLER_H
 
-#include <string>
+#include "Install/IRaucInstaller.h"
 
-namespace sua {
-    class MqttMessageDeserializer {
-    public:
-        void deserialize(const std::string& payload, class MessageStart& m) const;
-        void deserialize(const std::string& payload, class MessageState& m) const;
-    };
-} // namespace sua
+#include "gmock/gmock.h"
 
-#endif
+class MockRaucInstaller : public sua::IRaucInstaller {
+public:
+    MOCK_METHOD(sua::TechCode, installBundle, (const std::string & input), (override));
+    MOCK_METHOD(int32_t, getInstallProgress, (), (override));
+    MOCK_METHOD(std::string, getBundleVersion, (), (override));
+    MOCK_METHOD(std::string, getBundleVersion, (const std::string & input), (override));
+};
+
+#endif // SDV_SUA_IRAUCINSTALLER_H

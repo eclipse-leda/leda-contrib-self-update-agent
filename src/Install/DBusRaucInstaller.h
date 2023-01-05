@@ -17,40 +17,32 @@
 #ifndef SDV_SUA_DBUSRAUCINSTALLER_H
 #define SDV_SUA_DBUSRAUCINSTALLER_H
 
-#include <gio/gio.h>
-
 #include "Install/IRaucInstaller.h"
 
+#include <gio/gio.h>
+
 namespace sua {
+
     class DBusRaucInstaller : public IRaucInstaller {
     public:
         DBusRaucInstaller();
         ~DBusRaucInstaller();
-        void        installBundle(const std::string input) override;
+
+        TechCode    installBundle(const std::string& input) override;
         int32_t     getInstallProgress() override;
         std::string getBundleVersion() override;
-        std::string getBundleVersion(const std::string input) override;
+        std::string getBundleVersion(const std::string& input) override;
 
     private:
         GDBusConnection* connection{nullptr};
 
         void        setupDBusRaucConnection();
-        void        installDBusRaucBundle(const std::string bundleName);
+        TechCode    installDBusRaucBundle(const std::string& bundleName);
         int32_t     getDBusRaucInstallProgress() const;
         std::string getDBusRaucBundleVersion() const;
-        std::string getDBusRaucBundleVersion(const std::string input) const;
+        std::string getDBusRaucBundleVersion(const std::string& input) const;
     };
 
-    // Only needed for initial setup & test, will be removed.
-    class DummyRaucInstaller : public IRaucInstaller {
-    public:
-        DummyRaucInstaller();
-        ~DummyRaucInstaller();
-        void        installBundle(const std::string input);
-        int32_t     getInstallProgress();
-        std::string getBundleVersion();
-        std::string getBundleVersion(const std::string input);
-    };
 } // namespace sua
 
 #endif // SDV_SUA_DBUSRAUCINSTALLER_H

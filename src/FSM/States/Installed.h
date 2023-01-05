@@ -20,17 +20,16 @@
 #include "FSM/State.h"
 
 namespace sua {
+
     class Installed : public State {
-        using State::State;
-
     public:
-        void      handleTemplate(FotaEvent event, const MessageState payload) override;
-        FotaState getState() const override;
+        Installed()
+            : State("Installed")
+        { }
 
-    protected:
-        void onEntryTemplate() override;
-        void adjustEntryPayloadTemplate() override;
+        void onEnter(Context& ctx) override;
     };
+
 } // namespace sua
 
 #endif

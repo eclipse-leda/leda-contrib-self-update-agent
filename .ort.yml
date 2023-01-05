@@ -60,6 +60,18 @@ excludes:
   - pattern: "3rdparty/curl/LICENSES/**"
     reason: "DOCUMENTATION_OF"
     comment: "Copies of various licenses, not in production release."
+  - pattern: "3rdparty/nlohmann-json/docs/**"
+    reason: "DOCUMENTATION_OF"
+    comment: "Used in the generation of documentation, not in production release."
+  - pattern: "3rdparty/nlohmann-json/.reuse/**"
+    reason: "DOCUMENTATION_OF"
+    comment: "Documents dependencies for tests, not in production release."
+  - pattern: "3rdparty/nlohmann-json/LICENSES/**"
+    reason: "DOCUMENTATION_OF"
+    comment: "Details of licenses used, not in production release."
+  - pattern: "3rdparty/nlohmann-json/tests/thirdparty/imapdl/**"
+    reason: "TEST_OF"
+    comment: "Tests of nlohmann-json, not included in production release"
 curations:
   license_findings:
   - path: "3rdparty/paho.mqtt.c/notice.html"

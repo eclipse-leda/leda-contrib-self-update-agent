@@ -1,0 +1,86 @@
+#    Copyright 2022 Contributors to the Eclipse Foundation
+#
+#    Licensed under the Apache License, Version 2.0 (the "License");
+#    you may not use this file except in compliance with the License.
+#    You may obtain a copy of the License at
+#
+#        http://www.apache.org/licenses/LICENSE-2.0
+#
+#    Unless required by applicable law or agreed to in writing, software
+#    distributed under the License is distributed on an "AS IS" BASIS,
+#    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#    See the License for the specific language governing permissions and
+#    limitations under the License.
+#
+#    SPDX-License-Identifier: Apache-2.0
+
+name: Build native binaries
+
+inputs:
+  arch:
+    required: true
+    description: "Architecture amd64/arm64"
+  run_number:
+    required: true
+    description: "Workflow run number"
+
+runs:
+  using: "composite"
+  steps:
+  - uses: actions/checkout@v3
+    with:
+      submodules: recursive
+
+  # Remove apt repos that are known to break from time to time 
+  - name: Remove broken apt repos
+    run: |
+      for apt_file in `grep -lr microsoft /etc/apt/sources.list.d/`; do sudo rm $apt_file; done
+    shell: bash
+
+  - name: Install tools
+    run: |
+      sudo apt-get install apt-transport-https --yes
+      sudo apt-get -y update
+      sudo apt-get -y upgrade
+      sudo apt-get -y install autoconf binutils cmake file \
+      gcc g++ git libtool make \
+      build-essential libcurl4-openssl-dev \
+      binutils-aarch64-linux-gnu gcc-9-aarch64-linux-gnu g++-9-aarch64-linux-gnu \
+      python3 python3-pip python3-setuptools python3-wheel ninja-build python3-pip \
+      libselinux1-dev libmount-dev libmount1 libblkid-dev
+      pip3 install meson
+    shell: bash
+
+  - name: Build for ${{ inputs.arch }}
+    run: |
+      mkdir build_${{ inputs.arch }} 
+      ./scripts/build_openssl_${{ inputs.arch }}.sh
+      ./scripts/build_glib_${{ inputs.arch }}.sh
+      cd build_${{ inputs.arch }}
+      cmake \
+        -DCMAKE_INSTALL_PREFIX=../dist_${{ inputs.arch }} \
+        -DCMAKE_TOOLCHAIN_FILE=../cmake/linux/${{ matrix.arch }}/toolchain.cmake \
+        -DOPENSSL_ROOT_DIR=../build_${{ matrix.arch }} \
+        -DOPENSSL_CRYPTO_LIBRARY=../build_${{ matrix.arch }}/lib/libcrypto.so \
+        -DSUA_BUILD_NUMBER=${{ inputs.run_number }} ..
+      make
+      make install
+    shell: bash
+
+  - name: Run unit tests
+    if: ${{ inputs.arch=='amd64' }}
+    run: |
+      cd dist_${{ inputs.arch }}/utest
+      ./TestSDVSelfUpdateAgent
+    shell: bash
+
+  - name: Compress artifacts
+    run: |
+      tar -czvf self-update-agent-${{ inputs.arch }}-build-${{ inputs.run_number }}.tar.gz \
+        --transform s/dist_${{ inputs.arch }}/self-update-agent-${{ inputs.arch }}-build-${{ inputs.run_number }}/ \
+        --exclude=dist_${{ inputs.arch }}/lib/cmake \
+        --exclude=dist_${{ inputs.arch }}/lib/pkgconfig \
+        dist_${{ inputs.arch }}/bin/sdv-self-update-agent \
+        dist_${{ inputs.arch }}/lib
+    shell: bash
+

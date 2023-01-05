@@ -14,37 +14,33 @@
 //
 //    SPDX-License-Identifier: Apache-2.0
 
-#ifndef SDV_SUA_SOFTWAREUPDATEAGENT_H
-#define SDV_SUA_SOFTWAREUPDATEAGENT_H
+#ifndef SDV_SUA_STATEFACTORY_H
+#define SDV_SUA_STATEFACTORY_H
 
-#include "FSM/FSM.h"
-#include "FSM/State.h"
-#include "Mqtt/MqttConfiguration.h"
-#include "Mqtt/MqttListener.h"
-#include "Mqtt/MqttProcessor.h"
-#include "Patterns/Dispatcher.h"
-
+#include <functional>
+#include <map>
 #include <memory>
-#include <string>
 
 namespace sua {
-    class MqttConfiguration;
 
-    class SoftwareUpdateAgent
-        : public MqttListener
-        , public DispatcherSubscriber {
+    class State;
+
+    class StateFactory {
     public:
-        SoftwareUpdateAgent(const std::shared_ptr<IRaucInstaller> installerAgent,
-                            const std::string                     hostPathToUpdatesDir);
+        StateFactory() = default;
 
-    protected:
-        void start();
-        void handle(const class MessageStart& message) override;
+        template <typename T>
+        void addStateT(const std::string& name)
+        {
+            _states[name] = []() -> std::shared_ptr<State> { return std::make_shared<T>(); };
+        }
+
+        std::shared_ptr<State> createState(const std::string& name);
 
     private:
-        std::shared_ptr<FSM>           _stateMachine;
-        std::shared_ptr<MqttProcessor> _mqttProcessor;
+        std::map<std::string, std::function<std::shared_ptr<State>()>> _states;
     };
+
 } // namespace sua
 
 #endif

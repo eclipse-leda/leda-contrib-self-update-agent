@@ -9,9 +9,11 @@ set(CMAKE_INSTALL_RPATH ../lib)
 
 set(SDV_SUA_BUILD_TESTS TRUE)
 
+include(cmake/dependencies.cmake)
+
 add_subdirectory(3rdparty)
 add_subdirectory(src)
 
 if(SDV_SUA_BUILD_TESTS)
-  add_subdirectory(utest)
-endif()
+    add_subdirectory(utest)
+endif()

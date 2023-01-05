@@ -15,56 +15,20 @@
 //    SPDX-License-Identifier: Apache-2.0
 
 #include "FSM/States/Idle.h"
-#include "FSM/States/Downloading.h"
-#include "FSM/States/Failed.h"
-#include "FSM/States/Uninitialized.h"
-#include "Patterns/Dispatcher.h"
-#include "TechCodes.h"
-#include "Utils/BundleChecker.h"
+#include "FSM/FSM.h"
+#include "Context.h"
+#include "FotaEvent.h"
+#include "Logger.h"
 
 namespace sua {
-    void Idle::onEntryTemplate()
+
+    Idle::Idle()
+        : Connected("Idle")
+    { }
+
+    void Idle::onEnter(Context& /*ctx*/)
     {
-        Dispatcher::instance().dispatch(EVENT_IDLE, "");
+        // Do not send current version (as it was sent from 'Connected' state)
     }
 
-    void Idle::adjustEntryPayloadTemplate()
-    {
-        _payload.stateMessage  = "Entered Idle state";
-        _payload.stateProgress = 0;
-        _payload.stateTechCode = 0;
-    }
-
-    void Idle::handleTemplate(const FotaEvent event, const MessageState payload)
-    {
-        std::shared_ptr<State> nextState;
-
-        switch(event) {
-        case FotaEvent::FotaStart:
-            if(BundleChecker().isUpdateBundleVersionDifferent(payload.bundleVersion,
-                                                              _context->_installerAgent)) {
-                nextState = std::make_shared<Downloading>(_context, payload);
-            } else {
-                MessageState msg  = payload;
-                msg.stateProgress = 0;
-                msg.stateTechCode = 4001;
-                msg.stateMessage = "Update rejected, update bundle version same as current version";
-                nextState        = std::make_shared<Failed>(_context, msg);
-            }
-            transitTo(nextState);
-            break;
-        case FotaEvent::ConnectivityLost:
-            nextState = std::make_shared<Uninitialized>(_context, payload);
-            transitTo(nextState);
-            break;
-        default:
-            handleBadEvent(event, payload);
-            break;
-        }
-    }
-
-    FotaState Idle::getState() const
-    {
-        return FotaState::Idle;
-    }
 } // namespace sua

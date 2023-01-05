@@ -20,17 +20,18 @@
 #include <functional>
 #include <string>
 #include <vector>
+#include <map>
 
 namespace sua {
 
     class Dispatcher {
     public:
-        using Callback = std::function<void(const std::string&)>;
+        using Callback = std::function<void(const std::map<std::string, std::string>&)>;
 
         int  subscribe(const std::string& topic, Callback callback);
         void unsubscribe(int id);
 
-        void dispatch(const std::string& topic, const std::string& payload);
+        void dispatch(const std::string& topic, const std::map<std::string, std::string>& payload);
 
     public:
         static Dispatcher& instance();
