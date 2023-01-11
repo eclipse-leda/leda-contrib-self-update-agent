@@ -48,6 +48,7 @@ target_link_libraries(${PROJECT_NAME}
     gmodule_lib
     glib_lib
     ffi_lib
+    pcre_lib
     z_lib
     ${SUA_PLATFORM_LIBS}
     ssl_lib
