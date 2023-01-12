@@ -43,12 +43,12 @@ runs:
       sudo apt-get -y update
       sudo apt-get -y upgrade
       sudo apt-get -y install autoconf binutils cmake file \
-      gcc g++ git libtool make \
-      build-essential libcurl4-openssl-dev \
-      binutils-aarch64-linux-gnu gcc-9-aarch64-linux-gnu g++-9-aarch64-linux-gnu \
-      python3 python3-pip python3-setuptools python3-wheel ninja-build python3-pip \
-      libselinux1-dev libmount-dev libmount1 libblkid-dev
-      pip3 install meson
+        gcc g++ git libtool make gcovr \
+        build-essential libcurl4-openssl-dev \
+        binutils-aarch64-linux-gnu gcc-9-aarch64-linux-gnu g++-9-aarch64-linux-gnu \
+        python3 python3-pip python3-setuptools python3-wheel ninja-build python3-pip \
+        libselinux1-dev libmount-dev libmount1 libblkid-dev
+        pip3 install meson
     shell: bash
 
   - name: Build for ${{ inputs.arch }}
@@ -62,7 +62,25 @@ runs:
         -DCMAKE_TOOLCHAIN_FILE=../cmake/linux/${{ matrix.arch }}/toolchain.cmake \
         -DOPENSSL_ROOT_DIR=../build_${{ matrix.arch }} \
         -DOPENSSL_CRYPTO_LIBRARY=../build_${{ matrix.arch }}/lib/libcrypto.so \
-        -DSUA_BUILD_NUMBER=${{ inputs.run_number }} ..
+        -DSUA_BUILD_NUMBER=${{ inputs.run_number }} \
+        -DSUA_BUILD_TESTS=NO \
+        ..
+      make
+      make install
+    shell: bash
+
+  - name: Build for ${{ inputs.arch }} (with code-coverage enabled)
+    if: ${{ inputs.arch=='amd64' }}
+    run: |
+      cd build_${{ inputs.arch }}
+      cmake \
+        -DCMAKE_INSTALL_PREFIX=../dist_${{ inputs.arch }}_testing \
+        -DCMAKE_TOOLCHAIN_FILE=../cmake/linux/${{ matrix.arch }}/toolchain.cmake \
+        -DOPENSSL_ROOT_DIR=../build_${{ matrix.arch }} \
+        -DOPENSSL_CRYPTO_LIBRARY=../build_${{ matrix.arch }}/lib/libcrypto.so \
+        -DSUA_BUILD_NUMBER=${{ inputs.run_number }} \
+        -DSUA_BUILD_TESTS=YES \
+        ..
       make
       make install
     shell: bash
@@ -70,8 +88,11 @@ runs:
   - name: Run unit tests
     if: ${{ inputs.arch=='amd64' }}
     run: |
-      cd dist_${{ inputs.arch }}/utest
-      ./TestSDVSelfUpdateAgent
+      cd dist_${{ inputs.arch }}_testing/utest
+      ./TestSelfUpdateAgent
+      mkdir report
+      gcovr --root ../.. --html --html-details --output report/coverage.html -e ../../3rdparty -e ../../utest -e ../../src/main.cpp
+      tar -czvf ../../code-coverage.tar.gz report
     shell: bash
 
   - name: Compress artifacts
