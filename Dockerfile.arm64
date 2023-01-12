@@ -69,6 +69,8 @@ COPY --from=build /usr/aarch64-linux-gnu/lib/libstdc++.so.6 /lib/
 COPY --from=build /usr/aarch64-linux-gnu/lib/libgcc_s.so.1 /lib/
 COPY --from=build /usr/aarch64-linux-gnu/lib/libc.so.6 /lib/
 COPY --from=build /usr/aarch64-linux-gnu/lib/libm.so.6 /lib/
+COPY --from=build /usr/bin/sh /usr/bin/sh
+COPY --from=build /usr/bin/ls /usr/bin/ls
 
 WORKDIR /sua/bin
 ENV LD_LIBRARY_PATH ../lib
