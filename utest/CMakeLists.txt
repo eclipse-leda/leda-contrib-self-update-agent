@@ -1,4 +1,4 @@
-add_executable(TestSDVSelfUpdateAgent
+add_executable(TestSelfUpdateAgent
     TestDispatcher.cpp
     TestFSM.cpp
     TestMqttMessagingProtocolYAML.cpp
@@ -12,7 +12,7 @@ include_directories(
 )
 
 target_link_libraries(
-    TestSDVSelfUpdateAgent
+    TestSelfUpdateAgent
     sua
     curl_lib
     paho-mqttpp3
@@ -31,4 +31,4 @@ target_link_libraries(
     gmock
 )
 
-install(TARGETS TestSDVSelfUpdateAgent RUNTIME DESTINATION ${CMAKE_INSTALL_PREFIX}/utest)
+install(TARGETS TestSelfUpdateAgent RUNTIME DESTINATION ${CMAKE_INSTALL_PREFIX}/utest)
