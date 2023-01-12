@@ -90,11 +90,16 @@ jobs:
           arch: ${{ matrix.arch }}
           run_number: ${{ github.run_number }}
 
-      - name: Upload ${{ matrix.arch }} artifact to workspace
+      - name: Upload ${{ matrix.arch }} artifacts to workspace
         uses: actions/upload-artifact@v3
         with:
-          name: self-update-agent-${{ matrix.arch }}-build-${{ github.run_number }}.tar.gz
           path: self-update-agent-${{ matrix.arch }}-build-${{ github.run_number }}.tar.gz
+
+      - name: Upload code coverage results to workspace
+        if: ${{ matrix.arch == 'amd64' }}
+        uses: actions/upload-artifact@v3
+        with:
+          path: code-coverage.tar.gz
 
   upload-native-binary:
     runs-on: ubuntu-latest
@@ -115,5 +120,7 @@ jobs:
           prerelease: true
           automatic_release_tag: build_${{ github.run_number }}
           title: "Build ${{ github.run_number }}"
-          files: "**/self-update-agent-*-build-${{ github.run_number }}.tar.gz"
-
+          files: |
+            ./artifact/code-coverage.tar.gz
+            ./artifact/self-update-agent-amd64-build-${{ github.run_number }}.tar.gz
+            ./artifact/self-update-agent-arm64-build-${{ github.run_number }}.tar.gz

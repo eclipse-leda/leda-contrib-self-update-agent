@@ -22,6 +22,6 @@ set(BUILD_SHARED_LIBS ON)
 set(BUILD_CURL_EXE    OFF)
 add_subdirectory(curl)
 
-if(SDV_SUA_BUILD_TESTS)
+if(SUA_BUILD_TESTS)
   add_subdirectory(googletest)
 endif()

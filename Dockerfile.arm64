@@ -34,8 +34,8 @@ RUN cd /work \
     && cmake \
         -DCMAKE_INSTALL_PREFIX=../dist_arm64 \
         -DCMAKE_TOOLCHAIN_FILE=../cmake/linux/arm64/toolchain.cmake \
-        -DOPENSSL_ROOT_DIR=../build_arm64 \
-        -DOPENSSL_CRYPTO_LIBRARY=../build_arm64/lib/libcrypto.so \
+        -DOPENSSL_ROOT_DIR=. \
+        -DOPENSSL_CRYPTO_LIBRARY=lib/libcrypto.so \
         -DCMAKE_BUILD_TYPE="Release" \
         -DSUA_BUILD_NUMBER=$GITHUB_RUN_NUMBER \
         -DSUA_COMMIT_HASH=$GITHUB_COMMIT_HASH \

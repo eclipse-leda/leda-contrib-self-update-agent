@@ -10,6 +10,14 @@ if(NOT DEFINED SUA_BUILD_NUMBER)
     set(SUA_BUILD_NUMBER "local")
 endif()
 
+if(SUA_BUILD_TESTS)
+    add_compile_options(
+        -fprofile-arcs
+        -ftest-coverage
+        -fPIC
+    )
+endif()
+
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/version.h.in ${CMAKE_CURRENT_BINARY_DIR}/include/version.h @ONLY)
 
 include_directories(
@@ -56,6 +64,10 @@ target_link_libraries(${PROJECT_NAME}
     sua
 )
 
+if(SUA_BUILD_TESTS)
+    target_link_libraries(sua gcov)
+endif()
+
 install(TARGETS ${PROJECT_NAME} RUNTIME DESTINATION ${CMAKE_INSTALL_PREFIX}/bin)
 install(TARGETS sua LIBRARY DESTINATION ${CMAKE_INSTALL_PREFIX}/lib)
 
@@ -65,4 +77,3 @@ install(
         ${CMAKE_BINARY_DIR}/lib/libcrypto.so.3
     DESTINATION ${CMAKE_INSTALL_PREFIX}/lib
 )
-
