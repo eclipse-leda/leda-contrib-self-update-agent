@@ -93,7 +93,7 @@ Following combination of payload_status and action_status are possible:
 | RUNNING | DOWNLOAD_SUCCESS | Image is downloaded without errors |
 | RUNNING | INSTALLING | Installing an image |
 | INCOMPLETE | UPDATE_FAILURE | One of these has failed: download, update or self-update was rejected. Message will contain detailed description what has happened |
-| COMPLETE | UPDATE_SUCCESS | Self-update succeeded |
+| COMPLETED | UPDATE_SUCCESS | Self-update succeeded |
 
 ## Description of other fields
 
