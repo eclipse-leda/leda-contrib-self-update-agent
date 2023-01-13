@@ -162,7 +162,7 @@ namespace {
                 "activityId": "id",
                 "timestamp": 42,
                 "payload": {
-                    "status": "COMPLETE",
+                    "status": "COMPLETED",
                     "message": "Current OS image is equal to the target one from desired state.",
                     "actions": []
                 }
@@ -352,7 +352,7 @@ namespace {
                 "activityId": "id",
                 "timestamp": 42,
                 "payload": {
-                    "status": "COMPLETE",
+                    "status": "COMPLETED",
                     "message": "Self-update completed, reboot required.",
                     "actions": [
                         {
