@@ -116,7 +116,7 @@ namespace sua {
         }
 
         if(name == "skipped") {
-            return writeFeedbackWithoutPayload(ctx.desiredState, "COMPLETE",
+            return writeFeedbackWithoutPayload(ctx.desiredState, "COMPLETED",
                 "Current OS image is equal to the target one from desired state.");
         }
 
@@ -161,7 +161,7 @@ namespace sua {
 
         if(name == "installed") {
             return writeFeedbackWithPayload(ctx.desiredState,
-                "COMPLETE", "Self-update completed, reboot required.",
+                "COMPLETED", "Self-update completed, reboot required.",
                 "UPDATE_SUCCESS", "Writing partition completed, reboot required.",
                 100);
         }
