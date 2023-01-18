@@ -20,6 +20,9 @@
 #include "Logger.h"
 
 #include <string>
+#include <chrono>
+
+using namespace std::chrono_literals;
 
 namespace {
 
@@ -131,11 +134,13 @@ namespace sua {
     {
         Logger::info("MQTT broker address: '{}:{}'", _config.brokerHost, _config.brokerPort);
 
-        mqtt::connect_options options;
+        static mqtt::connect_options options;
         options.set_clean_session(false);
         options.set_servers(std::make_shared<mqtt::string_collection>(
             fmt::format("{}:{}", _config.brokerHost, _config.brokerPort)
         ));
+        options.set_automatic_reconnect(true);
+        options.set_connect_timeout(5000ms);
 
         static MqttCallback callback(_client, options, _context);
         _client.set_callback(callback);
@@ -176,6 +181,10 @@ namespace sua {
         message->set_qos(QUALITY);
         message->set_retained(retained);
         _client.publish(message);
+
+        if(!_client.is_connected() || !_client.get_pending_delivery_tokens().empty()) {
+            _client.reconnect();
+        }
     }
 
 } // namespace sua
