@@ -39,6 +39,9 @@ namespace sua {
                 const std::string & state, const std::string & stateMessage,
                 const std::string & status, const std::string & statusMessage,
                 int progress) const;
+
+        std::string writeSystemVersionWithoutActivityId(const std::string & version);
+        std::string writeSystemVersionWithActivityId(const std::string & version, const std::string & activityId);
     };
 
 } // namespace sua
