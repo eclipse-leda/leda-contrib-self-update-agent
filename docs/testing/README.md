@@ -67,6 +67,11 @@ mosquitto_sub -t "selfupdate/currentstate"
 mosquitto_sub -t "selfupdate/desiredstatefeedback"
 ```
 
+## Trigger current state request
+```
+mosquitto_pub -t "selfupdate/currentstate/get" -f docs/testing/mqtt/current-state-get.json
+```
+
 # Container
 
 For testing the container variant, it shall be ensured that all the components are connected to the same network and using proper ports mapping, so that they would be able to communicate with each other.
