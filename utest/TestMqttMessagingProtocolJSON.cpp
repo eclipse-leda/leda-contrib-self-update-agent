@@ -82,8 +82,9 @@ namespace {
         EXPECT_EQ(s.activityId, "random-uuid-as-string");
     }
 
-    TEST_F(TestMessagingProtocolJSON, createMessage_systemVersion)
+    TEST_F(TestMessagingProtocolJSON, createMessage_systemVersionWithoutActivityId)
     {
+        ctx.desiredState.activityId = "";
         const std::string result = ProtocolJSON().createMessage(ctx, "systemVersion");
 
         // clang-format off
@@ -91,17 +92,46 @@ namespace {
             {
                 "timestamp": 42,
                 "payload": {
-                    "domains": [
+                    "softwareNodes": [
                         {
-                            "id": "self-update",
-                            "components": [
-                                {
-                                    "id": "os-image",
-                                    "version": "1.0"
-                                }
-                            ]
+                            "id": "os-image",
+                            "version": "1.0",
+                            "name": "System Image",
+                            "type": "IMAGE",
+                            "parameters": []
                         }
-                    ]
+                    ],
+                    "hardwareNodes": [],
+                    "associations": []
+                }
+            }
+        )";
+        // clang-format on
+
+        EXPECT_EQ_MULTILINE(result, expected);
+    }
+
+    TEST_F(TestMessagingProtocolJSON, createMessage_systemVersionWithActivityId)
+    {
+        const std::string result = ProtocolJSON().createMessage(ctx, "systemVersion");
+
+        // clang-format off
+        const std::string expected = R"(
+            {
+                "activityId": "id",
+                "timestamp": 42,
+                "payload": {
+                    "softwareNodes": [
+                        {
+                            "id": "os-image",
+                            "version": "1.0",
+                            "name": "System Image",
+                            "type": "IMAGE",
+                            "parameters": []
+                        }
+                    ],
+                    "hardwareNodes": [],
+                    "associations": []
                 }
             }
         )";

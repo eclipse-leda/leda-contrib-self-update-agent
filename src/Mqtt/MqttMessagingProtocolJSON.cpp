@@ -81,28 +81,11 @@ namespace sua {
     std::string MqttMessagingProtocolJSON::createMessage(const class Context& ctx, const std::string& name)
     {
         if(name == "systemVersion") {
-            // clang-format off
-            const std::string tpl = jsonTemplate(R"(
-                {
-                    "timestamp": {},
-                    "payload": {
-                        "domains": [
-                            {
-                                "id": "self-update",
-                                "components": [
-                                    {
-                                        "id": "os-image",
-                                        "version": "{}"
-                                    }
-                                ]
-                            }
-                        ]
-                    }
-                }
-            )");
-            // clang-format on
-
-            return fmt::format(tpl, epochTime(), ctx.currentState.version);
+            if(ctx.desiredState.activityId.empty()) {
+                return writeSystemVersionWithoutActivityId(ctx.currentState.version);
+            } else {
+                return writeSystemVersionWithActivityId(ctx.currentState.version, ctx.desiredState.activityId);
+            }
         }
 
         if(name == "identifying") {
@@ -230,6 +213,59 @@ namespace sua {
         // clang-format on
         
         return fmt::format(tpl, desiredState.activityId, epochTime(), state, stateMessage, desiredState.bundleVersion, status, progress, statusMessage);
+    }
+
+    std::string MqttMessagingProtocolJSON::writeSystemVersionWithoutActivityId(const std::string & version)
+    {
+        // clang-format off
+        const std::string tpl = jsonTemplate(R"(
+            {
+                "timestamp": {},
+                "payload": {
+                    "softwareNodes": [
+                        {
+                            "id": "os-image",
+                            "version": "{}",
+                            "name": "System Image",
+                            "type": "IMAGE",
+                            "parameters": []
+                        }
+                    ],
+                    "hardwareNodes": [],
+                    "associations": []
+                }
+            }
+        )");
+        // clang-format on
+
+        return fmt::format(tpl, epochTime(), version);
+    }
+
+    std::string MqttMessagingProtocolJSON::writeSystemVersionWithActivityId(const std::string & version, const std::string & activityId)
+    {
+        // clang-format off
+        const std::string tpl = jsonTemplate(R"(
+            {
+                "activityId": "{}",
+                "timestamp": {},
+                "payload": {
+                    "softwareNodes": [
+                        {
+                            "id": "os-image",
+                            "version": "{}",
+                            "name": "System Image",
+                            "type": "IMAGE",
+                            "parameters": []
+                        }
+                    ],
+                    "hardwareNodes": [],
+                    "associations": []
+                }
+            }
+        )");
+        // clang-format on
+
+        return fmt::format(tpl, activityId, epochTime(), version);
     }
 
 } // namespace sua
