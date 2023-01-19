@@ -20,10 +20,12 @@
 #include "Mqtt/MqttMessagingProtocolYAML.h"
 #include "Mqtt/MqttConfiguration.h"
 #include "Utils/BundleChecker.h"
+#include "Utils/ServerAddressParser.h"
 #include "SelfUpdateAgent.h"
 #include "Logger.h"
 #include "version.h"
 
+#include <cstdlib>
 #include <iostream>
 #include <memory>
 
@@ -34,21 +36,29 @@ The system needs to be restarted manually for the update to take effect.
 
 Usage: sdv-self-update-agent [OPTIONS]
 
+Environment variables:
+SUA_SERVER    sets and overrides MQTT server address to connect
+              (default is 'tcp://mosquitto:1883')
+
 Options:
 -h, --help    display this help and exit
 -v, --version display version (git hash and build number) used to build sua
 -p, --path    path where downloaded update bundles will be stored (default is '/data/selfupdates')
 -a, --api     use 'k8s' or 'bfb' format for mqtt communication (default is 'bfb')
-    --host    MQTT broker host to connect (default is 'mosquitto')
-    --port    MQTT broker port to conenct (default is '1883')
+-s, --server  MQTT broker server to connect (default is 'tcp://mosquitto:1883')
+              (has precedence over SUA_SERVER environment variable)
 )";
 
 int main(int argc, char* argv[])
 {
     std::string hostPathToSelfupdateDir{"/data/selfupdates"};
-    std::string api  = "bfb";
-    std::string host = "mosquitto";
-    int         port = 1883;
+    std::string api    = "bfb";
+    std::string server = "tcp://mosquitto:1883";
+
+    const char * env_server = std::getenv("SUA_SERVER");
+    if(env_server) {
+        server = env_server;
+    }
 
     if(argc > 1) {
         for(int i = 1; i < argc; i++) {
@@ -79,27 +89,49 @@ int main(int argc, char* argv[])
                 continue;
             }
 
-            if("--host" == opt) {
+            if(("-s" == opt) || ("--server" == opt)) {
                 if((i + 1) < argc) {
-                    host = argv[i + 1];
-                }
-                continue;
-            }
-
-            if("--port" == opt) {
-                if((i + 1) < argc) {
-                    port = std::stoi(argv[i + 1]);
+                    server = argv[i + 1];
                 }
                 continue;
             }
         }
     }
 
+    bool failure_detected = false;
+
+    std::cout << "Self Update Agent:" << std::endl;
+
+    std::string transport = "tcp";
+    std::string host      = "mosquitto";
+    int         port      = 1883;
+
+    try {
+        sua::ServerAddressParser().parse(server, transport, host, port);
+    } catch (const std::invalid_argument & e) {
+        std::cout << fmt::format("Invalid port in address '{}'\n", server);
+        failure_detected = true;
+    } catch (const std::out_of_range & e) {
+        std::cout << fmt::format("Invalid port in address '{}'\n", server);
+        failure_detected = true;
+    } catch (const std::runtime_error & e) {
+        std::cout << e.what() << std::endl;
+        failure_detected = true;
+    }
+
+    if(transport != "tcp") {
+        std::cout << "Unsupported transport '" << transport << "', 'tcp' in one valid option." << std::endl;
+        failure_detected = true;
+    }
+
     if((api != "k8s") && (api != "bfb")) {
-        std::cout << "Self Update Agent:" << std::endl;
         std::cout << "Unsupported api '" << api << "', valid are 'k8s' and 'bfb' only."
                   << std::endl;
-        return 0;
+        failure_detected = true;
+    }
+
+    if(failure_detected) {
+      return 0;
     }
 
     sua::Logger::instance().init();
@@ -132,7 +164,7 @@ int main(int argc, char* argv[])
     sua::Logger::info("SUA commit hash        : '{}'", SUA_COMMIT_HASH  );
     sua::Logger::info("Communication protocol : '{}'", api);
     sua::Logger::info("Updates directory      : '{}'", ctx.updatesDirectory);
-    sua::Logger::info("MQTT broker address    : '{}:{}'", conf.brokerHost, conf.brokerPort);
+    sua::Logger::info("MQTT broker address    : '{}://{}:{}'", transport, conf.brokerHost, conf.brokerPort);
 
     sua.init();
     sua.start(conf);
