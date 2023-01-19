@@ -67,12 +67,17 @@ MQTT communication is done via 3 MQTT topics:
 ## selfupdate/currentstate
 | Topic| Direction | Description |
 |------|  -------- | ----------- |
-| selfupdate/currentstate | OUT | This message is being sent once, on SUA start. It contains information about currently installed OS version.
+| selfupdate/currentstate | OUT | This message is being sent either once on SUA start or as an answer to response received by selfupdate/currentstate/get. It contains information about currently installed OS version. |
+
+## selfupdate/currentstate/get
+| Topic| Direction | Description |
+|------|  -------- | ----------- |
+| selfupdate/currentstate/get | IN | This message can be received at any point of time. Indicates that SUA should send back version of installed OS as current state. |
 
 ## selfupdate/desiredstatefeedback
 | Topic| Direction | Description |
 |------|  -------- | ----------- |
-| selfupdate/desiredstatefeedback | OUT | This message is being sent by SUA to share current progress of triggered update process. This is the *OUT* counterpart of *selfupdate/desiredstate* input message. 
+| selfupdate/desiredstatefeedback | OUT | This message is being sent by SUA to share current progress of triggered update process. This is the *OUT* counterpart of *selfupdate/desiredstate* input message. |
 
 SUA supports 2 protocols depending on configuration: [link](docs/k8s.md) for Kubernetes-based Custom Objects or [link](docs/bfb.md) for Update Agent API.Default protocol is bfb.
 
