@@ -60,6 +60,7 @@ runs:
 
     # https://github.com/docker/build-push-action
     - name: Build and push docker image to ghcr.io
+      if: github.event.pull_request.merged == true
       id: build-and-push
       uses: docker/build-push-action@ac9327eae2b366085ac7f6a2d02df8aa8ead720a
       with:

@@ -47,6 +47,7 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
 
   push-container-image:
+    if: github.event.pull_request.merged == true
     runs-on: ubuntu-latest
     needs: build-container-image
     steps:
@@ -113,6 +114,7 @@ jobs:
         uses: actions/download-artifact@v2
 
       - name: Upload artifacts to build results
+        if: github.event.pull_request.merged == true
         uses: marvinpinto/action-automatic-releases@latest
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
