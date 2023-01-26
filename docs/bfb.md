@@ -10,15 +10,25 @@ MQTT Topic: selfupdate/currentstate
     "payload": {
         "softwareNodes": [
             {
-                "id": "os-image",
+                "id": "self-update-agent",
+                "version": "build-42,
+                "name": "OTA NG Self Update Agent",
+                "type": "APPLICATION"
+            },
+            {
+                "id": "self-update:leda-deviceimage",
                 "version": "1.0",
-                "name": "System Image",
-                "type": "IMAGE",
-                "parameters": []
+                "name": "Official Leda device image",
+                "type": "IMAGE"
             }
         ],
         "hardwareNodes": [],
-        "associations": []
+        "associations": [
+            {
+                "sourceId": "self-update-agent",
+                "targetId": "self-update:leda-deviceimage"
+            }
+        ]
     }
 }
 ```
@@ -104,5 +114,5 @@ Following combination of payload_status and action_status are possible:
 |------|-------------|
 | activityId | Random UUID as string (needs to be taken from desiredstate message and passed back in all feedback messages) |
 | timestamp | Epoch time |
-| version | Either current version or bundle version |
+| version | Reflects version of SUA running on the device, OS version or bundle version |
 | progress | Percentage value of download/install progress |
