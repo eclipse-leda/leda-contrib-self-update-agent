@@ -19,6 +19,7 @@
 
 #include "spdlog/fmt/fmt.h"
 #include "nlohmann/json.hpp"
+#include "version.h"
 
 #include <regex>
 #include <iostream>
@@ -224,21 +225,31 @@ namespace sua {
                 "payload": {
                     "softwareNodes": [
                         {
-                            "id": "os-image",
+                            "id": "self-update-agent",
+                            "version": "build-{},
+                            "name": "OTA NG Self Update Agent",
+                            "type": "APPLICATION"
+                        },
+                        {
+                            "id": "self-update:leda-deviceimage",
                             "version": "{}",
-                            "name": "System Image",
-                            "type": "IMAGE",
-                            "parameters": []
+                            "name": "Official Leda device image",
+                            "type": "IMAGE"
                         }
                     ],
                     "hardwareNodes": [],
-                    "associations": []
+                    "associations": [
+                        {
+                            "sourceId": "self-update-agent",
+                            "targetId": "self-update:leda-deviceimage"
+                        }
+                    ]
                 }
             }
         )");
         // clang-format on
 
-        return fmt::format(tpl, epochTime(), version);
+        return fmt::format(tpl, epochTime(), SUA_BUILD_NUMBER, version);
     }
 
     std::string MqttMessagingProtocolJSON::writeSystemVersionWithActivityId(const std::string & version, const std::string & activityId)
@@ -251,21 +262,31 @@ namespace sua {
                 "payload": {
                     "softwareNodes": [
                         {
-                            "id": "os-image",
+                            "id": "self-update-agent",
+                            "version": "build-{},
+                            "name": "OTA NG Self Update Agent",
+                            "type": "APPLICATION"
+                        },
+                        {
+                            "id": "self-update:leda-deviceimage",
                             "version": "{}",
-                            "name": "System Image",
-                            "type": "IMAGE",
-                            "parameters": []
+                            "name": "Official Leda device image",
+                            "type": "IMAGE"
                         }
                     ],
                     "hardwareNodes": [],
-                    "associations": []
+                    "associations": [
+                        {
+                            "sourceId": "self-update-agent",
+                            "targetId": "self-update:leda-deviceimage"
+                        }
+                    ]
                 }
             }
         )");
         // clang-format on
 
-        return fmt::format(tpl, activityId, epochTime(), version);
+        return fmt::format(tpl, activityId, epochTime(), SUA_BUILD_NUMBER, version);
     }
 
 } // namespace sua

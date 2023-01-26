@@ -14,10 +14,8 @@
 //
 //    SPDX-License-Identifier: Apache-2.0
 
-#ifndef SDV_SUA_VERSION_H
-#define SDV_SUA_VERSION_H
+#include "version.h"
 
 const char * SUA_COMMIT_HASH  = "@SUA_COMMIT_HASH@";
 const char * SUA_BUILD_NUMBER = "@SUA_BUILD_NUMBER@";
 
-#endif

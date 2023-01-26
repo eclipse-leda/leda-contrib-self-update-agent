@@ -18,7 +18,7 @@ if(SUA_BUILD_TESTS)
     )
 endif()
 
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/version.h.in ${CMAKE_CURRENT_BINARY_DIR}/include/version.h @ONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/version.cpp.in ${CMAKE_CURRENT_BINARY_DIR}/version.cpp @ONLY)
 
 include_directories(
     ${CMAKE_SOURCE_DIR}/src
@@ -35,11 +35,11 @@ include_directories(
     ${CMAKE_BINARY_DIR}/3rdparty/curl/lib
     ${CMAKE_BINARY_DIR}/glib
     ${CMAKE_BINARY_DIR}/glib/glib
-    ${CMAKE_BINARY_DIR}/src/include
 )
 
 file(GLOB_RECURSE SRCS *.cpp *.h)
 list(FILTER SRCS EXCLUDE REGEX "main.cpp" )
+list(APPEND SRCS ${CMAKE_CURRENT_BINARY_DIR}/version.cpp)
 
 add_library(sua SHARED ${SRCS})
 add_executable(${PROJECT_NAME} ${SRCS} main.cpp)
