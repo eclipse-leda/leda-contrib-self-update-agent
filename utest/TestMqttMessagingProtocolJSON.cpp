@@ -4,6 +4,8 @@
 #include "Context.h"
 #include "Utils.h"
 
+#include "version.h"
+
 namespace {
 
     class ProtocolJSON : public sua::MqttMessagingProtocolJSON {
@@ -84,6 +86,8 @@ namespace {
 
     TEST_F(TestMessagingProtocolJSON, createMessage_systemVersionWithoutActivityId)
     {
+        SUA_BUILD_NUMBER = "42";
+
         ctx.desiredState.activityId = "";
         const std::string result = ProtocolJSON().createMessage(ctx, "systemVersion");
 
@@ -94,15 +98,25 @@ namespace {
                 "payload": {
                     "softwareNodes": [
                         {
-                            "id": "os-image",
+                            "id": "self-update-agent",
+                            "version": "build-42,
+                            "name": "OTA NG Self Update Agent",
+                            "type": "APPLICATION"
+                        },
+                        {
+                            "id": "self-update:leda-deviceimage",
                             "version": "1.0",
-                            "name": "System Image",
-                            "type": "IMAGE",
-                            "parameters": []
+                            "name": "Official Leda device image",
+                            "type": "IMAGE"
                         }
                     ],
                     "hardwareNodes": [],
-                    "associations": []
+                    "associations": [
+                        {
+                            "sourceId": "self-update-agent",
+                            "targetId": "self-update:leda-deviceimage"
+                        }
+                    ]
                 }
             }
         )";
@@ -113,6 +127,8 @@ namespace {
 
     TEST_F(TestMessagingProtocolJSON, createMessage_systemVersionWithActivityId)
     {
+        SUA_BUILD_NUMBER = "42";
+
         const std::string result = ProtocolJSON().createMessage(ctx, "systemVersion");
 
         // clang-format off
@@ -123,15 +139,25 @@ namespace {
                 "payload": {
                     "softwareNodes": [
                         {
-                            "id": "os-image",
+                            "id": "self-update-agent",
+                            "version": "build-42,
+                            "name": "OTA NG Self Update Agent",
+                            "type": "APPLICATION"
+                        },
+                        {
+                            "id": "self-update:leda-deviceimage",
                             "version": "1.0",
-                            "name": "System Image",
-                            "type": "IMAGE",
-                            "parameters": []
+                            "name": "Official Leda device image",
+                            "type": "IMAGE"
                         }
                     ],
                     "hardwareNodes": [],
-                    "associations": []
+                    "associations": [
+                        {
+                            "sourceId": "self-update-agent",
+                            "targetId": "self-update:leda-deviceimage"
+                        }
+                    ]
                 }
             }
         )";
