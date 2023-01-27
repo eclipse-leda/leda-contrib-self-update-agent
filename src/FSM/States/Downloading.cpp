@@ -58,8 +58,7 @@ namespace sua {
             Logger::info("Bundle version (spec): '{}'", ctx.desiredState.bundleVersion);
             Logger::info("Bundle version (file): '{}'", bundleVersion);
 
-            if(ctx.bundleChecker->isBundleVersionConsistent(
-                   ctx.desiredState.bundleVersion, ctx.installerAgent, ctx.updatesDirectory + "/temp_file")) {
+            if(ctx.desiredState.bundleVersion == bundleVersion) {
                 Logger::info("Bundle version matches spec");
                 return FotaEvent::BundleVersionOK;
             } else {

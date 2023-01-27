@@ -25,7 +25,8 @@
 class MockMqttMessagingProtocol : public sua::IMqttMessagingProtocol {
 public:
     MOCK_METHOD(sua::DesiredState, readDesiredState, (const std::string & input), (override));
-    MOCK_METHOD(std::string, createMessage, (const sua::Context& ctx), (override));
+    MOCK_METHOD(sua::DesiredState, readCurrentStateRequest, (const std::string & input), (override));
+    MOCK_METHOD(std::string, createMessage, (const class sua::Context& ctx, const std::string& name), (override));
 };
 
 #endif

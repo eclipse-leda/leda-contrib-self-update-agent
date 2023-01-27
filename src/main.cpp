@@ -135,7 +135,7 @@ int main(int argc, char* argv[])
     }
 
     sua::Logger::instance().init();
-    sua::Logger::instance().setLogLevel(sua::Logger::Logger::All);
+    sua::Logger::instance().setLogLevel(sua::Logger::Level::All);
     sua::Logger::info("SelfUpdateAgent started");
     sua::Logger::info("Path to selfupdates directory = {}", hostPathToSelfupdateDir);
 
