@@ -3,6 +3,7 @@
 #include "Mqtt/MqttMessagingProtocolJSON.h"
 #include "Context.h"
 #include "Utils.h"
+#include  "nlohmann/json.hpp"
 
 #include "version.h"
 
@@ -28,6 +29,11 @@ namespace {
             d.activityId        = "id";
             d.bundleVersion     = "1.0";
             d.bundleDownloadUrl = "url";
+        }
+
+        void validateJsonSyntax(const std::string & input) {
+            std::stringstream ss(input);
+            nlohmann::json json = nlohmann::json::parse(ss);
         }
     };
 
@@ -99,7 +105,7 @@ namespace {
                     "softwareNodes": [
                         {
                             "id": "self-update-agent",
-                            "version": "build-42,
+                            "version": "build-42",
                             "name": "OTA NG Self Update Agent",
                             "type": "APPLICATION"
                         },
@@ -122,6 +128,8 @@ namespace {
         )";
         // clang-format on
 
+        EXPECT_NO_THROW(validateJsonSyntax(expected));
+        EXPECT_NO_THROW(validateJsonSyntax(result));
         EXPECT_EQ_MULTILINE(result, expected);
     }
 
@@ -140,7 +148,7 @@ namespace {
                     "softwareNodes": [
                         {
                             "id": "self-update-agent",
-                            "version": "build-42,
+                            "version": "build-42",
                             "name": "OTA NG Self Update Agent",
                             "type": "APPLICATION"
                         },
@@ -162,7 +170,9 @@ namespace {
             }
         )";
         // clang-format on
-        
+
+        EXPECT_NO_THROW(validateJsonSyntax(expected));
+        EXPECT_NO_THROW(validateJsonSyntax(result));
         EXPECT_EQ_MULTILINE(result, expected);
     }
 
@@ -184,6 +194,8 @@ namespace {
         )";
         // clang-format on
 
+        EXPECT_NO_THROW(validateJsonSyntax(expected));
+        EXPECT_NO_THROW(validateJsonSyntax(result));
         EXPECT_EQ_MULTILINE(result, expected);
     }
 
@@ -205,6 +217,8 @@ namespace {
         )";
         // clang-format on
 
+        EXPECT_NO_THROW(validateJsonSyntax(expected));
+        EXPECT_NO_THROW(validateJsonSyntax(result));
         EXPECT_EQ_MULTILINE(result, expected);
     }
 
@@ -226,6 +240,8 @@ namespace {
         )";
         // clang-format on
 
+        EXPECT_NO_THROW(validateJsonSyntax(expected));
+        EXPECT_NO_THROW(validateJsonSyntax(result));
         EXPECT_EQ_MULTILINE(result, expected);
     }
 
@@ -257,6 +273,8 @@ namespace {
         )";
         // clang-format on
 
+        EXPECT_NO_THROW(validateJsonSyntax(expected));
+        EXPECT_NO_THROW(validateJsonSyntax(result));
         EXPECT_EQ_MULTILINE(result, expected);
     }
 
@@ -292,6 +310,8 @@ namespace {
         )";
         // clang-format on
 
+        EXPECT_NO_THROW(validateJsonSyntax(expected));
+        EXPECT_NO_THROW(validateJsonSyntax(result));
         EXPECT_EQ_MULTILINE(result, expected);
     }
 
@@ -327,6 +347,8 @@ namespace {
         )";
         // clang-format on
 
+        EXPECT_NO_THROW(validateJsonSyntax(expected));
+        EXPECT_NO_THROW(validateJsonSyntax(result));
         EXPECT_EQ_MULTILINE(result, expected);
     }
 
@@ -360,6 +382,8 @@ namespace {
         )";
         // clang-format on
 
+        EXPECT_NO_THROW(validateJsonSyntax(expected));
+        EXPECT_NO_THROW(validateJsonSyntax(result));
         EXPECT_EQ_MULTILINE(result, expected);
     }
 
@@ -393,6 +417,8 @@ namespace {
         )";
         // clang-format on
 
+        EXPECT_NO_THROW(validateJsonSyntax(expected));
+        EXPECT_NO_THROW(validateJsonSyntax(result));
         EXPECT_EQ_MULTILINE(result, expected);
     }
 
@@ -426,6 +452,8 @@ namespace {
         )";
         // clang-format on
 
+        EXPECT_NO_THROW(validateJsonSyntax(expected));
+        EXPECT_NO_THROW(validateJsonSyntax(result));
         EXPECT_EQ_MULTILINE(result, expected);
     }
 
@@ -459,6 +487,8 @@ namespace {
         )";
         // clang-format on
 
+        EXPECT_NO_THROW(validateJsonSyntax(expected));
+        EXPECT_NO_THROW(validateJsonSyntax(result));
         EXPECT_EQ_MULTILINE(result, expected);
     }
 
