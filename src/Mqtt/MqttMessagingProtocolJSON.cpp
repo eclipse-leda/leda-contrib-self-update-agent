@@ -226,7 +226,7 @@ namespace sua {
                     "softwareNodes": [
                         {
                             "id": "self-update-agent",
-                            "version": "build-{},
+                            "version": "build-{}",
                             "name": "OTA NG Self Update Agent",
                             "type": "APPLICATION"
                         },
@@ -263,7 +263,7 @@ namespace sua {
                     "softwareNodes": [
                         {
                             "id": "self-update-agent",
-                            "version": "build-{},
+                            "version": "build-{}",
                             "name": "OTA NG Self Update Agent",
                             "type": "APPLICATION"
                         },
