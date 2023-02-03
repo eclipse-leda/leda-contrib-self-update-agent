@@ -26,11 +26,6 @@ class MockBundleChecker : public sua::IBundleChecker {
 public:
     MOCK_METHOD(bool, isUpdateBundleVersionDifferent,
         (const std::string & updateBundleVer, std::shared_ptr<sua::IRaucInstaller> installer), (override));
-
-    MOCK_METHOD(bool, isBundleVersionConsistent,
-        (const std::string & declaredVersion,
-         std::shared_ptr<sua::IRaucInstaller> installer,
-         const std::string & bundlePath), (override));
 };
 
 #endif
