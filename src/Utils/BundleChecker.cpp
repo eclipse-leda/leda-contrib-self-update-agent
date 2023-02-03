@@ -25,11 +25,4 @@ namespace sua {
         return updateBundleVer != installer->getBundleVersion();
     }
 
-    bool BundleChecker::isBundleVersionConsistent(const std::string & declaredVersion,
-                                                  std::shared_ptr<IRaucInstaller> installer,
-                                                  const std::string &             bundlePath)
-    {
-        return declaredVersion == installer->getBundleVersion(bundlePath);
-    }
-
 } // namespace sua
