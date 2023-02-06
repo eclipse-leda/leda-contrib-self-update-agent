@@ -75,6 +75,7 @@ namespace sua {
             { FotaEvent::ConnectivityLost       , "Idle"            , "Uninitialized"   },
             { FotaEvent::Start                  , "Idle"            , "Failed"           , FotaEvent::BundleVersionUnchanged },
             { FotaEvent::Start                  , "Idle"            , "Downloading"      , FotaEvent::BundleVersionOK        },
+            { FotaEvent::GetCurrentState        , "Idle"            , "SendCurrentState"},
             // from "SendCurrentState"
             { FotaEvent::ConnectivityLost       , "SendCurrentState", "Uninitialized"   },
             { FotaEvent::Waiting                , "SendCurrentState", "Idle"            },
