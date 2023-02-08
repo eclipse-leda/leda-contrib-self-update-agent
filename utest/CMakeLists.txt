@@ -11,6 +11,7 @@ add_executable(TestSelfUpdateAgent
 include_directories(
     ../src
     ${CMAKE_SOURCE_DIR}/3rdparty/spdlog/include
+    ${CMAKE_SOURCE_DIR}/3rdparty/nlohmann-json/include
 )
 
 target_link_libraries(
