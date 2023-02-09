@@ -52,8 +52,9 @@ namespace sua {
         }
 
         if(result == TechCode::InstallationFailed) {
-            Logger::error("RAUC install failed");
-            send(ctx, IMqttProcessor::TOPIC_FEEDBACK, "installFailed");
+            const auto lastError = ctx.installerAgent->getLastError();
+            Logger::error("RAUC install failed: {}", lastError);
+            send(ctx, IMqttProcessor::TOPIC_FEEDBACK, "installFailed", lastError);
             return FotaEvent::InstallFailed;
         }
 

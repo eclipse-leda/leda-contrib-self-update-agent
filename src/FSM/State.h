@@ -37,6 +37,7 @@ namespace sua {
         virtual FotaEvent body(Context& ctx);
 
         void send(Context& ctx, const std::string& topic, const std::string& messageName, bool retained = false);
+        void send(Context& ctx, const std::string& topic, const std::string& messageName, const std::string& message, bool retained = false);
 
     private:
         std::string _name;

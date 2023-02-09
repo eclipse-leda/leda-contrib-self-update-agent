@@ -87,7 +87,7 @@ namespace sua {
       return {};
     }
 
-    std::string MqttMessagingProtocolYAML::createMessage(const class Context& ctx, const std::string& name)
+    std::string MqttMessagingProtocolYAML::createMessage(const class Context& ctx, const std::string& name, const std::string& message)
     {
         Yaml::Node root;
         root["apiVersion"]       = "sdv.eclipse.org/v1";

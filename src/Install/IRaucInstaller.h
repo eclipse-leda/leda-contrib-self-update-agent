@@ -31,6 +31,10 @@ namespace sua {
         virtual int32_t     getInstallProgress()                        = 0;
         virtual std::string getBundleVersion()                          = 0;
         virtual std::string getBundleVersion(const std::string & input) = 0;
+        virtual std::string getLastError()                              = 0;
+
+        virtual bool installing() = 0;
+        virtual bool succeeded()  = 0;
     };
 
 } // namespace sua

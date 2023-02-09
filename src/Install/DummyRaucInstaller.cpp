@@ -47,4 +47,9 @@ namespace sua {
         return "dummy_version";
     }
 
+    std::string DummyRaucInstaller::getLastError()
+    {
+        return "";
+    }
+
 } // namespace sua

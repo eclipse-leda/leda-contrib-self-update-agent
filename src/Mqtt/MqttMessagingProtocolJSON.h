@@ -27,7 +27,7 @@ namespace sua {
 
         DesiredState readCurrentStateRequest(const std::string & input) override;
 
-        std::string createMessage(const class Context& ctx, const std::string& name) override;
+        std::string createMessage(const class Context& ctx, const std::string& name, const std::string& message = "") override;
 
     protected:
         virtual uint64_t epochTime() const;
@@ -38,7 +38,7 @@ namespace sua {
         std::string writeFeedbackWithPayload(const DesiredState & desiredState,
                 const std::string & state, const std::string & stateMessage,
                 const std::string & status, const std::string & statusMessage,
-                int progress) const;
+                const std::string & customStatusMessage, int progress) const;
 
         std::string writeSystemVersionWithoutActivityId(const std::string & version);
         std::string writeSystemVersionWithActivityId(const std::string & version, const std::string & activityId);

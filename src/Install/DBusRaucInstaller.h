@@ -19,6 +19,7 @@
 
 #include "Install/IRaucInstaller.h"
 
+#include <atomic>
 #include <gio/gio.h>
 
 namespace sua {
@@ -32,9 +33,20 @@ namespace sua {
         int32_t     getInstallProgress() override;
         std::string getBundleVersion() override;
         std::string getBundleVersion(const std::string& input) override;
+        std::string getLastError() override;
+
+        bool installing() override;
+        bool succeeded() override;
+
+        void setFinished();
+        void setSuccess(bool value);
 
     private:
         GDBusConnection* connection{nullptr};
+        GMainLoop* loop{nullptr};
+
+        std::atomic_bool is_installing;
+        std::atomic_bool is_succeeded;
 
         void        setupDBusRaucConnection();
         TechCode    installDBusRaucBundle(const std::string& bundleName);
