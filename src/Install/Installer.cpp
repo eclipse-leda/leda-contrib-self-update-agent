@@ -37,9 +37,7 @@ namespace sua {
     {
         Logger::trace("Installer::start({})", input);
 
-        if(_installerAgent->installBundle(input) != TechCode::OK) {
-            return TechCode::InstallationFailed;
-        }
+        _installerAgent->installBundle(input);
 
         bool     installing                  = true;
         uint32_t count                       = 0;
@@ -49,18 +47,18 @@ namespace sua {
         while(installing) {
             progressPercentage = _installerAgent->getInstallProgress();
             std::this_thread::sleep_for(2000ms);
-            count++;
-            if(progressPercentage >= 100 || count >= 120) {
-                installing = false;
+            tries++;
+            if(tries >= 120) {
+                return TechCode::InstallationFailed;
             }
 
             if(progressPercentage >= progressNotificationLimiter) {
                 if(progressPercentage != 100) {
                     std::map<std::string, std::string> payload;
                     payload["percentage"] = std::to_string(progressPercentage);
-                    sua::Dispatcher::instance().dispatch(EVENT_INSTALLING, payload);
+                    sua::Dispatcher::instance().dispatch(EVENT_INSTALLING, payload);\
                 }
-                progressNotificationLimiter += 10;
+								progressNotificationLimiter += 10;
             }
         }
 

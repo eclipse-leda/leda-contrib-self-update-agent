@@ -27,7 +27,7 @@ namespace sua {
 
         DesiredState readCurrentStateRequest(const std::string & input) override;
 
-        std::string createMessage(const class Context& ctx, const std::string& name) override;
+        std::string createMessage(const class Context& ctx, const std::string& name, const std::string& message = "") override;
     };
 
 } // namespace sua

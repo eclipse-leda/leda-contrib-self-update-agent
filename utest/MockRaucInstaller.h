@@ -27,6 +27,9 @@ public:
     MOCK_METHOD(int32_t, getInstallProgress, (), (override));
     MOCK_METHOD(std::string, getBundleVersion, (), (override));
     MOCK_METHOD(std::string, getBundleVersion, (const std::string & input), (override));
+    MOCK_METHOD(std::string, getLastError, (), (override));
+    MOCK_METHOD(bool, installing, (), (override));
+    MOCK_METHOD(bool, succeeded, (), (override));
 };
 
 #endif // SDV_SUA_IRAUCINSTALLER_H

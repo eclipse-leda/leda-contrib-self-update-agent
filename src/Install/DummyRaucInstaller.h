@@ -31,6 +31,10 @@ namespace sua {
         int32_t     getInstallProgress() override;
         std::string getBundleVersion() override;
         std::string getBundleVersion(const std::string& input) override;
+        std::string getLastError() override;
+
+        bool installing() override { return false; }
+        bool succeeded() override { return false; }
     };
 
 } // namespace sua

@@ -38,4 +38,9 @@ namespace sua {
         ctx.mqttProcessor->send(topic, ctx.messagingProtocol->createMessage(ctx, messageName), retained);
     }
 
+    void State::send(Context& ctx, const std::string& topic, const std::string& messageName, const std::string& message, bool retained)
+    {
+        ctx.mqttProcessor->send(topic, ctx.messagingProtocol->createMessage(ctx, messageName, message), retained);
+    }
+
 } // namespace sua

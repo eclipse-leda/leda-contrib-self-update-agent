@@ -79,7 +79,7 @@ namespace sua {
         // clang-format on
     }
 
-    std::string MqttMessagingProtocolJSON::createMessage(const class Context& ctx, const std::string& name)
+    std::string MqttMessagingProtocolJSON::createMessage(const class Context& ctx, const std::string& name, const std::string& message)
     {
         if(name == "systemVersion") {
             if(ctx.desiredState.activityId.empty()) {
@@ -108,7 +108,7 @@ namespace sua {
             return writeFeedbackWithPayload(ctx.desiredState,
                 "INCOMPLETE", "Update rejected.",
                 "UPDATE_FAILURE", "Bundle version does not match version in desired state request.",
-                0);
+                message, 0);
         }
 
         if(name == "downloading") {
@@ -117,7 +117,7 @@ namespace sua {
             return writeFeedbackWithPayload(ctx.desiredState,
                 "RUNNING", "Self-update agent is performing an OS image update.",
                 "DOWNLOADING", fmt::format("Downloading {:.{}f} MiB...", mbytes, 1),
-                ctx.desiredState.downloadProgressPercentage);
+                message, ctx.desiredState.downloadProgressPercentage);
         }
 
         if(name == "downloaded") {
@@ -126,35 +126,35 @@ namespace sua {
             return writeFeedbackWithPayload(ctx.desiredState,
                 "RUNNING", "Self-update agent is performing an OS image update.",
                 "DOWNLOAD_SUCCESS", fmt::format("Downloaded {:.{}f} MiB...", mbytes, 1),
-                100);
+                message, 100);
         }
 
         if(name == "downloadFailed") {
             return writeFeedbackWithPayload(ctx.desiredState,
                 "INCOMPLETE", "Download failed.",
                 "UPDATE_FAILURE", "Download failed.",
-                ctx.desiredState.downloadProgressPercentage);
+                message, ctx.desiredState.downloadProgressPercentage);
         }
 
         if(name == "installing") {
             return writeFeedbackWithPayload(ctx.desiredState,
                 "RUNNING", "Self-update agent is performing an OS image update.",
                 "UPDATING", "RAUC install...",
-                ctx.desiredState.installProgressPercentage);
+                message, ctx.desiredState.installProgressPercentage);
         }
 
         if(name == "installed") {
             return writeFeedbackWithPayload(ctx.desiredState,
                 "COMPLETED", "Self-update completed, reboot required.",
                 "UPDATE_SUCCESS", "Writing partition completed, reboot required.",
-                100);
+                message, 100);
         }
 
         if(name == "installFailed") {
             return writeFeedbackWithPayload(ctx.desiredState,
                 "INCOMPLETE", "Install failed.",
                 "UPDATE_FAILURE", "Writing partition failed.",
-                ctx.desiredState.installProgressPercentage);
+                message, ctx.desiredState.installProgressPercentage);
         }
 
         if(name == "currentState") {
@@ -187,6 +187,7 @@ namespace sua {
     std::string MqttMessagingProtocolJSON::writeFeedbackWithPayload(const DesiredState & desiredState,
                 const std::string & state, const std::string & stateMessage,
                 const std::string & status, const std::string & statusMessage,
+                const std::string & customStatusMessage,
                 int progress) const
     {
         // clang-format off
@@ -213,7 +214,12 @@ namespace sua {
         )");
         // clang-format on
         
-        return fmt::format(tpl, desiredState.activityId, epochTime(), state, stateMessage, desiredState.bundleVersion, status, progress, statusMessage);
+        return fmt::format(tpl, desiredState.activityId, epochTime(),
+                state, stateMessage,
+                desiredState.bundleVersion,
+                status, progress,
+                (customStatusMessage.empty() ? statusMessage : customStatusMessage)
+                );
     }
 
     std::string MqttMessagingProtocolJSON::writeSystemVersionWithoutActivityId(const std::string & version)
