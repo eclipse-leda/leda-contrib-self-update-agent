@@ -102,6 +102,12 @@ jobs:
         with:
           path: code-coverage.tar.gz
 
+      - name: Upload unit tests results to workspace
+        if: ${{ matrix.arch == 'amd64' }}
+        uses: actions/upload-artifact@v3
+        with:
+          path: unit_tests_report.txt
+
   upload-native-binary:
     runs-on: ubuntu-latest
     needs: build-native-binary
@@ -123,6 +129,7 @@ jobs:
           automatic_release_tag: build_${{ github.run_number }}
           title: "Build ${{ github.run_number }}"
           files: |
+            ./artifact/unit_tests_report.txt
             ./artifact/code-coverage.tar.gz
             ./artifact/self-update-agent-amd64-build-${{ github.run_number }}.tar.gz
             ./artifact/self-update-agent-arm64-build-${{ github.run_number }}.tar.gz

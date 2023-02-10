@@ -89,7 +89,7 @@ runs:
     if: ${{ inputs.arch=='amd64' }}
     run: |
       cd dist_${{ inputs.arch }}_testing/utest
-      ./TestSelfUpdateAgent
+      ./TestSelfUpdateAgent > ../../unit_tests_report.txt
       mkdir report
       gcovr --root ../.. --html --html-details --output report/coverage.html -e ../../3rdparty -e ../../utest -e ../../src/main.cpp
       tar -czvf ../../code-coverage.tar.gz report
