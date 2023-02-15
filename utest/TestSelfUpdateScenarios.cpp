@@ -33,7 +33,17 @@ namespace {
                 .Times(1)
                 .RetiresOnSaturation();
 
-            EXPECT_CALL(*messagingProtocol, createMessage(_, name))
+            EXPECT_CALL(*messagingProtocol, createMessage(_, name, _))
+                .Times(1)
+                .RetiresOnSaturation();
+        }
+
+        void willSend(const std::string & topic, const std::string & name, const std::string & message) {
+            EXPECT_CALL(*mqttProcessor, send(topic, _, false))
+                .Times(1)
+                .RetiresOnSaturation();
+
+            EXPECT_CALL(*messagingProtocol, createMessage(_, name, message))
                 .Times(1)
                 .RetiresOnSaturation();
         }
@@ -70,17 +80,24 @@ namespace {
                 .RetiresOnSaturation();
         }
 
-        void installWillFail()
+        void installSetupWillFail()
         {
             EXPECT_CALL(*installerAgent, installBundle(_))
                 .WillOnce(Return(sua::TechCode::InstallationFailed))
                 .RetiresOnSaturation();
         }
 
-        void installWillSucceed()
+        void installSetupWillSucceed()
         {
             EXPECT_CALL(*installerAgent, installBundle(_))
                 .WillOnce(Return(sua::TechCode::OK))
+                .RetiresOnSaturation();
+        }
+
+        void installStatusWillBeSuccess()
+        {
+            EXPECT_CALL(*installerAgent, succeeded())
+                .WillOnce(Return(true))
                 .RetiresOnSaturation();
         }
 
@@ -88,6 +105,20 @@ namespace {
         {
             EXPECT_CALL(*installerAgent, getInstallProgress())
                 .WillOnce(Return(value))
+                .RetiresOnSaturation();
+        }
+
+        void installStatusWillBe(const bool value)
+        {
+            EXPECT_CALL(*installerAgent, installing())
+                .WillOnce(Return(value))
+                .RetiresOnSaturation();
+        }
+
+        void lastErrorWillBe(const std::string & text)
+        {
+            EXPECT_CALL(*installerAgent, getLastError())
+                .WillOnce(Return(text))
                 .RetiresOnSaturation();
         }
 
@@ -232,7 +263,7 @@ namespace {
         ctx().stateMachine->handleEvent(sua::FotaEvent::Start);
     }
 
-    TEST_F(TestSelfUpdateScenarios, receivesUpdateRequestAndInstallFails_sendsInstallFailed)
+    TEST_F(TestSelfUpdateScenarios, receivesUpdateRequestAndInstallSetupFails_sendsInstallFailed)
     {
         willTransitTo("Uninitialized");
         currentVersionIs("1.0");
@@ -249,7 +280,8 @@ namespace {
         willSend("selfupdate/desiredstatefeedback", "downloaded");
 
         willTransitTo("Installing");
-        installWillFail();
+        installSetupWillFail();
+        lastErrorWillBe("test");
         willSend("selfupdate/desiredstatefeedback", "installFailed");
 
         willTransitTo("Failed");
@@ -278,11 +310,14 @@ namespace {
         willSend("selfupdate/desiredstatefeedback", "downloaded");
 
         willTransitTo("Installing");
-        installWillSucceed();
+        installSetupWillSucceed();
         // gmock is checking expecations in reverse order
-        installProgressWillBe(100);
+        installStatusWillBe(false); // completed (!installing)
+        installStatusWillBe(true); // installing
+        installStatusWillBe(true); // installing
+        installProgressWillBe(99);
         installProgressWillBe(50);
-        installProgressWillBe(0);
+        installStatusWillBeSuccess();
         willSend("selfupdate/desiredstatefeedback", "installing");
         willSend("selfupdate/desiredstatefeedback", "installing");
         willSend("selfupdate/desiredstatefeedback", "installed");

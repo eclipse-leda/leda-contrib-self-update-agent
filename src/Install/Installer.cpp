@@ -37,14 +37,15 @@ namespace sua {
     {
         Logger::trace("Installer::start({})", input);
 
-        _installerAgent->installBundle(input);
+        if(_installerAgent->installBundle(input) == TechCode::InstallationFailed) {
+            return TechCode::InstallationFailed;
+        }
 
-        bool     installing                  = true;
-        uint32_t count                       = 0;
+        int      tries                       = 0;
         int32_t  progressPercentage          = 0;
         int32_t  progressNotificationLimiter = 0;
 
-        while(installing) {
+        while(_installerAgent->installing()) {
             progressPercentage = _installerAgent->getInstallProgress();
             std::this_thread::sleep_for(2000ms);
             tries++;
@@ -62,7 +63,11 @@ namespace sua {
             }
         }
 
-        return TechCode::OK;
+        if(_installerAgent->succeeded()) {
+            return TechCode::OK;
+        }
+
+        return TechCode::InstallationFailed;
     }
 
 } // namespace sua
