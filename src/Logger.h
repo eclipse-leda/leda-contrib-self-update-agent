@@ -37,6 +37,7 @@ namespace sua {
         Logger();
 
         void init();
+        void shutdown();
 
         void setLogLevel(int mask);
         int  getLogLevel() const;

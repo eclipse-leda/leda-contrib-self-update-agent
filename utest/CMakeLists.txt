@@ -1,6 +1,7 @@
 add_executable(TestSelfUpdateAgent
     TestDispatcher.cpp
     TestFSM.cpp
+    TestLogger.cpp
     TestMqttMessagingProtocolYAML.cpp
     TestMqttMessagingProtocolJSON.cpp
     TestSelfUpdateScenarios.cpp
