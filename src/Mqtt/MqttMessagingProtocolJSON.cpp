@@ -57,26 +57,73 @@ namespace sua {
 
     DesiredState MqttMessagingProtocolJSON::readDesiredState(const std::string & input)
     {
-        // clang-format off
         DesiredState s;
         std::stringstream ss(input);
         nlohmann::json json = nlohmann::json::parse(ss);
-        s.activityId        = json["activityId"];
-        s.bundleVersion     = json["payload"]["domains"][0]["components"][0]["version"];
-        s.bundleDownloadUrl = json["payload"]["domains"][0]["components"][0]["config"][0]["value"];
+
+        s.activityId = json.at("activityId");
+        if(s.activityId.empty()) {
+            throw std::logic_error("mandatory field 'activityId' is empty");
+        }
+
+        auto find_by_key_value = [] (const nlohmann::json & j, const std::string & key, const std::string & value) -> nlohmann::json::const_iterator {
+            return std::find_if(j.begin(), j.end(),
+                [&key, &value] (const nlohmann::json & item) {
+                    return item.at(key) == value;
+                }
+            );
+        };
+
+        const auto & payload = json.at("payload");
+        const auto & domains = payload.at("domains");
+        const auto domain_it = find_by_key_value(domains, "id", "self-update");
+        if(domain_it == domains.end()) {
+            throw std::runtime_error("mandatory domain with 'id'='self-update' is missing");
+        }
+
+        const auto & components = domain_it->at("components");
+        const auto component_it = find_by_key_value(components, "id", "os-image");
+        if(component_it == components.end()) {
+            throw std::runtime_error("mandatory component with 'id'='os-image' is missing");
+        }
+
+        const auto & configs = component_it->at("config");
+        const auto config_it = find_by_key_value(configs, "key", "image");
+        if(config_it == configs.end()) {
+            throw std::runtime_error("mandatory config entry with bundle url is missing");
+        }
+
+        s.bundleVersion     = component_it->at("version");
+        s.bundleDownloadUrl = config_it->at("value");
+
+        if(s.bundleVersion.empty()) {
+            throw std::runtime_error("mandatory bundle version is empty");
+        }
+
+        if(s.bundleDownloadUrl.empty()) {
+            throw std::runtime_error("mandatory bundle download url is empty");
+        }
+
         return s;
-        // clang-format on
     }
 
     DesiredState MqttMessagingProtocolJSON::readCurrentStateRequest(const std::string & input)
     {
-        // clang-format off
         DesiredState s;
         std::stringstream ss(input);
-        nlohmann::json json = nlohmann::json::parse(ss);
-        s.activityId        = json["activityId"];
+
+        auto json = nlohmann::json::parse(ss);
+        if(!json.contains("activityId")) {
+            throw std::logic_error("mandatory field 'activityId' is missing");
+        }
+
+        s.activityId = json.at("activityId");
+
+        if(s.activityId.empty()) {
+            throw std::logic_error("mandatory field 'activityId' is empty");
+        }
+
         return s;
-        // clang-format on
     }
 
     std::string MqttMessagingProtocolJSON::createMessage(const class Context& ctx, const std::string& name, const std::string& message)
@@ -97,6 +144,11 @@ namespace sua {
         if(name == "identified") {
             return writeFeedbackWithoutPayload(ctx.desiredState,
                 "IDENTIFIED", "Self-update agent is about to perform an OS image update.");
+        }
+
+        if(name == "identificationFailed") {
+            return writeFeedbackWithoutPayload(ctx.desiredState,
+                "IDENTIFICATION_FAILED", message);
         }
 
         if(name == "skipped") {
