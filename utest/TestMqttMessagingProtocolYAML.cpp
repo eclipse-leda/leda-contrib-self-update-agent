@@ -86,13 +86,7 @@ namespace {
 
     TEST_F(TestMessagingProtocolYAML, createMessage_identifiedAndSkipped)
     {
-        const std::string result = sua::MqttMessagingProtocolYAML().createMessage(ctx, "identifiedAndSkipped");
-        EXPECT_EQ(result, "");
-    }
-
-    TEST_F(TestMessagingProtocolYAML, createMessage_completedAndSkipped)
-    {
-        const std::string result = sua::MqttMessagingProtocolYAML().createMessage(ctx, "completedAndSkipped");
+        const std::string result = sua::MqttMessagingProtocolYAML().createMessage(ctx, "identificationFailed");
         EXPECT_EQ(result, "");
     }
 
@@ -259,7 +253,7 @@ namespace {
 
     TEST_F(TestMessagingProtocolYAML, createMessage_invalidBundle)
     {
-        const std::string result = sua::MqttMessagingProtocolYAML().createMessage(ctx, "invalidBundle");
+        const std::string result = sua::MqttMessagingProtocolYAML().createMessage(ctx, "skipped");
 
         // clang-format off
         const std::string expected = R"(
@@ -309,7 +303,7 @@ namespace {
 
     TEST_F(TestMessagingProtocolYAML, createMessage_updateRejected)
     {
-        const std::string result = sua::MqttMessagingProtocolYAML().createMessage(ctx, "updateRejected");
+        const std::string result = sua::MqttMessagingProtocolYAML().createMessage(ctx, "rejected");
 
         // clang-format off
         const std::string expected = R"(
@@ -330,6 +324,11 @@ namespace {
         // clang-format on
 
         EXPECT_EQ_MULTILINE(result, expected);
+    }
+
+    TEST_F(TestMessagingProtocolYAML, createUnknownMessage_throwsLogicError)
+    {
+        EXPECT_THROW(sua::MqttMessagingProtocolYAML().createMessage(ctx, "unknown"), std::logic_error);
     }
 
 }

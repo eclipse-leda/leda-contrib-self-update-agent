@@ -107,11 +107,7 @@ namespace sua {
             return "";
         }
 
-        if(name == "identifiedAndSkipped") {
-            return "";
-        }
-
-        if(name == "completedAndSkipped") {
+        if(name == "identificationFailed") {
             return "";
         }
 
@@ -166,7 +162,7 @@ namespace sua {
             return serialized(base(ctx.desiredState, state));
         }
 
-        if(name == "invalidBundle") {
+        if(name == "skipped") {
             std::map<std::string, std::string> state;
             state["state/name"    ] = "failed";
             state["state/message" ] = "Invalid bundle";
@@ -182,7 +178,7 @@ namespace sua {
             return serialized(base(ctx.desiredState, state));
         }
 
-        if(name == "updateRejected") {
+        if(name == "rejected") {
             std::map<std::string, std::string> state;
             state["state/name"    ] = "failed";
             state["state/message" ] = "Update rejected";
