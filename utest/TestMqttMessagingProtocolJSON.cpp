@@ -75,6 +75,40 @@ namespace {
         EXPECT_EQ(s.bundleVersion, "1.1");
     }
 
+    TEST_F(TestMessagingProtocolJSON, readDesiredState_activityIdIsEmpty_throwsLogicError)
+    {
+        // clang-format off
+        const std::string input = R"(
+            {
+                "activityId": "",
+                "timestamp": 123456789,
+                "payload": {
+                    "domains": [
+                        {
+                            "id": "self-update",
+                            "components": [
+                                {
+                                    "id": "os-image",
+                                    "version": "1.1",
+                                    "config": [
+                                        {
+                                            "key": "image",
+                                            "value": "http://example.com/downloads/os-image-1.1.bin"
+                                        }
+                                    ]
+                                }
+                            ]
+                        }
+                    ]
+                }
+            }
+        )";
+        // clang-format on
+
+        EXPECT_NO_THROW(validateJsonSyntax(input));
+        EXPECT_THROW(ProtocolJSON().readDesiredState(input), std::logic_error);
+    }
+
     TEST_F(TestMessagingProtocolJSON, readDesiredState_missingDomain_throwsRuntimeError)
     {
         // clang-format off
@@ -196,7 +230,7 @@ namespace {
                             "components": [
                                 {
                                     "id": "os-image",
-                                    "version": "",
+                                    "version": "1.0",
                                     "config": [
                                         {
                                             "key": "image",
