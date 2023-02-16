@@ -67,11 +67,153 @@ namespace {
         )";
         // clang-format on
 
+        EXPECT_NO_THROW(validateJsonSyntax(input));
         const sua::DesiredState s = ProtocolJSON().readDesiredState(input);
 
         EXPECT_EQ(s.activityId, "random-uuid-as-string");
         EXPECT_EQ(s.bundleDownloadUrl, "http://example.com/downloads/os-image-1.1.bin");
         EXPECT_EQ(s.bundleVersion, "1.1");
+    }
+
+    TEST_F(TestMessagingProtocolJSON, readDesiredState_missingDomain_throwsRuntimeError)
+    {
+        // clang-format off
+        const std::string input = R"(
+            {
+                "activityId": "id",
+                "timestamp": 123456789,
+                "payload": {
+                    "domains": [
+                    ]
+                }
+            }
+        )";
+        // clang-format on
+
+        EXPECT_NO_THROW(validateJsonSyntax(input));
+        EXPECT_THROW(ProtocolJSON().readDesiredState(input), std::runtime_error);
+    }
+
+    TEST_F(TestMessagingProtocolJSON, readDesiredState_missingComponent_throwsRuntimeError)
+    {
+        // clang-format off
+        const std::string input = R"(
+            {
+                "activityId": "id",
+                "timestamp": 123456789,
+                "payload": {
+                    "domains": [
+                        {
+                            "id": "self-update",
+                            "components": [
+                            ]
+                        }
+                    ]
+                }
+            }
+        )";
+        // clang-format on
+
+        EXPECT_NO_THROW(validateJsonSyntax(input));
+        EXPECT_THROW(ProtocolJSON().readDesiredState(input), std::runtime_error);
+    }
+
+    TEST_F(TestMessagingProtocolJSON, readDesiredState_missingConfig_throwsRuntimeError)
+    {
+        // clang-format off
+        const std::string input = R"(
+            {
+                "activityId": "id",
+                "timestamp": 123456789,
+                "payload": {
+                    "domains": [
+                        {
+                            "id": "self-update",
+                            "components": [
+                                {
+                                    "id": "os-image",
+                                    "version": "1.1",
+                                    "config": [
+                                    ]
+                                }
+                            ]
+                        }
+                    ]
+                }
+            }
+        )";
+        // clang-format on
+
+        EXPECT_NO_THROW(validateJsonSyntax(input));
+        EXPECT_THROW(ProtocolJSON().readDesiredState(input), std::runtime_error);
+    }
+
+    TEST_F(TestMessagingProtocolJSON, readDesiredState_versionIsEmpty_throwsRuntimeError)
+    {
+        // clang-format off
+        const std::string input = R"(
+            {
+                "activityId": "id",
+                "timestamp": 123456789,
+                "payload": {
+                    "domains": [
+                        {
+                            "id": "self-update",
+                            "components": [
+                                {
+                                    "id": "os-image",
+                                    "version": "",
+                                    "config": [
+                                        {
+                                            "key": "image",
+                                            "value": "http://example.com/downloads/os-image-1.1.bin"
+                                        }
+                                    ]
+                                }
+                            ]
+                        }
+                    ]
+                }
+            }
+        )";
+        // clang-format on
+
+        EXPECT_NO_THROW(validateJsonSyntax(input));
+        EXPECT_THROW(ProtocolJSON().readDesiredState(input), std::runtime_error);
+    }
+
+    TEST_F(TestMessagingProtocolJSON, readDesiredState_bundleDownloadUrlIsEmpty_throwsRuntimeError)
+    {
+        // clang-format off
+        const std::string input = R"(
+            {
+                "activityId": "id",
+                "timestamp": 123456789,
+                "payload": {
+                    "domains": [
+                        {
+                            "id": "self-update",
+                            "components": [
+                                {
+                                    "id": "os-image",
+                                    "version": "",
+                                    "config": [
+                                        {
+                                            "key": "image",
+                                            "value": ""
+                                        }
+                                    ]
+                                }
+                            ]
+                        }
+                    ]
+                }
+            }
+        )";
+        // clang-format on
+
+        EXPECT_NO_THROW(validateJsonSyntax(input));
+        EXPECT_THROW(ProtocolJSON().readDesiredState(input), std::runtime_error);
     }
 
     TEST_F(TestMessagingProtocolJSON, readCurrentStateRequest)
@@ -85,9 +227,39 @@ namespace {
         )";
         // clang-format on
 
+        EXPECT_NO_THROW(validateJsonSyntax(input));
         const sua::DesiredState s = ProtocolJSON().readCurrentStateRequest(input);
 
         EXPECT_EQ(s.activityId, "random-uuid-as-string");
+    }
+
+    TEST_F(TestMessagingProtocolJSON, readCurrentStateRequest_activityIdMissing_throwsLogicError)
+    {
+        // clang-format off
+        const std::string input = R"(
+            {
+                "timestamp": 123456789
+            }
+        )";
+        // clang-format on
+
+        EXPECT_NO_THROW(validateJsonSyntax(input));
+        EXPECT_THROW(ProtocolJSON().readCurrentStateRequest(input), std::logic_error);
+    }
+
+    TEST_F(TestMessagingProtocolJSON, readCurrentStateRequest_activityIdEmpty_throwsLogicError)
+    {
+        // clang-format off
+        const std::string input = R"(
+            {
+                "activityId": "",
+                "timestamp": 123456789
+            }
+        )";
+        // clang-format on
+
+        EXPECT_NO_THROW(validateJsonSyntax(input));
+        EXPECT_THROW(ProtocolJSON().readCurrentStateRequest(input), std::logic_error);
     }
 
     TEST_F(TestMessagingProtocolJSON, createMessage_systemVersionWithoutActivityId)
@@ -211,6 +383,29 @@ namespace {
                 "payload": {
                     "status": "IDENTIFIED",
                     "message": "Self-update agent is about to perform an OS image update.",
+                    "actions": []
+                }
+            }
+        )";
+        // clang-format on
+
+        EXPECT_NO_THROW(validateJsonSyntax(expected));
+        EXPECT_NO_THROW(validateJsonSyntax(result));
+        EXPECT_EQ_MULTILINE(result, expected);
+    }
+
+    TEST_F(TestMessagingProtocolJSON, createMessage_identificationFailed)
+    {
+        const std::string result = ProtocolJSON().createMessage(ctx, "identificationFailed", "test");
+
+        // clang-format off
+        const std::string expected = R"(
+            {
+                "activityId": "id",
+                "timestamp": 42,
+                "payload": {
+                    "status": "IDENTIFICATION_FAILED",
+                    "message": "test",
                     "actions": []
                 }
             }
@@ -497,6 +692,11 @@ namespace {
         const std::string result = ProtocolJSON().createMessage(ctx, "currentState");
 
         EXPECT_EQ_MULTILINE(result, "");
+    }
+
+    TEST_F(TestMessagingProtocolJSON, createUnknownMessage_throwsLogicError)
+    {
+        EXPECT_THROW(ProtocolJSON().createMessage(ctx, "unknown"), std::logic_error);
     }
 
 }
