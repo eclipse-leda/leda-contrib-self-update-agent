@@ -39,7 +39,7 @@ namespace sua {
         stdout_sink->set_pattern("%^%Y-%m-%dT%H:%M:%S.%f%z %-8l %v%$");
 
         auto json_file_sink =
-            std::make_shared<spdlog::sinks::basic_file_sink_mt>("../logs/log.json", true);
+        std::make_shared<spdlog::sinks::basic_file_sink_mt>("../logs/log.json", true);
         json_file_sink->set_level(spdlog::level::trace);
         json_file_sink->set_pattern(
             "{\"time\": \"%Y-%m-%dT%H:%M:%S.%f%z\", \"level\": \"%^%l%$\", \"message\": \"%v\"},");
@@ -48,6 +48,11 @@ namespace sua {
             "sua_logger", spdlog::sinks_init_list{stdout_sink, json_file_sink});
         logger->set_level(spdlog::level::trace);
         spdlog::set_default_logger(logger);
+    }
+
+    void Logger::shutdown()
+    {
+        spdlog::shutdown();
     }
 
     void Logger::setLogLevel(int mask)
