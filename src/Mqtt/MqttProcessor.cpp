@@ -19,6 +19,8 @@
 #include "FotaEvent.h"
 #include "Logger.h"
 
+#include "nlohmann/json.hpp"
+
 #include <string>
 #include <chrono>
 
@@ -101,12 +103,37 @@ namespace {
 
         void message_arrived(mqtt::const_message_ptr msg) override
         {
-            if(msg->get_topic() == sua::IMqttProcessor::TOPIC_START) {
-                _context.desiredState = _context.messagingProtocol->readDesiredState(msg->get_payload_str());
-                _context.stateMachine->handleEvent(sua::FotaEvent::Start);
-            } if(msg->get_topic() == sua::IMqttProcessor::TOPIC_STATE_GET) {
-                _context.desiredState = _context.messagingProtocol->readCurrentStateRequest(msg->get_payload_str());
-                _context.stateMachine->handleEvent(sua::FotaEvent::GetCurrentState);
+            auto & ctx = _context;
+            auto proto = ctx.messagingProtocol;
+            auto mqtt  = ctx.mqttProcessor;
+
+            const auto message = msg->get_payload_str();
+            const auto topic   = msg->get_topic();
+
+            sua::Logger::trace("Received fequest, topic={}", topic);
+
+            try {
+                if(topic == sua::IMqttProcessor::TOPIC_START) {
+                    ctx.desiredState = proto->readDesiredState(message);
+                    ctx.stateMachine->handleEvent(sua::FotaEvent::Start);
+                } if(topic == sua::IMqttProcessor::TOPIC_STATE_GET) {
+                    ctx.desiredState = proto->readCurrentStateRequest(message);
+                    ctx.stateMachine->handleEvent(sua::FotaEvent::GetCurrentState);
+                }
+            } catch(const nlohmann::json::parse_error & e) {
+                sua::Logger::error("Invalid request for {}, unable to parse json: {}", topic, e.what());
+            } catch(const nlohmann::json::exception& e) {
+                ctx.desiredState.activityId = nlohmann::json::parse(message).at("activityId");
+                sua::Logger::error("Invalid request for {}: {}", topic, e.what());
+                mqtt->send(sua::IMqttProcessor::TOPIC_FEEDBACK, proto->createMessage(ctx, "identifying"));
+                mqtt->send(sua::IMqttProcessor::TOPIC_FEEDBACK, proto->createMessage(ctx, "identificationFailed", e.what()));
+            } catch(const std::logic_error & e) {
+                sua::Logger::error("Invalid request for {}: {}", topic, e.what());
+            } catch(const std::runtime_error & e) {
+                ctx.desiredState.activityId = nlohmann::json::parse(message).at("activityId");
+                sua::Logger::error("Invalid request for {}: {}", topic, e.what());
+                mqtt->send(sua::IMqttProcessor::TOPIC_FEEDBACK, proto->createMessage(ctx, "identifying"));
+                mqtt->send(sua::IMqttProcessor::TOPIC_FEEDBACK, proto->createMessage(ctx, "identificationFailed", e.what()));
             }
         }
 
