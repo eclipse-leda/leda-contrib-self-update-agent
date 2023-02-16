@@ -5,6 +5,7 @@ add_executable(TestSelfUpdateAgent
     TestMqttMessagingProtocolJSON.cpp
     TestSelfUpdateScenarios.cpp
     TestServerAddressParser.cpp
+    TestStateFactory.cpp
     Utils.cpp
 )
 

@@ -27,8 +27,6 @@ namespace sua {
 
     class StateFactory {
     public:
-        StateFactory() = default;
-
         template <typename T>
         void addStateT(const std::string& name)
         {
