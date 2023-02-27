@@ -45,12 +45,21 @@ namespace sua {
         GDBusConnection* connection{nullptr};
         GMainLoop* loop{nullptr};
 
+        guint            _signalSubscriptionIdProperties;
+        guint            _signalSubscriptionIdCompleted;
+
         std::atomic_bool is_installing;
         std::atomic_bool is_succeeded;
 
         void        setupDBusRaucConnection();
+        void        subscribeDBusSignals();
+        void        unsubscribeDBusSignals();
+
         TechCode    installDBusRaucBundle(const std::string& bundleName);
+        TechCode    installDBusRaucBundleWithArgs(const std::string& bundleName);
         int32_t     getDBusRaucInstallProgress() const;
+        bool        getDBusRaucInstallOperationIsInstalling() const;
+        std::string getDBusRaucLastError() const;
         std::string getDBusRaucBundleVersion() const;
         std::string getDBusRaucBundleVersion(const std::string& input) const;
     };
