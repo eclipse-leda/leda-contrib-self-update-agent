@@ -41,15 +41,18 @@ namespace sua {
             return TechCode::InstallationFailed;
         }
 
-        int      tries                       = 0;
-        int32_t  progressPercentage          = 0;
-        int32_t  progressNotificationLimiter = 0;
+        int32_t        progressPercentage          = 0;
+        int32_t        progressNotificationLimiter = 0;
+        uint32_t       waitingCount                = 0;
+        const uint32_t waitingTimeout              = 15 * 60;  // [sec]
 
         while(_installerAgent->installing()) {
             progressPercentage = _installerAgent->getInstallProgress();
-            std::this_thread::sleep_for(2000ms);
-            tries++;
-            if(tries >= 120) {
+            if (progressPercentage < 0) {
+                std::string lastError = _installerAgent->getLastError();
+                if (!lastError.empty()) {
+                    Logger::error("LastError: {}", lastError);
+                }
                 return TechCode::InstallationFailed;
             }
 
@@ -57,10 +60,18 @@ namespace sua {
                 if(progressPercentage != 100) {
                     std::map<std::string, std::string> payload;
                     payload["percentage"] = std::to_string(progressPercentage);
-                    sua::Dispatcher::instance().dispatch(EVENT_INSTALLING, payload);\
+                    sua::Dispatcher::instance().dispatch(EVENT_INSTALLING, payload);
+                    progressNotificationLimiter = progressPercentage + 1;
                 }
-								progressNotificationLimiter += 10;
             }
+
+            if(waitingCount >= waitingTimeout) {
+                Logger::error("Waiting for completion more than {} secs => assuming failed installation", waitingTimeout);
+                return TechCode::InstallationFailed;
+            }
+
+            std::this_thread::sleep_for(2000ms);
+            waitingCount += 2;
         }
 
         if(_installerAgent->succeeded()) {

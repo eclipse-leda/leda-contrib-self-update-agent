@@ -25,6 +25,10 @@ namespace sua {
     public:
         bool isUpdateBundleVersionDifferent(const std::string &             updateBundleVer,
                                             std::shared_ptr<IRaucInstaller> installer) override;
+
+        bool isBundleVersionConsistent(const std::string &             declaredVersion,
+                                       std::shared_ptr<IRaucInstaller> installer,
+                                       const std::string &             bundlePath) override;
     };
 
 } // namespace sua

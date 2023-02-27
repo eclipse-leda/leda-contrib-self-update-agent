@@ -36,23 +36,33 @@ namespace sua {
     FotaEvent Installing::body(Context& ctx)
     {
         subscribe(Installer::EVENT_INSTALLING, [this, &ctx](const std::map<std::string, std::string>& payload) {
-            const auto percentage = std::stoi(payload.at("percentage"));
-            Logger::info("RAUC install progress: {}", percentage);
-						ctx.desiredState.installProgressPercentage = percentage;
-						send(ctx, IMqttProcessor::TOPIC_FEEDBACK, "installing");
+            ctx.desiredState.installProgressPercentage = std::stoi(payload.at("percentage"));
+            Logger::info("Install progress: {}%", ctx.desiredState.installProgressPercentage);
+            send(ctx, IMqttProcessor::TOPIC_FEEDBACK, "installing");
         });
 
-        auto installer    = std::make_shared<Installer>(ctx.installerAgent);
-        const auto result = installer->start(ctx.updatesDirectory + "/temp_file");
+        std::string install_input;
+        if (true == ctx.downloadMode)
+        {
+            install_input = ctx.updatesDirectory + "/temp_file";
+        }
+        else
+        {
+            // installation streamed via download URL
+            install_input = ctx.desiredState.bundleDownloadUrl;
+        }
+
+        auto installer = Installer(ctx.installerAgent);
+        const auto result = installer.start(install_input);
 
         if(result == TechCode::OK) {
-            Logger::info("RAUC install completed");
+            Logger::info("Installation completed");
             send(ctx, IMqttProcessor::TOPIC_FEEDBACK, "installed");
             return FotaEvent::InstallCompleted;
         }
 
         const auto lastError = ctx.installerAgent->getLastError();
-        Logger::error("RAUC install failed: {}", lastError);
+        Logger::error("Installation failed: {}", lastError);
         send(ctx, IMqttProcessor::TOPIC_FEEDBACK, "installFailed", lastError);
         return FotaEvent::InstallFailed;
     }

@@ -1,4 +1,4 @@
-//    Copyright 2022 Contributors to the Eclipse Foundation
+//    Copyright 2023 Contributors to the Eclipse Foundation
 //
 //    Licensed under the Apache License, Version 2.0 (the "License");
 //    you may not use this file except in compliance with the License.
@@ -30,8 +30,8 @@
 namespace {
 
     const int        HTTP_OK                     = 200;
-    const char       FILE_DIR[FILENAME_MAX]      = "/RaucUpdate";
-    const char       FILE_PATH[FILENAME_MAX]     = "/RaucUpdate/temp_file";
+    char             FILE_DIR[FILENAME_MAX]      = "/RaucUpdate";
+    char             FILE_PATH[FILENAME_MAX]     = "/RaucUpdate/temp_file";
     bool             cancelled                   = false;
     int              progressNotificationLimiter = 0;
 
@@ -148,6 +148,13 @@ namespace {
 namespace sua {
 
     const std::string Downloader::EVENT_DOWNLOADING = "Downloader/Downloading";
+
+    Downloader::Downloader(const std::string& download_dir)
+    {
+        const std::string filepath = download_dir + "/temp_file";
+        strncpy(FILE_DIR, download_dir.c_str(), FILENAME_MAX - 1);
+        strncpy(FILE_PATH, filepath.c_str(), FILENAME_MAX - 1);
+    }
 
     TechCode Downloader::start(const std::string & input)
     {

@@ -1,4 +1,4 @@
-//    Copyright 2022 Contributors to the Eclipse Foundation
+//    Copyright 2023 Contributors to the Eclipse Foundation
 //
 //    Licensed under the Apache License, Version 2.0 (the "License");
 //    you may not use this file except in compliance with the License.
@@ -53,6 +53,7 @@ namespace sua {
         std::shared_ptr<IMqttProcessor>         mqttProcessor;
         std::shared_ptr<IBundleChecker>         bundleChecker;
         std::string                             updatesDirectory = "/data/selfupdates";
+        bool                                    downloadMode = true;
 
         DesiredState desiredState;
         CurrentState currentState;

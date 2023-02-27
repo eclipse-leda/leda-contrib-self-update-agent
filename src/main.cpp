@@ -16,6 +16,7 @@
 
 #include "Download/Downloader.h"
 #include "Install/DBusRaucInstaller.h"
+#include "Install/DummyRaucInstaller.h"
 #include "Mqtt/MqttMessagingProtocolJSON.h"
 #include "Mqtt/MqttMessagingProtocolYAML.h"
 #include "Mqtt/MqttConfiguration.h"
@@ -41,19 +42,23 @@ SUA_SERVER    sets and overrides MQTT server address to connect
               (default is 'tcp://mosquitto:1883')
 
 Options:
--h, --help    display this help and exit
--v, --version display version (git hash and build number) used to build sua
--p, --path    path where downloaded update bundles will be stored (default is '/data/selfupdates')
--a, --api     use 'k8s' or 'bfb' format for mqtt communication (default is 'bfb')
--s, --server  MQTT broker server to connect (default is 'tcp://mosquitto:1883')
-              (has precedence over SUA_SERVER environment variable)
+-h, --help      display this help and exit
+-a, --api       use 'k8s' or 'bfb' format for mqtt communication (default is 'bfb')
+-i, --installer set install method 'download' to download update bundles and let Rauc install them,
+                'stream' to let Rauc install bundles directly from HTTP-server,
+                or 'dummy' for neither download nor installation (default is 'stream')
+-p, --path      path where downloaded update bundles will be stored (default is '/data/selfupdates')
+-s, --server    MQTT broker server to connect (default is 'tcp://mosquitto:1883')
+                (has precedence over SUA_SERVER environment variable)
+-v, --version   display version (Git hash and build number) used to build SUA and exit
 )";
 
 int main(int argc, char* argv[])
 {
+    std::string server{"tcp://mosquitto:1883"};
+    std::string api{"bfb"};
+    std::string installer{"stream"};
     std::string hostPathToSelfupdateDir{"/data/selfupdates"};
-    std::string api    = "bfb";
-    std::string server = "tcp://mosquitto:1883";
 
     const char * env_server = std::getenv("SUA_SERVER");
     if(env_server) {
@@ -63,6 +68,7 @@ int main(int argc, char* argv[])
     if(argc > 1) {
         for(int i = 1; i < argc; i++) {
             const std::string opt(argv[i]);
+            std::string argValue;
 
             if(("-h" == opt) || ("--help" == opt)) {
                 std::cout << help_string;
@@ -75,29 +81,58 @@ int main(int argc, char* argv[])
                 return 0;
             }
 
+            if(i + 1 < argc && argv[i + 1][0] != '-') {
+                i++;
+                argValue = argv[i];
+            }
+
             if(("-p" == opt) || ("--path" == opt)) {
-                if((i + 1) < argc) {
-                    hostPathToSelfupdateDir = argv[(i + 1)];
+                if (argValue.empty()) {
+                    std::cout << "Missing path string for '" << opt << "'" << std::endl
+                              << help_string << std::endl;
+                    return 1;
                 }
+                hostPathToSelfupdateDir = argValue;
                 continue;
             }
 
             if(("-a" == opt) || ("--api" == opt)) {
-                if((i + 1) < argc) {
-                    api = argv[i + 1];
+                if (argValue.empty()) {
+                    std::cout << "Missing format value for '" << opt << "'" << std::endl
+                              << help_string << std::endl;
+                    return 1;
                 }
+                api = argValue;
                 continue;
             }
 
             if(("-s" == opt) || ("--server" == opt)) {
-                if((i + 1) < argc) {
-                    server = argv[i + 1];
+                if (argValue.empty()) {
+                    std::cout << "Missing server string '" << opt << "'" << std::endl
+                              << help_string << std::endl;
+                    return 1;
                 }
+                server = argValue;
                 continue;
             }
+
+            if(("-i" == opt) || ("--installer" == opt)) {
+                if (argValue.empty()) {
+                    std::cout << "Missing install method for '" << opt << "'" << std::endl
+                              << help_string << std::endl;
+                    return 1;
+                }
+                installer = argValue;
+                continue;
+            }
+
+            std::cout << "Invalid argument '" << opt << "'" << std::endl
+                      << help_string << std::endl;
+            return 1;
         }
     }
 
+    // check if arguments have valid values
     bool failure_detected = false;
 
     std::cout << "Self Update Agent:" << std::endl;
@@ -131,7 +166,7 @@ int main(int argc, char* argv[])
     }
 
     if(failure_detected) {
-      return 0;
+        return 1;
     }
 
     sua::Logger::instance().init();
@@ -146,6 +181,19 @@ int main(int argc, char* argv[])
         protocol = std::make_shared<sua::MqttMessagingProtocolJSON>();
     }
 
+    std::shared_ptr<sua::IRaucInstaller> installerAgent;
+    bool downloadMode = false;
+    if(installer == "download") {
+        installerAgent = std::make_shared<sua::DBusRaucInstaller>();
+        downloadMode = true;
+    }
+    else if(installer == "stream") {
+        installerAgent = std::make_shared<sua::DBusRaucInstaller>();
+        downloadMode = false;
+    } else {
+        installerAgent = std::make_shared<sua::DummyRaucInstaller>();
+    }
+
     // Depending on testing scenario, localhost or ip address of mosquitto container shall be used.
     sua::MqttConfiguration conf;
     conf.brokerHost = host;
@@ -154,17 +202,19 @@ int main(int argc, char* argv[])
     sua::SelfUpdateAgent sua;
     sua::Context & ctx = sua.context();
     ctx.stateMachine      = std::make_shared<sua::FSM>(sua.context());
-    ctx.installerAgent    = std::make_shared<sua::DBusRaucInstaller>();
-    ctx.downloaderAgent   = std::make_shared<sua::Downloader>();
+    ctx.installerAgent    = installerAgent;
+    ctx.downloadMode      = downloadMode;
+    ctx.downloaderAgent   = std::make_shared<sua::Downloader>(hostPathToSelfupdateDir);
     ctx.messagingProtocol = protocol;
     ctx.updatesDirectory  = hostPathToSelfupdateDir;
     ctx.bundleChecker     = std::make_shared<sua::BundleChecker>();
 
     sua::Logger::info("SUA build number       : '{}'", SUA_BUILD_NUMBER );
     sua::Logger::info("SUA commit hash        : '{}'", SUA_COMMIT_HASH  );
-    sua::Logger::info("Communication protocol : '{}'", api);
-    sua::Logger::info("Updates directory      : '{}'", ctx.updatesDirectory);
     sua::Logger::info("MQTT broker address    : '{}://{}:{}'", transport, conf.brokerHost, conf.brokerPort);
+    sua::Logger::info("Communication protocol : '{}'", api);
+    sua::Logger::info("Install method         : '{}'", installer);
+    sua::Logger::info("Updates directory      : '{}'", ctx.updatesDirectory);
 
     sua.init();
     sua.start(conf);

@@ -26,7 +26,7 @@ namespace sua {
     {
         ctx.currentState.version = ctx.desiredState.bundleVersion;
 
-        Logger::info("System version (slot): '{}'", ctx.currentState.version);
+        Logger::info("System version (installed): '{}'", ctx.currentState.version);
         send(ctx, IMqttProcessor::TOPIC_FEEDBACK, "currentState");
 
         ctx.stateMachine->handleEvent(FotaEvent::Waiting);

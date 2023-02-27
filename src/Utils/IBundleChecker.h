@@ -29,6 +29,10 @@ namespace sua {
 
         virtual bool isUpdateBundleVersionDifferent(const std::string &             updateBundleVer,
                                                     std::shared_ptr<IRaucInstaller> installer) = 0;
+
+        virtual bool isBundleVersionConsistent(const std::string &             declaredVersion,
+                                               std::shared_ptr<IRaucInstaller> installer,
+                                               const std::string &             bundlePath) = 0;
     };
 
 } // namespace sua

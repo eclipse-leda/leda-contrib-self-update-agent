@@ -1,4 +1,4 @@
-//    Copyright 2022 Contributors to the Eclipse Foundation
+//    Copyright 2023 Contributors to the Eclipse Foundation
 //
 //    Licensed under the Apache License, Version 2.0 (the "License");
 //    you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
 //    SPDX-License-Identifier: Apache-2.0
 
 #include "BundleChecker.h"
+#include "Logger.h"
 
 namespace sua {
 
@@ -23,6 +24,18 @@ namespace sua {
                                                   std::shared_ptr<IRaucInstaller> installer)
     {
         return updateBundleVer != installer->getBundleVersion();
+    }
+
+    bool BundleChecker::isBundleVersionConsistent(const std::string & declaredVersion,
+                                                  std::shared_ptr<IRaucInstaller> installer,
+                                                  const std::string &             bundlePath)
+    {
+        std::string fileVersion = installer->getBundleVersion(bundlePath);
+
+        Logger::info("Bundle version (spec): '{}'", declaredVersion);
+        Logger::info("Bundle version (file): '{}'", fileVersion);
+
+        return declaredVersion == fileVersion;
     }
 
 } // namespace sua
