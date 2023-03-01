@@ -39,6 +39,7 @@ runs:
 
   - name: Install tools
     run: |
+      sudo echo RESET grub-efi/install_devices | sudo debconf-communicate grub-pc
       sudo apt-get install apt-transport-https --yes
       sudo apt-get -y update
       sudo apt-get -y upgrade
