@@ -55,12 +55,6 @@ set_property(
     PROPERTY IMPORTED_LOCATION ${CMAKE_BINARY_DIR}/glib/subprojects/libffi/src/libffi.so
 )
 
-add_library(pcre_lib SHARED IMPORTED)
-set_property(
-    TARGET pcre_lib
-    PROPERTY IMPORTED_LOCATION ${CMAKE_BINARY_DIR}/glib/subprojects/pcre2-10.40/libpcre2-8.so
-)
-
 add_library(z_lib SHARED IMPORTED)
 set_property(
     TARGET z_lib
