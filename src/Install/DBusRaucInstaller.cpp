@@ -1,4 +1,4 @@
-//    Copyright 2022 Contributors to the Eclipse Foundation
+//    Copyright 2023 Contributors to the Eclipse Foundation
 //
 //    Licensed under the Apache License, Version 2.0 (the "License");
 //    you may not use this file except in compliance with the License.
@@ -38,11 +38,9 @@ namespace sua {
                     GVariant * parameters,
                     gpointer user_data)
     {
-        Logger::trace("de.pengutronix.rauc.Installer::Completed callback");
-
         int32_t status = 0;
         g_variant_get(parameters, "(i)", &status);
-        Logger::trace("RAUC install status = {}", status);
+        Logger::trace("Rauc signals Completed: install status = {}", status);
 
         DBusRaucInstaller * installer = (DBusRaucInstaller *)user_data;
         if(status == 0) {
@@ -50,7 +48,7 @@ namespace sua {
         } else {
             installer->setSuccess(false);
         }
-        installer->setFinished();
+        installer->setInstalling(false);
     }
 
     void on_properties_changed(
@@ -58,9 +56,6 @@ namespace sua {
         const gchar *sender_name, const gchar *object_path, const gchar *interface_name, const gchar *signal_name,
         GVariant *parameters, gpointer user_data)
     {
-        Logger::trace("onDBusRaucPropertiesChanged - sender_name: {}, object_path: {}, interface_name: {}, signal_name: {}",
-                      sender_name, object_path, interface_name, signal_name);
-       
         if(nullptr != parameters) {
             const gchar  *iface;
             GVariantIter *properties = NULL;
@@ -69,22 +64,34 @@ namespace sua {
             GVariant     *value = NULL;
 
             g_variant_get(parameters, "(&sa{sv}as)", &iface, &properties, &unknown);
-            Logger::trace("signal iface: {}", iface);
-
             if(!g_strcmp0(iface, "de.pengutronix.rauc.Installer")) {
-                while(g_variant_iter_next(properties, "{&sv}", &key, &value)) {
+                while(g_variant_iter_next(properties, "{&sv}", &key, &value))
+                {
                     if(!g_strcmp0(key, "Operation")) {
-                        const gchar  *operation;
-                        g_variant_get(value, "s", &operation);
-                        Logger::info("Rauc signals operation: {}", operation);
+                        const gchar *message;
+                        g_variant_get(value, "s", &message);
+                        Logger::trace("Rauc signals {}: {}", key, message);
+
+                        DBusRaucInstaller* installer = (DBusRaucInstaller*)user_data;
+                        if(!g_strcmp0(message, "installing")) {
+                            installer->setSuccess(false);
+                            installer->setInstalling(true);
+                        }
+                    }
+                    else if(!g_strcmp0(key, "LastError")) {
+                        const gchar *message;
+                        g_variant_get(value, "s", &message);
+                        Logger::trace("Rauc signals {}: {}", key, message);
                     }
                     else if(!g_strcmp0(key, "Progress")) {
                         int32_t progressPercentage = 0;
                         gchar*  message;
                         int32_t nesting = 0;
                         g_variant_get(value, "(isi)", &progressPercentage, &message, &nesting);
-                        Logger::info("Rauc signals progress: {}% - {} ({})", progressPercentage, message, nesting);
+                        Logger::trace("Rauc signals {}: {}% ({}) {}", key, progressPercentage, nesting, message);
                     }
+                    // ignore other properties
+
                     g_variant_unref(value);
                 }
             }
@@ -113,9 +120,20 @@ namespace sua {
 
     TechCode DBusRaucInstaller::installBundle(const std::string& input)
     {
-        Logger::trace("Installing Rauc bundle {}", input);
-        //return installDBusRaucBundle(input);  RAUC: "Using deprecated 'Install' D-Bus Method (replaced by 'InstallBundle')"
-        return installDBusRaucBundleWithArgs(input);
+        g_main_context_iteration(g_main_loop_get_context(loop), FALSE);
+
+        // check if RAUC is still installing
+        std::string operation = getDBusRaucProperty("Operation");
+        if (operation != "idle") {
+            Logger::error("Rauc is not in operation 'idle'");
+            return TechCode::InstallationFailed;
+        }
+
+        TechCode result = callDBusRaucInstallBundle(input);
+
+        is_installing = (result == TechCode::OK);
+        is_succeeded  = false;
+        return result;
     }
 
     int32_t DBusRaucInstaller::getInstallProgress()
@@ -135,7 +153,8 @@ namespace sua {
 
     void DBusRaucInstaller::subscribeDBusSignals()
     {
-        _signalSubscriptionIdProperties = g_dbus_connection_signal_subscribe(connection,
+        signalSubscriptionIdProperties = g_dbus_connection_signal_subscribe(
+            connection,
             NULL,
             "org.freedesktop.DBus.Properties",
             "PropertiesChanged",
@@ -143,10 +162,10 @@ namespace sua {
             NULL,
             G_DBUS_SIGNAL_FLAGS_NONE,
             on_properties_changed,
-            NULL,
+            this,
             NULL);
 
-        _signalSubscriptionIdCompleted = g_dbus_connection_signal_subscribe(
+        signalSubscriptionIdCompleted = g_dbus_connection_signal_subscribe(
             connection,
             NULL,
             "de.pengutronix.rauc.Installer",
@@ -156,68 +175,33 @@ namespace sua {
             G_DBUS_SIGNAL_FLAGS_NONE,
             on_completed,
             this,
-            NULL
-        );
+            NULL);
     }
 
     void DBusRaucInstaller::unsubscribeDBusSignals()
     {
-        g_dbus_connection_signal_unsubscribe(connection, _signalSubscriptionIdProperties);
-        g_dbus_connection_signal_unsubscribe(connection, _signalSubscriptionIdCompleted);
+        g_dbus_connection_signal_unsubscribe(connection, signalSubscriptionIdProperties);
+        g_dbus_connection_signal_unsubscribe(connection, signalSubscriptionIdCompleted);
     }
 
     void DBusRaucInstaller::setupDBusRaucConnection()
     {
         GError* connectionError = nullptr;
         connection              = g_bus_get_sync(G_BUS_TYPE_SYSTEM, NULL, &connectionError);
-        loop = g_main_loop_new(NULL, FALSE);
+        loop                    = g_main_loop_new(NULL, FALSE);
 
         if(nullptr != connection) {
-            Logger::trace("Valid connection to DBus");
+            Logger::trace("Valid connection to D-Bus");
         } else {
-            Logger::error("Unable to connect to DBus, code = {}, message = {}",
+            Logger::error("Unable to connect to D-Bus, code = {}, message = {}",
                           connectionError->code,
                           connectionError->message);
         }
     }
 
-    TechCode DBusRaucInstaller::installDBusRaucBundle(const std::string& bundleName)
+    TechCode DBusRaucInstaller::callDBusRaucInstallBundle(const std::string& bundleName)
     {
-        is_installing = true;
-        is_succeeded  = false;
-
-        GError*   connectionError = nullptr;
-        GVariant* result          = g_dbus_connection_call_sync(connection,
-                                                       "de.pengutronix.rauc",
-                                                       "/",
-                                                       "de.pengutronix.rauc.Installer",
-                                                       "Install",
-                                                       g_variant_new("(s)", bundleName.c_str()),
-                                                       NULL,
-                                                       G_DBUS_CALL_FLAGS_NONE,
-                                                       -1,
-                                                       NULL,
-                                                       &connectionError);
-
-        if(nullptr != result) {
-            g_variant_unref(result);
-        } else {
-            Logger::error("Install call to Rauc via DBus failed, code = {}, message = {}",
-                          connectionError->code,
-                          connectionError->message);
-
-            is_installing = false;
-            is_succeeded  = false;
-
-            return TechCode::InstallationFailed;
-        }
-
-        return TechCode::OK;
-    }
-
-    TechCode DBusRaucInstaller::installDBusRaucBundleWithArgs(const std::string& bundleName)
-    {
-        Logger::trace("DBusRaucInstaller::installDBusRaucBundleWithArgs");
+        Logger::trace("DBusRaucInstaller::callDBusRaucInstallBundle");
         GError*         connectionError = nullptr;
         GVariantBuilder argumentBuilder;
 
@@ -250,7 +234,6 @@ namespace sua {
 
     int32_t DBusRaucInstaller::getDBusRaucInstallProgress() const
     {
-        Logger::trace("Install progress");
         GError*   connectionError = nullptr;
         GVariant* progressInfo    = g_dbus_connection_call_sync(
             connection,
@@ -272,27 +255,59 @@ namespace sua {
             gchar*    message;
             g_variant_get(progressInfo, "(v)", &internalVal);
             g_variant_get(internalVal, "(isi)", &progressPercentage, &message, &nesting);
-            Logger::trace("Installing");
-            Logger::trace(" message             = {}", message);
-            Logger::trace(" progress percentage = {}", progressPercentage);
-            Logger::trace(" nesting             = {}", nesting);
+            Logger::trace("Rauc Installer progress: {}% ({}) {}", progressPercentage, nesting, message);
             g_variant_unref(progressInfo);
 
             // simple error detection
-            if (progressPercentage == 100 && 
+            if (progressPercentage == 100 &&
                 std::string(message) != "Installing done.") {
                 return -1;
             }
         } else {
-            Logger::error("Connection to DBus lost? code = {}, message = {}",
+            Logger::error("Connection to D-Bus lost? code = {}, message = {}",
                           connectionError->code,
                           connectionError->message);
         }
         return progressPercentage;
     }
 
+    std::string DBusRaucInstaller::getDBusRaucProperty(const gchar* propertyKey) const
+    {
+        GError*   connectionError = nullptr;
+        GVariant* operationInfo   = g_dbus_connection_call_sync(
+            connection,
+            "de.pengutronix.rauc",
+            "/",
+            "org.freedesktop.DBus.Properties",
+            "Get",
+            g_variant_new("(ss)", "de.pengutronix.rauc.Installer", propertyKey),
+            NULL,
+            G_DBUS_CALL_FLAGS_NONE,
+            -1,
+            NULL,
+            &connectionError);
+
+        std::string propertyValue;
+        if(nullptr != operationInfo) {
+            GVariant* internalVal;
+            gchar*    value;
+            g_variant_get(operationInfo, "(v)", &internalVal);
+            g_variant_get(internalVal, "s", &value);
+            g_variant_unref(operationInfo);
+            propertyValue = std::string(value);
+        }
+        else {
+            Logger::error("Connection to D-Bus lost? code = {}, message = {}",
+                          connectionError->code,
+                          connectionError->message);
+        }
+        Logger::trace("Rauc Installer property {} = {}", propertyKey, propertyValue);
+        return propertyValue;
+    }
+
     std::string DBusRaucInstaller::getDBusRaucBundleVersion() const
     {
+        Logger::trace("DBusRaucInstaller::getDBusRaucBundleVersion"); 
         std::string bundleVersion   = VERSION_UNAVAILABLE;
         GError*     connectionError = nullptr;
         GVariant*   slotStatus      = g_dbus_connection_call_sync(connection,
@@ -366,8 +381,8 @@ namespace sua {
 
     std::string DBusRaucInstaller::getDBusRaucBundleVersion(const std::string& input) const
     {
-        Logger::trace("getDBusRaucBundleVersion, input={}", input);
-        std::string bundleVersion   = "bundle_version_not_available";
+        Logger::trace("DBusRaucInstaller::getDBusRaucBundleVersion out of {}", input);
+        std::string bundleVersion   = VERSION_UNAVAILABLE;
         GError*     connectionError = nullptr;
         GVariant*   result          = g_dbus_connection_call_sync(connection,
                                                        "de.pengutronix.rauc",
@@ -382,53 +397,24 @@ namespace sua {
                                                        &connectionError);
 
         if(nullptr != result) {
-            Logger::trace("Retrieved the version data, processing...");
             gchar* compatible;
             gchar* version;
             g_variant_get(result, "(ss)", &compatible, &version);
             bundleVersion = std::string(version);
-            Logger::trace("Version of downloaded bundle: {}", bundleVersion);
             g_free(compatible);
             g_free(version);
         } else {
-            Logger::trace("Retrieval of bundle version was not succesfull, error {}",
-                         connectionError->message);
+            Logger::trace("Retrieval of bundle version was not succesfull, error = {}",
+                          connectionError->message);
         }
 
-        Logger::trace("Retrieved version of the incoming bundle is: " + bundleVersion);
+        Logger::trace("Retrieved version of the incoming bundle is: {}", bundleVersion);
         return bundleVersion;
     }
 
     std::string DBusRaucInstaller::getLastError()
     {
-        GError*   connectionError = nullptr;
-        GVariant* lastErrorInfo   = g_dbus_connection_call_sync(
-            connection,
-            "de.pengutronix.rauc",
-            "/",
-            "org.freedesktop.DBus.Properties",
-            "Get",
-            g_variant_new("(ss)", "de.pengutronix.rauc.Installer", "LastError"),
-            NULL,
-            G_DBUS_CALL_FLAGS_NONE,
-            -1,
-            NULL,
-            &connectionError);
-
-        std::string lastError;
-        if(nullptr != lastErrorInfo) {
-            GVariant* internalVal;
-            gchar*    message;
-            g_variant_get(lastErrorInfo, "(v)", &internalVal);
-            g_variant_get(internalVal, "s", &message);
-            g_variant_unref(lastErrorInfo);
-            lastError = message;
-        } else {
-            Logger::error("Connection to DBus lost? code = {}, message = {}",
-                          connectionError->code,
-                          connectionError->message);
-        }
-        return lastError;
+        return getDBusRaucProperty("LastError");
     }
 
     bool DBusRaucInstaller::installing()
@@ -447,9 +433,9 @@ namespace sua {
         is_succeeded = value;
     }
 
-    void DBusRaucInstaller::setFinished()
+    void DBusRaucInstaller::setInstalling(const bool value)
     {
-        is_installing = false;
+        is_installing = value;
     }
 
 } // namespace sua
