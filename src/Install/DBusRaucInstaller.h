@@ -1,4 +1,4 @@
-//    Copyright 2022 Contributors to the Eclipse Foundation
+//    Copyright 2023 Contributors to the Eclipse Foundation
 //
 //    Licensed under the Apache License, Version 2.0 (the "License");
 //    you may not use this file except in compliance with the License.
@@ -38,15 +38,15 @@ namespace sua {
         bool installing() override;
         bool succeeded() override;
 
-        void setFinished();
+        void setInstalling(bool value);
         void setSuccess(bool value);
 
     private:
         GDBusConnection* connection{nullptr};
         GMainLoop* loop{nullptr};
 
-        guint            _signalSubscriptionIdProperties;
-        guint            _signalSubscriptionIdCompleted;
+        guint            signalSubscriptionIdProperties;
+        guint            signalSubscriptionIdCompleted;
 
         std::atomic_bool is_installing;
         std::atomic_bool is_succeeded;
@@ -55,11 +55,9 @@ namespace sua {
         void        subscribeDBusSignals();
         void        unsubscribeDBusSignals();
 
-        TechCode    installDBusRaucBundle(const std::string& bundleName);
-        TechCode    installDBusRaucBundleWithArgs(const std::string& bundleName);
+        TechCode    callDBusRaucInstallBundle(const std::string& bundleName);
         int32_t     getDBusRaucInstallProgress() const;
-        bool        getDBusRaucInstallOperationIsInstalling() const;
-        std::string getDBusRaucLastError() const;
+        std::string getDBusRaucProperty(const gchar* propertyKey) const;
         std::string getDBusRaucBundleVersion() const;
         std::string getDBusRaucBundleVersion(const std::string& input) const;
     };

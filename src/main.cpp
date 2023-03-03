@@ -1,4 +1,4 @@
-//    Copyright 2022 Contributors to the Eclipse Foundation
+//    Copyright 2023 Contributors to the Eclipse Foundation
 //
 //    Licensed under the Apache License, Version 2.0 (the "License");
 //    you may not use this file except in compliance with the License.
@@ -46,7 +46,7 @@ Options:
 -a, --api       use 'k8s' or 'bfb' format for mqtt communication (default is 'bfb')
 -i, --installer set install method 'download' to download update bundles and let Rauc install them,
                 'stream' to let Rauc install bundles directly from HTTP-server,
-                or 'dummy' for neither download nor installation (default is 'stream')
+                or 'dummy' for neither download nor installation (default is 'download')
 -p, --path      path where downloaded update bundles will be stored (default is '/data/selfupdates')
 -s, --server    MQTT broker server to connect (default is 'tcp://mosquitto:1883')
                 (has precedence over SUA_SERVER environment variable)
@@ -57,7 +57,7 @@ int main(int argc, char* argv[])
 {
     std::string server{"tcp://mosquitto:1883"};
     std::string api{"bfb"};
-    std::string installer{"stream"};
+    std::string installer{"download"};
     std::string hostPathToSelfupdateDir{"/data/selfupdates"};
 
     const char * env_server = std::getenv("SUA_SERVER");
@@ -160,8 +160,13 @@ int main(int argc, char* argv[])
     }
 
     if((api != "k8s") && (api != "bfb")) {
-        std::cout << "Unsupported api '" << api << "', valid are 'k8s' and 'bfb' only."
-                  << std::endl;
+        std::cout << "Unsupported api '" << api << "', valid are 'k8s' and 'bfb' only." << std::endl;
+        failure_detected = true;
+    }
+
+    if((installer != "download") && (installer != "stream") && (installer != "dummy")) {
+        std::cout << "Unsupported installer '" << installer
+                  << "', valid are 'download', 'stream' and 'dummy' only." << std::endl;
         failure_detected = true;
     }
 
@@ -172,7 +177,6 @@ int main(int argc, char* argv[])
     sua::Logger::instance().init();
     sua::Logger::instance().setLogLevel(sua::Logger::Level::All);
     sua::Logger::info("SelfUpdateAgent started");
-    sua::Logger::info("Path to selfupdates directory = {}", hostPathToSelfupdateDir);
 
     std::shared_ptr<sua::IMqttMessagingProtocol> protocol;
     if(api == "k8s") {
@@ -182,7 +186,7 @@ int main(int argc, char* argv[])
     }
 
     std::shared_ptr<sua::IRaucInstaller> installerAgent;
-    bool downloadMode = false;
+    bool downloadMode = true;
     if(installer == "download") {
         installerAgent = std::make_shared<sua::DBusRaucInstaller>();
         downloadMode = true;
