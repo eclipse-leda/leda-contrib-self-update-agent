@@ -43,18 +43,11 @@ namespace sua {
 
         int32_t        progressPercentage          = 0;
         int32_t        progressNotificationLimiter = 0;
-        uint32_t       waitingCount                = 0;
+        uint32_t       waitingCount                = 0;        // [sec]
         const uint32_t waitingTimeout              = 15 * 60;  // [sec]
 
         while(_installerAgent->installing()) {
             progressPercentage = _installerAgent->getInstallProgress();
-            if (progressPercentage < 0) {
-                std::string lastError = _installerAgent->getLastError();
-                if (!lastError.empty()) {
-                    Logger::error("LastError: {}", lastError);
-                }
-                return TechCode::InstallationFailed;
-            }
 
             if(progressPercentage >= progressNotificationLimiter) {
                 if(progressPercentage != 100) {
@@ -70,8 +63,10 @@ namespace sua {
                 return TechCode::InstallationFailed;
             }
 
-            std::this_thread::sleep_for(2000ms);
-            waitingCount += 2;
+            if(progressPercentage < 100) {
+                std::this_thread::sleep_for(2000ms);
+                waitingCount += 2;
+            }
         }
 
         if(_installerAgent->succeeded()) {

@@ -56,7 +56,7 @@ namespace sua {
         void        unsubscribeDBusSignals();
 
         TechCode    callDBusRaucInstallBundle(const std::string& bundleName);
-        int32_t     getDBusRaucInstallProgress() const;
+        int32_t     getDBusRaucInstallProgress();
         std::string getDBusRaucProperty(const gchar* propertyKey) const;
         std::string getDBusRaucBundleVersion() const;
         std::string getDBusRaucBundleVersion(const std::string& input) const;
