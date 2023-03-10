@@ -78,7 +78,21 @@ namespace sua {
                             installer->setInstalling(true);
                         }
                     }
-                    else if(!g_strcmp0(key, "LastError")) {
+                    else if(!g_strcmp0(key, "Compatible")) {
+                        const gchar *message;
+                        g_variant_get(value, "s", &message);
+                        Logger::trace("Rauc signals {}: {}", key, message);
+
+                        DBusRaucInstaller* installer = (DBusRaucInstaller*)user_data;
+                        if(installer->installing()) {
+                            Logger::error("Rauc service was re-started, installation failed");
+                            installer->setSuccess(false);
+                            installer->setInstalling(false);
+                        }
+                    }
+                    else if(!g_strcmp0(key, "LastError") ||
+                            !g_strcmp0(key, "Variant")   ||
+                            !g_strcmp0(key, "BootSlot")    ) {
                         const gchar *message;
                         g_variant_get(value, "s", &message);
                         Logger::trace("Rauc signals {}: {}", key, message);
@@ -90,7 +104,9 @@ namespace sua {
                         g_variant_get(value, "(isi)", &progressPercentage, &message, &nesting);
                         Logger::trace("Rauc signals {}: {}% ({}) {}", key, progressPercentage, nesting, message);
                     }
-                    // ignore other properties
+                    else {
+                        Logger::trace("Rauc signals {}", key);
+                    }
 
                     g_variant_unref(value);
                 }
@@ -232,7 +248,7 @@ namespace sua {
         return TechCode::OK;
     }
 
-    int32_t DBusRaucInstaller::getDBusRaucInstallProgress() const
+    int32_t DBusRaucInstaller::getDBusRaucInstallProgress()
     {
         GError*   connectionError = nullptr;
         GVariant* progressInfo    = g_dbus_connection_call_sync(
@@ -258,10 +274,10 @@ namespace sua {
             Logger::trace("Rauc Installer progress: {}% ({}) {}", progressPercentage, nesting, message);
             g_variant_unref(progressInfo);
 
-            // simple error detection
-            if (progressPercentage == 100 &&
-                std::string(message) != "Installing done.") {
-                return -1;
+            // Installing failed?
+            if(progressPercentage == 100 && g_strcmp0(message, "Installing done.")) {
+                setSuccess(false);
+                setInstalling(false);
             }
         } else {
             Logger::error("Connection to D-Bus lost? code = {}, message = {}",
@@ -414,7 +430,12 @@ namespace sua {
 
     std::string DBusRaucInstaller::getLastError()
     {
-        return getDBusRaucProperty("LastError");
+        std::string errorMessage{getDBusRaucProperty("LastError")};
+        if (errorMessage.empty())
+        {
+            errorMessage = "Unexpected no-error-status of RAUC";
+        }
+        return errorMessage;
     }
 
     bool DBusRaucInstaller::installing()
