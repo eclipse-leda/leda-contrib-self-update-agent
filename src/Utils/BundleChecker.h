@@ -1,4 +1,4 @@
-//    Copyright 2022 Contributors to the Eclipse Foundation
+//    Copyright 2023 Contributors to the Eclipse Foundation
 //
 //    Licensed under the Apache License, Version 2.0 (the "License");
 //    you may not use this file except in compliance with the License.
@@ -23,7 +23,7 @@ namespace sua {
 
     class BundleChecker : public IBundleChecker {
     public:
-        bool isUpdateBundleVersionDifferent(const std::string &             updateBundleVer,
+        bool isUpdateBundleVersionDifferent(const std::string &             updateBundleVersion,
                                             std::shared_ptr<IRaucInstaller> installer) override;
 
         bool isBundleVersionConsistent(const std::string &             declaredVersion,

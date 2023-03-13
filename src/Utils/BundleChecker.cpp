@@ -19,23 +19,27 @@
 
 namespace sua {
 
-    bool
-    BundleChecker::isUpdateBundleVersionDifferent(const std::string & updateBundleVer,
-                                                  std::shared_ptr<IRaucInstaller> installer)
+    bool BundleChecker::isUpdateBundleVersionDifferent(const std::string & updateBundleVersion,
+                                                       std::shared_ptr<IRaucInstaller> installer)
     {
-        return updateBundleVer != installer->getBundleVersion();
+        std::string slotVersion = installer->getBundleVersion();
+
+        Logger::info("Bundle version (slot): '{}'", slotVersion);
+        Logger::info("Bundle version (file): '{}'", updateBundleVersion);
+
+        return slotVersion != updateBundleVersion;
     }
 
     bool BundleChecker::isBundleVersionConsistent(const std::string & declaredVersion,
                                                   std::shared_ptr<IRaucInstaller> installer,
-                                                  const std::string &             bundlePath)
+                                                  const std::string & bundlePath)
     {
-        std::string fileVersion = installer->getBundleVersion(bundlePath);
+        std::string updateBundleVersion = installer->getBundleVersion(bundlePath);
 
         Logger::info("Bundle version (spec): '{}'", declaredVersion);
-        Logger::info("Bundle version (file): '{}'", fileVersion);
+        Logger::info("Bundle version (file): '{}'", updateBundleVersion);
 
-        return declaredVersion == fileVersion;
+        return declaredVersion == updateBundleVersion;
     }
 
 } // namespace sua

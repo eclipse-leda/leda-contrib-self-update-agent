@@ -1,4 +1,4 @@
-//    Copyright 2022 Contributors to the Eclipse Foundation
+//    Copyright 2023 Contributors to the Eclipse Foundation
 //
 //    Licensed under the Apache License, Version 2.0 (the "License");
 //    you may not use this file except in compliance with the License.
@@ -110,7 +110,7 @@ namespace {
             const auto message = msg->get_payload_str();
             const auto topic   = msg->get_topic();
 
-            sua::Logger::trace("Received fequest, topic={}", topic);
+            sua::Logger::trace("Received request, topic={}", topic);
 
             try {
                 if(topic == sua::IMqttProcessor::TOPIC_START) {

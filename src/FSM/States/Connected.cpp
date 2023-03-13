@@ -37,13 +37,13 @@ namespace sua {
 
     FotaEvent Connected::body(Context& ctx)
     {
-        Logger::info("Bundle version (slot): '{}'", ctx.currentState.version);
-        Logger::info("Bundle version (spec): '{}'", ctx.desiredState.bundleVersion);
+        Logger::info("Bundle version (last): '{}'", ctx.currentState.version);
+
         send(ctx, IMqttProcessor::TOPIC_FEEDBACK, "identifying");
 
         if(ctx.bundleChecker->isUpdateBundleVersionDifferent(ctx.desiredState.bundleVersion,
                                                              ctx.installerAgent)) {
-            Logger::info("Bundle and system versions differ");
+            Logger::info("Bundle file and slot versions differ.");
             send(ctx, IMqttProcessor::TOPIC_FEEDBACK, "identified");
             return FotaEvent::BundleVersionOK;
         }

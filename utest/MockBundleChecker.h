@@ -1,4 +1,4 @@
-//    Copyright 2022 Contributors to the Eclipse Foundation
+//    Copyright 2023 Contributors to the Eclipse Foundation
 //
 //    Licensed under the Apache License, Version 2.0 (the "License");
 //    you may not use this file except in compliance with the License.
@@ -25,7 +25,7 @@
 class MockBundleChecker : public sua::IBundleChecker {
 public:
     MOCK_METHOD(bool, isUpdateBundleVersionDifferent,
-        (const std::string & updateBundleVer, std::shared_ptr<sua::IRaucInstaller> installer), (override));
+        (const std::string & updateBundleVersion, std::shared_ptr<sua::IRaucInstaller> installer), (override));
 };
 
 #endif

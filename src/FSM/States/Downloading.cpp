@@ -58,10 +58,6 @@ namespace sua {
                 const std::string pathDownloadedFile = ctx.updatesDirectory + "/temp_file";
                 Logger::trace("Downloaded bundle file should exist now as '{}'", pathDownloadedFile);
 
-                const auto bundleVersion = ctx.installerAgent->getBundleVersion(ctx.updatesDirectory + "/temp_file");
-                Logger::info("Bundle version (spec): '{}'", ctx.desiredState.bundleVersion);
-                Logger::info("Bundle version (file): '{}'", bundleVersion);
-
                 if(ctx.bundleChecker->isBundleVersionConsistent(
                     ctx.desiredState.bundleVersion, ctx.installerAgent, pathDownloadedFile)) {
                     Logger::info("Downloaded bundle version matches spec.");
