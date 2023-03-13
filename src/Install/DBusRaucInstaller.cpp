@@ -159,7 +159,12 @@ namespace sua {
 
     std::string DBusRaucInstaller::getBundleVersion()
     {
-        return getDBusRaucBundleVersion();
+        std::string bundleVersion = getDBusRaucBundleVersion();
+
+        if(bundleVersion == VERSION_UNAVAILABLE) {
+            bundleVersion = getOsVersionId();
+        }
+        return bundleVersion;
     }
 
     std::string DBusRaucInstaller::getBundleVersion(const std::string& input)
@@ -367,32 +372,36 @@ namespace sua {
             g_variant_unref(slotDict);
             g_variant_unref(slotStatus);
         }
+        return bundleVersion;
+    }
 
-        if(bundleVersion == VERSION_UNAVAILABLE) {
-            std::ifstream f("/etc/os-release");
-            if(f) {
-                std::string keyValue;
+    std::string DBusRaucInstaller::getOsVersionId() const
+    {
+        Logger::trace("DBusRaucInstaller::getOsVersionId");
+        std::string versionId = VERSION_UNAVAILABLE;
+        std::ifstream file("/etc/os-release");
+        if(file) {
+            std::string keyValue;
 
-                while(std::getline(f, keyValue)) {
-                    std::stringstream ss(keyValue);
+            while(std::getline(file, keyValue)) {
+                std::stringstream ss(keyValue);
 
-                    std::string key;
-                    std::getline(ss, key, '=');
+                std::string key;
+                std::getline(ss, key, '=');
 
-                    if(key == "VERSION_ID") {
-                        std::string value;
-                        std::getline(ss, value, '=');
-                        value.erase(std::remove(value.begin(), value.end(), '"'), value.end());
-                        if(!value.empty()) {
-                            bundleVersion = value;
-                            break;
-                        }
+                if(key == "VERSION_ID") {
+                    std::string value;
+                    std::getline(ss, value, '=');
+                    value.erase(std::remove(value.begin(), value.end(), '"'), value.end());
+                    if(!value.empty()) {
+                        versionId = value;
+                        break;
                     }
                 }
             }
         }
 
-        return bundleVersion;
+        return versionId;
     }
 
     std::string DBusRaucInstaller::getDBusRaucBundleVersion(const std::string& input) const
