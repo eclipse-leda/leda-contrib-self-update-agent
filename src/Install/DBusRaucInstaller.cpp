@@ -160,6 +160,7 @@ namespace sua {
     std::string DBusRaucInstaller::getBundleVersion()
     {
         std::string bundleVersion = getDBusRaucBundleVersion();
+        g_main_context_iteration(g_main_loop_get_context(loop), FALSE);
 
         if(bundleVersion == VERSION_UNAVAILABLE) {
             bundleVersion = getOsVersionId();
@@ -169,7 +170,10 @@ namespace sua {
 
     std::string DBusRaucInstaller::getBundleVersion(const std::string& input)
     {
-        return getDBusRaucBundleVersion(input);
+        std::string bundleVersion = getDBusRaucBundleVersion(input);
+        g_main_context_iteration(g_main_loop_get_context(loop), FALSE);
+
+        return bundleVersion;
     }
 
     void DBusRaucInstaller::subscribeDBusSignals()
@@ -439,7 +443,7 @@ namespace sua {
                           connectionError->message);
         }
 
-        Logger::trace("Retrieved version of the incoming bundle is: {}", bundleVersion);
+        Logger::trace("Retrieved version of the incoming bundle is: '{}'", bundleVersion);
         return bundleVersion;
     }
 
