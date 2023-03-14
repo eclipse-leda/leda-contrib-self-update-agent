@@ -279,10 +279,16 @@ namespace sua {
             Logger::trace("Rauc Installer progress: {}% ({}) {}", progressPercentage, nesting, message);
             g_variant_unref(progressInfo);
 
-            // Installing failed?
-            if(progressPercentage == 100 && g_strcmp0(message, "Installing done.")) {
-                setSuccess(false);
-                setInstalling(false);
+            if(progressPercentage == 100 && nesting == 1) {
+                if(!g_strcmp0(message, "Checking bundle done.")) {
+                    // ignore a rare previous 100% progress before this installation started
+                    progressPercentage = 0;
+                }
+                else if(g_strcmp0(message, "Installing done.")) {
+                    // Installing failed.
+                    setSuccess(false);
+                    setInstalling(false);
+                }
             }
         } else {
             Logger::error("Connection to D-Bus lost? code = {}, message = {}",
