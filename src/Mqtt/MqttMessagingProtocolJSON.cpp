@@ -209,6 +209,13 @@ namespace sua {
                 message, ctx.desiredState.installProgressPercentage);
         }
 
+        if(name == "installFailedFallback") {
+            return writeFeedbackWithPayload(ctx.desiredState,
+                "RUNNING", "Self-update agent is performing an OS image update.",
+                "UPDATING", "Install in streaming mode failed, trying in download mode.",
+                message, 0);
+        }
+
         if(name == "currentState") {
             return "";
         }

@@ -301,6 +301,31 @@ namespace {
         EXPECT_EQ_MULTILINE(result, expected);
     }
 
+    TEST_F(TestMessagingProtocolYAML, createMessage_installFailedFallback)
+    {
+        const std::string result = sua::MqttMessagingProtocolYAML().createMessage(ctx, "installFailedFallback");
+
+        // clang-format off
+        const std::string expected = R"(
+            apiVersion: sdv.eclipse.org/v1
+            kind: SelfUpdateBundle
+            metadata:
+                name: "self-update-bundle-example"
+            spec:
+                bundleDownloadUrl: "http://url"
+                bundleName: "arm64-bundle"
+                bundleTarget: base
+                bundleVersion: 1.0
+            state:
+                message: "Stream install failed, trying download mode"
+                name: failed
+                techCode: 3001
+        )";
+        // clang-format on
+
+        EXPECT_EQ_MULTILINE(result, expected);
+    }
+
     TEST_F(TestMessagingProtocolYAML, createMessage_updateRejected)
     {
         const std::string result = sua::MqttMessagingProtocolYAML().createMessage(ctx, "rejected");

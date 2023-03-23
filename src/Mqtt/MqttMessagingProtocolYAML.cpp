@@ -178,6 +178,14 @@ namespace sua {
             return serialized(base(ctx.desiredState, state));
         }
 
+        if(name == "installFailedFallback") {
+            std::map<std::string, std::string> state;
+            state["state/name"    ] = "failed";
+            state["state/message" ] = "Stream install failed, trying download mode";
+            state["state/techCode"] = "3001";
+            return serialized(base(ctx.desiredState, state));
+        }
+
         if(name == "rejected") {
             std::map<std::string, std::string> state;
             state["state/name"    ] = "failed";

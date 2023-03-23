@@ -68,6 +68,7 @@ namespace sua {
             { FotaEvent::ConnectivityLost       , "Installing"      , "Uninitialized"   },
             { FotaEvent::InstallStart           , "Installing"      , "Installed"        , FotaEvent::InstallCompleted          },
             { FotaEvent::InstallStart           , "Installing"      , "Failed"           , FotaEvent::InstallFailed             },
+            { FotaEvent::InstallStart           , "Installing"      , "Downloading"      , FotaEvent::InstallFailedFallback     },
             // from "Installed"
             { FotaEvent::ConnectivityLost       , "Installed"       , "Uninitialized"   },
             { FotaEvent::Waiting                , "Installed"       , "Idle"            },

@@ -63,8 +63,18 @@ namespace sua {
 
         const auto lastError = ctx.installerAgent->getLastError();
         Logger::error("Installation failed: {}", lastError);
-        send(ctx, IMqttProcessor::TOPIC_FEEDBACK, "installFailed", lastError);
-        return FotaEvent::InstallFailed;
+
+        // for download mode transit to fail state
+        if (true == ctx.downloadMode) {
+            send(ctx, IMqttProcessor::TOPIC_FEEDBACK, "installFailed", lastError);
+            return FotaEvent::InstallFailed;
+        }
+
+        // for stream mode start again in download mode
+        Logger::info("Trying normal download mode as fallback");
+        send(ctx, IMqttProcessor::TOPIC_FEEDBACK, "installFailedFallback", lastError);
+        ctx.downloadMode = true;
+        return FotaEvent::InstallFailedFallback;
     }
 
 } // namespace sua
