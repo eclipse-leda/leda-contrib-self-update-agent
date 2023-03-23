@@ -196,6 +196,7 @@ int main(int argc, char* argv[])
         downloadMode = false;
     } else {
         installerAgent = std::make_shared<sua::DummyRaucInstaller>();
+        downloadMode = true;
     }
 
     // Depending on testing scenario, localhost or ip address of mosquitto container shall be used.

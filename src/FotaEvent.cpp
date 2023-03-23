@@ -36,7 +36,8 @@ namespace sua {
             { DownloadFailed            , "DownloadFailed"            },
             { InstallStart              , "InstallStart"              },
             { InstallCompleted          , "InstallCompleted"          },
-            { InstallFailed             , "InstallFailed"             }
+            { InstallFailed             , "InstallFailed"             },
+            { InstallFailedFallback     , "InstallFailedFallback"     }
         };
         // clang-format on
 

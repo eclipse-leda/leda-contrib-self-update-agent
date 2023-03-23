@@ -721,6 +721,41 @@ namespace {
         EXPECT_EQ_MULTILINE(result, expected);
     }
 
+    TEST_F(TestMessagingProtocolJSON, createMessage_installFailedFallback)
+    {
+        d.installProgressPercentage = 66;
+
+        const std::string result = ProtocolJSON().createMessage(ctx, "installFailedFallback");
+
+        // clang-format off
+        const std::string expected = R"(
+            {
+                "activityId": "id",
+                "timestamp": 42,
+                "payload": {
+                    "status": "RUNNING",
+                    "message": "Self-update agent is performing an OS image update.",
+                    "actions": [
+                        {
+                            "component": {
+                                "id": "self-update:os-image",
+                                "version": "1.0"
+                            },
+                            "status": "UPDATING",
+                            "progress": 0,
+                            "message": "Install in streaming mode failed, trying in download mode."
+                        }
+                    ]
+                }
+            }
+        )";
+        // clang-format on
+
+        EXPECT_NO_THROW(validateJsonSyntax(expected));
+        EXPECT_NO_THROW(validateJsonSyntax(result));
+        EXPECT_EQ_MULTILINE(result, expected);
+    }
+
     TEST_F(TestMessagingProtocolJSON, createMessage_currentState)
     {
         const std::string result = ProtocolJSON().createMessage(ctx, "currentState");

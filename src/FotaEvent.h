@@ -35,6 +35,7 @@ namespace sua {
         InstallStart,
         InstallCompleted,
         InstallFailed,
+        InstallFailedFallback,
         NotUsed,
     };
 
