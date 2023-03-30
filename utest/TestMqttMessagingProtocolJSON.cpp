@@ -723,8 +723,6 @@ namespace {
 
     TEST_F(TestMessagingProtocolJSON, createMessage_installFailedFallback)
     {
-        d.installProgressPercentage = 66;
-
         const std::string result = ProtocolJSON().createMessage(ctx, "installFailedFallback");
 
         // clang-format off

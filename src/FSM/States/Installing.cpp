@@ -58,6 +58,12 @@ namespace sua {
         if(result == TechCode::OK) {
             Logger::info("Installation completed");
             send(ctx, IMqttProcessor::TOPIC_FEEDBACK, "installed");
+
+            if(ctx.fallbackMode) {
+                ctx.downloadMode = false;
+                ctx.fallbackMode = false;
+            }
+
             return FotaEvent::InstallCompleted;
         }
 
@@ -67,6 +73,12 @@ namespace sua {
         // for download mode transit to fail state
         if (true == ctx.downloadMode) {
             send(ctx, IMqttProcessor::TOPIC_FEEDBACK, "installFailed", lastError);
+
+            if(ctx.fallbackMode) {
+                ctx.downloadMode = false;
+                ctx.fallbackMode = false;
+            }
+
             return FotaEvent::InstallFailed;
         }
 
@@ -74,6 +86,7 @@ namespace sua {
         Logger::info("Trying normal download mode as fallback");
         send(ctx, IMqttProcessor::TOPIC_FEEDBACK, "installFailedFallback", lastError);
         ctx.downloadMode = true;
+        ctx.fallbackMode = true;
         return FotaEvent::InstallFailedFallback;
     }
 

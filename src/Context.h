@@ -54,6 +54,7 @@ namespace sua {
         std::shared_ptr<IBundleChecker>         bundleChecker;
         std::string                             updatesDirectory = "/data/selfupdates";
         bool                                    downloadMode = true;
+        bool                                    fallbackMode = false;
 
         DesiredState desiredState;
         CurrentState currentState;
