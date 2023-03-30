@@ -21,7 +21,6 @@ namespace {
     class TestSelfUpdateScenarios : public ::testing::Test {
     public:
         TestSelfUpdateScenarios() {
-
         }
 
         TestSelfUpdateScenarios & test() {
@@ -127,6 +126,10 @@ namespace {
         }
 
         void SetUp() override {
+            if(WEXITSTATUS(std::system("systemctl status mosquitto > /dev/null")) != 0) {
+                FAIL() << "mosquitto service is not running on this machine!";
+            }
+
             sua::Logger::instance().setLogLevel(sua::Logger::Level::None);
 
             downloader = std::make_shared<MockDownloader>();
