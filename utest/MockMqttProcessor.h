@@ -17,15 +17,21 @@
 #ifndef SDV_SUA_MOCKMQTTPROCESSOR_H
 #define SDV_SUA_MOCKMQTTPROCESSOR_H
 
-#include "Mqtt/IMqttProcessor.h"
+#include "Mqtt/MqttProcessor.h"
 
 #include "gmock/gmock.h"
 
-class MockMqttProcessor : public sua::IMqttProcessor {
+class MockMqttProcessor : public sua::MqttProcessor {
 public:
-    MOCK_METHOD(void, start, (), (override));
-    MOCK_METHOD(void, stop, (), (override));
-    MOCK_METHOD(void, send, (const std::string& topic, const std::string& content, bool retained), (override));
+    MockMqttProcessor(class sua::Context& context)
+        : sua::MqttProcessor::MqttProcessor(context)
+    { }
+
+    MOCK_METHOD(void, send, (const std::string& topic, const std::string& messageName, const std::string& message, bool retained), (override));
+
+    void native_send(const std::string& topic, const std::string& messageName, const std::string& message, bool retained) {
+        sua::MqttProcessor::send(topic, messageName, message, retained);
+    }
 };
 
 #endif

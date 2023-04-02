@@ -26,13 +26,14 @@ namespace sua {
 
     class MqttProcessor : public IMqttProcessor {
     public:
-        MqttProcessor(const class MqttConfiguration & configuration, class Context & context);
+        MqttProcessor(class Context & context);
         ~MqttProcessor() = default;
 
-        void start() override;
+        void start(const MqttConfiguration & configuration) override;
         void stop() override;
 
-        void send(const std::string& topic, const std::string& content, bool retained = false) override;
+        //void send(const std::string& topic, const std::string& content, bool retained = false) override;
+        void send(const std::string& topic, const std::string& messageName, const std::string& message = "", bool retained = false) override;
 
     private:
         Context & _context;

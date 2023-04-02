@@ -151,14 +151,15 @@ namespace {
 
 namespace sua {
 
-    MqttProcessor::MqttProcessor(const MqttConfiguration & configuration, Context & context)
+    MqttProcessor::MqttProcessor(Context & context)
         : _context(context)
-        , _config(configuration)
-        , _client(configuration.brokerHost, _clientId)
+        , _client("", _clientId)
     { }
 
-    void MqttProcessor::start()
+    void MqttProcessor::start(const MqttConfiguration & configuration)
     {
+        _config = configuration;
+
         Logger::info("MQTT broker address: '{}:{}'", _config.brokerHost, _config.brokerPort);
 
         static mqtt::connect_options options;
@@ -198,16 +199,14 @@ namespace sua {
         }
     }
 
-    void MqttProcessor::send(const std::string& topic, const std::string& content, bool retained)
+    void MqttProcessor::send(const std::string& topic, const std::string& messageName, const std::string& message, bool retained)
     {
-        if(content.empty()) {
-            return;
-        }
+        const auto content = _context.messagingProtocol->createMessage(_context, messageName, message);
 
-        auto message = mqtt::make_message(topic, content);
-        message->set_qos(QUALITY);
-        message->set_retained(retained);
-        _client.publish(message);
+        auto mqtt_message = mqtt::make_message(topic, content);
+        mqtt_message->set_qos(QUALITY);
+        mqtt_message->set_retained(retained);
+        _client.publish(mqtt_message);
 
         if(!_client.is_connected() || !_client.get_pending_delivery_tokens().empty()) {
             _client.reconnect();

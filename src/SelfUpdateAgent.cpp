@@ -93,8 +93,7 @@ namespace sua {
         assert(_context.messagingProtocol != nullptr);
         assert(_context.bundleChecker     != nullptr);
 
-        _context.mqttProcessor = std::make_shared<MqttProcessor>(config, _context);
-        _context.mqttProcessor->start();
+        _context.mqttProcessor->start(config);
     }
 
     Context& SelfUpdateAgent::context()

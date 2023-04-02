@@ -20,6 +20,7 @@
 #include "Mqtt/MqttMessagingProtocolJSON.h"
 #include "Mqtt/MqttMessagingProtocolYAML.h"
 #include "Mqtt/MqttConfiguration.h"
+#include "Mqtt/MqttProcessor.h"
 #include "Utils/BundleChecker.h"
 #include "Utils/ServerAddressParser.h"
 #include "SelfUpdateAgent.h"
@@ -213,6 +214,7 @@ int main(int argc, char* argv[])
     ctx.messagingProtocol = protocol;
     ctx.updatesDirectory  = hostPathToSelfupdateDir;
     ctx.bundleChecker     = std::make_shared<sua::BundleChecker>();
+    ctx.mqttProcessor     = std::make_shared<sua::MqttProcessor>(ctx);
 
     sua::Logger::info("SUA build number       : '{}'", SUA_BUILD_NUMBER );
     sua::Logger::info("SUA commit hash        : '{}'", SUA_COMMIT_HASH  );

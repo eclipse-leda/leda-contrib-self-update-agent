@@ -30,10 +30,11 @@ namespace sua {
 
         virtual ~IMqttProcessor() = default;
 
-        virtual void start() = 0;
+        virtual void start(const class MqttConfiguration & configuration) = 0;
         virtual void stop() = 0;
 
-        virtual void send(const std::string& topic, const std::string& content, bool retained = false) = 0;
+        //virtual void send(const std::string& topic, const std::string& content, bool retained = false) = 0;
+        virtual void send(const std::string& topic, const std::string& messageName, const std::string& message = "", bool retained = false) = 0;
     };
 
 } // namespace sua
