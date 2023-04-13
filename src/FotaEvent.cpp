@@ -27,7 +27,7 @@ namespace sua {
             { Waiting                   , "Waiting"                   },
             { ConnectivityEstablished   , "ConnectivityEstablished"   },
             { ConnectivityLost          , "ConnectivityLost"          },
-            { Start                     , "Start"                     },
+            { Identify                  , "Identify"                  },
             { GetCurrentState           , "GetCurrentState"           },
             { BundleVersionOK           , "BundleVersionOK"           },
             { BundleVersionUnchanged    , "BundleVersionUnchanged"    },
@@ -37,7 +37,10 @@ namespace sua {
             { InstallStart              , "InstallStart"              },
             { InstallCompleted          , "InstallCompleted"          },
             { InstallFailed             , "InstallFailed"             },
-            { InstallFailedFallback     , "InstallFailedFallback"     }
+            { InstallFailedFallback     , "InstallFailedFallback"     },
+            { Activate                  , "Activate"                  },
+            { Cleanup                   , "Cleanup"                   },
+            { Rollback                  , "Rollback"                  }
         };
         // clang-format on
 

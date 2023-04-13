@@ -25,7 +25,7 @@ namespace sua {
         Waiting,
         ConnectivityEstablished,
         ConnectivityLost,
-        Start,
+        Identify,
         GetCurrentState,
         BundleVersionOK,
         BundleVersionUnchanged,
@@ -36,6 +36,9 @@ namespace sua {
         InstallCompleted,
         InstallFailed,
         InstallFailedFallback,
+        Activate,
+        Cleanup,
+        Rollback,
         NotUsed,
     };
 
