@@ -29,12 +29,15 @@ namespace sua {
         return TechCode::OK;
     }
 
+    int32_t DummyRaucInstaller::installProgressPollInterval() const
+    {
+        return 0;
+    }
+
     int32_t DummyRaucInstaller::getInstallProgress()
     {
-        static int progress = 0;
-        progress += 1;
-        progress = std::min(100, progress);
-        return progress;
+        _progress = std::min(100, _progress + 20);
+        return _progress;
     }
 
     std::string DummyRaucInstaller::getBundleVersion()
@@ -50,6 +53,16 @@ namespace sua {
     std::string DummyRaucInstaller::getLastError()
     {
         return "";
+    }
+
+    bool DummyRaucInstaller::installing()
+    {
+        return _progress != 100;
+    }
+
+    bool DummyRaucInstaller::succeeded()
+    {
+        return true;
     }
 
 } // namespace sua

@@ -30,6 +30,7 @@ namespace sua {
         ~DBusRaucInstaller();
 
         TechCode    installBundle(const std::string& input) override;
+        int32_t     installProgressPollInterval() const override;
         int32_t     getInstallProgress() override;
         std::string getBundleVersion() override;
         std::string getBundleVersion(const std::string& input) override;

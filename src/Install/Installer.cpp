@@ -64,7 +64,7 @@ namespace sua {
             }
 
             if(progressPercentage < 100) {
-                std::this_thread::sleep_for(2000ms);
+                std::this_thread::sleep_for(std::chrono::milliseconds(_installerAgent->installProgressPollInterval()));
                 waitingCount += 2;
             }
         }

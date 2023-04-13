@@ -28,13 +28,17 @@ namespace sua {
         ~DummyRaucInstaller();
 
         TechCode    installBundle(const std::string& input) override;
+        int32_t     installProgressPollInterval() const override;
         int32_t     getInstallProgress() override;
         std::string getBundleVersion() override;
         std::string getBundleVersion(const std::string& input) override;
         std::string getLastError() override;
 
-        bool installing() override { return false; }
-        bool succeeded() override { return false; }
+        bool installing() override;
+        bool succeeded() override;
+
+    private:
+        int _progress = 0;
     };
 
 } // namespace sua
