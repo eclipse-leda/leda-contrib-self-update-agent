@@ -766,4 +766,134 @@ namespace {
         EXPECT_THROW(ProtocolJSON().createMessage(ctx, "unknown"), std::logic_error);
     }
 
+    TEST_F(TestMessagingProtocolJSON, readCommand_DOWNLOAD)
+    {
+        // clang-format off
+        const std::string input = R"(
+            {
+                "activityId": "random-uuid-as-string",
+                "timestamp": 123456789,
+                "payload": {
+                    "baseline": "BASELINE NAME",
+                    "command": "DOWNLOAD"
+                }
+            }
+        )";
+        // clang-format on
+
+        EXPECT_NO_THROW(validateJsonSyntax(input));
+        const auto c = ProtocolJSON().readCommand(input);
+
+        EXPECT_EQ(c.activityId, "random-uuid-as-string");
+        EXPECT_EQ(c.command, sua::FotaEvent::DownloadStart);
+    }
+
+    TEST_F(TestMessagingProtocolJSON, readCommand_INSTALL)
+    {
+        // clang-format off
+        const std::string input = R"(
+            {
+                "activityId": "random-uuid-as-string",
+                "timestamp": 123456789,
+                "payload": {
+                    "baseline": "BASELINE NAME",
+                    "command": "INSTALL"
+                }
+            }
+        )";
+        // clang-format on
+
+        EXPECT_NO_THROW(validateJsonSyntax(input));
+        const auto c = ProtocolJSON().readCommand(input);
+
+        EXPECT_EQ(c.activityId, "random-uuid-as-string");
+        EXPECT_EQ(c.command, sua::FotaEvent::InstallStart);
+    }
+
+    TEST_F(TestMessagingProtocolJSON, readCommand_CLEANUP)
+    {
+        // clang-format off
+        const std::string input = R"(
+            {
+                "activityId": "random-uuid-as-string",
+                "timestamp": 123456789,
+                "payload": {
+                    "baseline": "BASELINE NAME",
+                    "command": "CLEANUP"
+                }
+            }
+        )";
+        // clang-format on
+
+        EXPECT_NO_THROW(validateJsonSyntax(input));
+        const auto c = ProtocolJSON().readCommand(input);
+
+        EXPECT_EQ(c.activityId, "random-uuid-as-string");
+        EXPECT_EQ(c.command, sua::FotaEvent::Cleanup);
+    }
+
+    TEST_F(TestMessagingProtocolJSON, readCommand_ACTIVATE)
+    {
+        // clang-format off
+        const std::string input = R"(
+            {
+                "activityId": "random-uuid-as-string",
+                "timestamp": 123456789,
+                "payload": {
+                    "baseline": "BASELINE NAME",
+                    "command": "ACTIVATE"
+                }
+            }
+        )";
+        // clang-format on
+
+        EXPECT_NO_THROW(validateJsonSyntax(input));
+        const auto c = ProtocolJSON().readCommand(input);
+
+        EXPECT_EQ(c.activityId, "random-uuid-as-string");
+        EXPECT_EQ(c.command, sua::FotaEvent::Activate);
+    }
+
+    // ROLLBACK
+    TEST_F(TestMessagingProtocolJSON, readCommand_ROLLBACK)
+    {
+        // clang-format off
+        const std::string input = R"(
+            {
+                "activityId": "random-uuid-as-string",
+                "timestamp": 123456789,
+                "payload": {
+                    "baseline": "BASELINE NAME",
+                    "command": "ROLLBACK"
+                }
+            }
+        )";
+        // clang-format on
+
+        EXPECT_NO_THROW(validateJsonSyntax(input));
+        const auto c = ProtocolJSON().readCommand(input);
+
+        EXPECT_EQ(c.activityId, "random-uuid-as-string");
+        EXPECT_EQ(c.command, sua::FotaEvent::Rollback);
+    }
+
+    TEST_F(TestMessagingProtocolJSON, readCommand_UNKNOWN_throwsRuntimeError)
+    {
+        // clang-format off
+        const std::string input = R"(
+            {
+                "activityId": "random-uuid-as-string",
+                "timestamp": 123456789,
+                "payload": {
+                    "baseline": "BASELINE NAME",
+                    "command": "UNKNOWN"
+                }
+            }
+        )";
+        // clang-format on
+
+        EXPECT_NO_THROW(validateJsonSyntax(input));
+        EXPECT_THROW(ProtocolJSON().readCommand(input), std::runtime_error);
+    }
+
 }

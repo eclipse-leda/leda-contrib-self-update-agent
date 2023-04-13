@@ -23,6 +23,8 @@ namespace sua {
     
     class MqttMessagingProtocolYAML : public IMqttMessagingProtocol {
     public:
+        Command readCommand(const std::string & input) override;
+
         DesiredState readDesiredState(const std::string & input) override;
 
         DesiredState readCurrentStateRequest(const std::string & input) override;

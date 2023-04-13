@@ -63,6 +63,11 @@ namespace {
 
 namespace sua {
 
+    Command MqttMessagingProtocolYAML::readCommand(const std::string & input)
+    {
+        return {};
+    }
+
     DesiredState MqttMessagingProtocolYAML::readDesiredState(const std::string & input)
     {
         Yaml::Node root;

@@ -60,6 +60,11 @@ namespace sua {
         CurrentState currentState;
     };
 
+    struct Command {
+        std::string activityId;
+        FotaEvent   command;
+    };
+
 } // namespace sua
 
 #endif

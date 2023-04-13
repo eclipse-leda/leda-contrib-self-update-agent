@@ -55,6 +55,35 @@ namespace sua {
         return std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch()).count();
     }
 
+    Command MqttMessagingProtocolJSON::readCommand(const std::string & input)
+    {
+        Command c;
+        std::stringstream ss(input);
+        nlohmann::json json = nlohmann::json::parse(ss);
+
+        c.activityId = json.at("activityId");
+        if(c.activityId.empty()) {
+            throw std::logic_error("mandatory field 'activityId' is empty");
+        }
+
+        const auto & command = json.at("payload").at("command");
+        if(command == "DOWNLOAD") {
+            c.command = FotaEvent::DownloadStart;
+        } else if(command == "INSTALL") {
+            c.command = FotaEvent::InstallStart;
+        } else if(command == "ACTIVATE") {
+            c.command = FotaEvent::Activate;
+        } else if(command == "CLEANUP") {
+            c.command = FotaEvent::Cleanup;
+        } else if(command == "ROLLBACK") {
+            c.command = FotaEvent::Rollback;
+        } else {
+            throw std::runtime_error(fmt::format("unknown command '{}'", command));
+        }
+
+        return c;
+    }
+
     DesiredState MqttMessagingProtocolJSON::readDesiredState(const std::string & input)
     {
         DesiredState s;
