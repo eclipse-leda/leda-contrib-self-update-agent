@@ -33,7 +33,10 @@ namespace sua {
         ctx.desiredState.downloadBytesTotal         = 0;
         ctx.desiredState.downloadBytesDownloaded    = 0;
         ctx.desiredState.downloadProgressPercentage = 0;
-        ctx.stateMachine->handleEvent(FotaEvent::DownloadStart);
+
+        if(ctx.fallbackMode) {
+            ctx.stateMachine->handleEvent(FotaEvent::DownloadStart);
+        }
     }
 
     FotaEvent Downloading::body(Context& ctx)

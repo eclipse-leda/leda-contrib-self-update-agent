@@ -30,7 +30,6 @@ namespace sua {
     void Installing::onEnter(Context& ctx)
     {
         ctx.desiredState.installProgressPercentage = 0;
-        ctx.stateMachine->handleEvent(FotaEvent::InstallStart);
     }
 
     FotaEvent Installing::body(Context& ctx)
