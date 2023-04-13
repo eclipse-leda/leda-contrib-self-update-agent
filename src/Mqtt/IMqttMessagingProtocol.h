@@ -25,6 +25,8 @@ namespace sua {
     public:
         virtual ~IMqttMessagingProtocol() = default;
 
+        virtual class Command readCommand(const std::string & input) = 0;
+
         virtual class DesiredState readDesiredState(const std::string & input) = 0;
 
         virtual class DesiredState readCurrentStateRequest(const std::string & input) = 0;

@@ -23,7 +23,8 @@ namespace sua {
 
     class IMqttProcessor {
     public:
-        static constexpr const char * TOPIC_START     = "selfupdate/desiredstate";
+        static constexpr const char * TOPIC_IDENTIFY  = "selfupdate/desiredstate";
+        static constexpr const char * TOPIC_COMMAND   = "selfupdate/desiredstate/command";
         static constexpr const char * TOPIC_FEEDBACK  = "selfupdate/desiredstatefeedback";
         static constexpr const char * TOPIC_STATE     = "selfupdate/currentstate";
         static constexpr const char * TOPIC_STATE_GET = "selfupdate/currentstate/get";

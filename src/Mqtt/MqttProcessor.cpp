@@ -88,8 +88,9 @@ namespace {
         void connected(const std::string& cause) override
         {
             sua::Logger::trace("MqttCallback::connected");
-            _mqttClient.subscribe(sua::IMqttProcessor::TOPIC_START, QUALITY, nullptr, _actionListener);
+            _mqttClient.subscribe(sua::IMqttProcessor::TOPIC_IDENTIFY, QUALITY, nullptr, _actionListener);
             _mqttClient.subscribe(sua::IMqttProcessor::TOPIC_STATE_GET, QUALITY, nullptr, _actionListener);
+            _mqttClient.subscribe(sua::IMqttProcessor::TOPIC_COMMAND, QUALITY, nullptr, _actionListener);
             _context.stateMachine->handleEvent(sua::FotaEvent::ConnectivityEstablished);
         }
 
@@ -113,12 +114,16 @@ namespace {
             sua::Logger::trace("Received request, topic={}", topic);
 
             try {
-                if(topic == sua::IMqttProcessor::TOPIC_START) {
+                if(topic == sua::IMqttProcessor::TOPIC_IDENTIFY) {
                     ctx.desiredState = proto->readDesiredState(message);
-                    ctx.stateMachine->handleEvent(sua::FotaEvent::Start);
+                    ctx.stateMachine->handleEvent(sua::FotaEvent::Identify);
                 } if(topic == sua::IMqttProcessor::TOPIC_STATE_GET) {
                     ctx.desiredState = proto->readCurrentStateRequest(message);
                     ctx.stateMachine->handleEvent(sua::FotaEvent::GetCurrentState);
+                } if(topic == sua::IMqttProcessor::TOPIC_COMMAND) {
+                    sua::Command c = proto->readCommand(message);
+                    ctx.desiredState.activityId = c.activityId;
+                    ctx.stateMachine->handleEvent(c.command);
                 }
             } catch(const nlohmann::json::parse_error & e) {
                 sua::Logger::error("Invalid request for {}, unable to parse json: {}", topic, e.what());
