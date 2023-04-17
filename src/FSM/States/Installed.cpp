@@ -28,8 +28,6 @@ namespace sua {
 
         Logger::info("System version, installed: '{}'", ctx.currentState.version);
         send(ctx, IMqttProcessor::TOPIC_FEEDBACK, "currentState");
-
-        ctx.stateMachine->handleEvent(FotaEvent::Waiting);
     }
 
 } // namespace sua

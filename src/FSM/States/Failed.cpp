@@ -26,8 +26,6 @@ namespace sua {
     { }
 
     void Failed::onEnter(Context& ctx)
-    {
-        ctx.stateMachine->handleEvent(FotaEvent::Waiting);
-    }
+    { }
 
 } // namespace sua
