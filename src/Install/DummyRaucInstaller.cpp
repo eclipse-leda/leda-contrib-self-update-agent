@@ -36,7 +36,6 @@ namespace sua {
 
     int32_t DummyRaucInstaller::getInstallProgress()
     {
-        _progress = std::min(100, _progress + 20);
         return _progress;
     }
 
@@ -57,6 +56,7 @@ namespace sua {
 
     bool DummyRaucInstaller::installing()
     {
+        _progress = std::min(100, _progress + 20);
         return _progress != 100;
     }
 
