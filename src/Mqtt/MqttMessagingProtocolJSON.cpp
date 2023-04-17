@@ -16,37 +16,13 @@
 
 #include "MqttMessagingProtocolJSON.h"
 #include "Context.h"
+#include "Utils/JsonUtils.h"
+#include "version.h"
 
 #include "spdlog/fmt/fmt.h"
 #include "nlohmann/json.hpp"
-#include "version.h"
 
-#include <regex>
-#include <iostream>
 #include <chrono>
-
-namespace {
-
-    std::string jsonTemplate(std::string tpl)
-    {
-        // required because lib-fmt expects curly brackets escaped as {{ and }}
-        // to properly handle placeholders 3 steps are done:
-        //   { -> {{
-        //   } -> }}
-        // this makes placeholder {} look like {{}}
-        //   {{}} -> {}
-
-        // escape opening
-        tpl = std::regex_replace(tpl, std::regex("\\{"), "{{");
-        // espace closing
-        tpl = std::regex_replace(tpl, std::regex("\\}"), "}}");
-        // unescape placeholder
-        tpl = std::regex_replace(tpl, std::regex("\\{\\{\\}\\}"), "{}");
-
-        return tpl;
-    }
-
-}
 
 namespace sua {
 
