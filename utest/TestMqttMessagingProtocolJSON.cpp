@@ -1,6 +1,7 @@
 #include "gtest/gtest.h"
 
 #include "Mqtt/MqttMessagingProtocolJSON.h"
+#include "Mqtt/MqttMessage.h"
 #include "Context.h"
 #include "Utils.h"
 #include  "nlohmann/json.hpp"
@@ -301,7 +302,7 @@ namespace {
         SUA_BUILD_NUMBER = "42";
 
         ctx.desiredState.activityId = "";
-        const std::string result = ProtocolJSON().createMessage(ctx, "systemVersion");
+        const std::string result = ProtocolJSON().createMessage(ctx, sua::MqttMessage::SystemVersion);
 
         // clang-format off
         const std::string expected = R"(
@@ -343,7 +344,7 @@ namespace {
     {
         SUA_BUILD_NUMBER = "42";
 
-        const std::string result = ProtocolJSON().createMessage(ctx, "systemVersion");
+        const std::string result = ProtocolJSON().createMessage(ctx, sua::MqttMessage::SystemVersion);
 
         // clang-format off
         const std::string expected = R"(
@@ -384,7 +385,7 @@ namespace {
 
     TEST_F(TestMessagingProtocolJSON, createMessage_identifying)
     {
-        const std::string result = ProtocolJSON().createMessage(ctx, "identifying");
+        const std::string result = ProtocolJSON().createMessage(ctx, sua::MqttMessage::Identifying);
 
         // clang-format off
         const std::string expected = R"(
@@ -407,7 +408,7 @@ namespace {
 
     TEST_F(TestMessagingProtocolJSON, createMessage_identified)
     {
-        const std::string result = ProtocolJSON().createMessage(ctx, "identified");
+        const std::string result = ProtocolJSON().createMessage(ctx, sua::MqttMessage::Identified);
 
         // clang-format off
         const std::string expected = R"(
@@ -430,7 +431,7 @@ namespace {
 
     TEST_F(TestMessagingProtocolJSON, createMessage_identificationFailed)
     {
-        const std::string result = ProtocolJSON().createMessage(ctx, "identificationFailed", "test");
+        const std::string result = ProtocolJSON().createMessage(ctx, sua::MqttMessage::IdentificationFailed, "test");
 
         // clang-format off
         const std::string expected = R"(
@@ -453,7 +454,7 @@ namespace {
 
     TEST_F(TestMessagingProtocolJSON, createMessage_skipped)
     {
-        const std::string result = ProtocolJSON().createMessage(ctx, "skipped");
+        const std::string result = ProtocolJSON().createMessage(ctx, sua::MqttMessage::Skipped);
 
         // clang-format off
         const std::string expected = R"(
@@ -476,7 +477,7 @@ namespace {
 
     TEST_F(TestMessagingProtocolJSON, createMessage_rejected)
     {
-        const std::string result = ProtocolJSON().createMessage(ctx, "rejected");
+        const std::string result = ProtocolJSON().createMessage(ctx, sua::MqttMessage::Rejected);
 
         // clang-format off
         const std::string expected = R"(
@@ -513,7 +514,7 @@ namespace {
         d.downloadBytesTotal         = 10485760;
         d.downloadProgressPercentage = 10;
 
-        const std::string result = ProtocolJSON().createMessage(ctx, "downloading");
+        const std::string result = ProtocolJSON().createMessage(ctx, sua::MqttMessage::Downloading);
 
         // clang-format off
         const std::string expected = R"(
@@ -550,7 +551,7 @@ namespace {
         d.downloadBytesTotal         = 10485760;
         d.downloadProgressPercentage = 10;
 
-        const std::string result = ProtocolJSON().createMessage(ctx, "downloaded");
+        const std::string result = ProtocolJSON().createMessage(ctx, sua::MqttMessage::Downloaded);
 
         // clang-format off
         const std::string expected = R"(
@@ -585,7 +586,7 @@ namespace {
     {
         d.downloadProgressPercentage = 66;
 
-        const std::string result = ProtocolJSON().createMessage(ctx, "downloadFailed");
+        const std::string result = ProtocolJSON().createMessage(ctx, sua::MqttMessage::DownloadFailed);
 
         // clang-format off
         const std::string expected = R"(
@@ -620,7 +621,7 @@ namespace {
     {
         d.installProgressPercentage = 42;
 
-        const std::string result = ProtocolJSON().createMessage(ctx, "installing");
+        const std::string result = ProtocolJSON().createMessage(ctx, sua::MqttMessage::Installing);
 
         // clang-format off
         const std::string expected = R"(
@@ -655,7 +656,7 @@ namespace {
     {
         d.installProgressPercentage = 100;
 
-        const std::string result = ProtocolJSON().createMessage(ctx, "installed");
+        const std::string result = ProtocolJSON().createMessage(ctx, sua::MqttMessage::Installed);
 
         // clang-format off
         const std::string expected = R"(
@@ -690,7 +691,7 @@ namespace {
     {
         d.installProgressPercentage = 66;
 
-        const std::string result = ProtocolJSON().createMessage(ctx, "installFailed");
+        const std::string result = ProtocolJSON().createMessage(ctx, sua::MqttMessage::InstallFailed);
 
         // clang-format off
         const std::string expected = R"(
@@ -723,7 +724,7 @@ namespace {
 
     TEST_F(TestMessagingProtocolJSON, createMessage_installFailedFallback)
     {
-        const std::string result = ProtocolJSON().createMessage(ctx, "installFailedFallback");
+        const std::string result = ProtocolJSON().createMessage(ctx, sua::MqttMessage::InstallFailedFallback);
 
         // clang-format off
         const std::string expected = R"(
@@ -756,14 +757,9 @@ namespace {
 
     TEST_F(TestMessagingProtocolJSON, createMessage_currentState)
     {
-        const std::string result = ProtocolJSON().createMessage(ctx, "currentState");
+        const std::string result = ProtocolJSON().createMessage(ctx, sua::MqttMessage::CurrentState);
 
         EXPECT_EQ_MULTILINE(result, "");
-    }
-
-    TEST_F(TestMessagingProtocolJSON, createUnknownMessage_throwsLogicError)
-    {
-        EXPECT_THROW(ProtocolJSON().createMessage(ctx, "unknown"), std::logic_error);
     }
 
     TEST_F(TestMessagingProtocolJSON, readCommand_DOWNLOAD)

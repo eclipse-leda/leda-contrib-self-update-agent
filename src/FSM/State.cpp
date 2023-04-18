@@ -33,14 +33,14 @@ namespace sua {
         return FotaEvent::NotUsed;
     }
 
-    void State::send(Context& ctx, const std::string& topic, const std::string& messageName, bool retained)
+    void State::send(Context& ctx, const std::string& topic, MqttMessage message_type, bool retained)
     {
-        ctx.mqttProcessor->send(topic, messageName, "", retained);
+        ctx.mqttProcessor->send(topic, message_type, "", retained);
     }
 
-    void State::send(Context& ctx, const std::string& topic, const std::string& messageName, const std::string& message, bool retained)
+    void State::send(Context& ctx, const std::string& topic, MqttMessage message_type, const std::string& message, bool retained)
     {
-        ctx.mqttProcessor->send(topic, messageName, message, retained);
+        ctx.mqttProcessor->send(topic, message_type, message, retained);
     }
 
 } // namespace sua

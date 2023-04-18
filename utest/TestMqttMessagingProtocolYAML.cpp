@@ -1,6 +1,7 @@
 #include "gtest/gtest.h"
 
 #include "Mqtt/MqttMessagingProtocolYAML.h"
+#include "Mqtt/MqttMessage.h"
 #include "Context.h"
 #include "Utils.h"
 
@@ -56,7 +57,7 @@ namespace {
 
     TEST_F(TestMessagingProtocolYAML, createMessage_systemVersion)
     {
-        const std::string result = sua::MqttMessagingProtocolYAML().createMessage(ctx, "systemVersion");
+        const std::string result = sua::MqttMessagingProtocolYAML().createMessage(ctx, sua::MqttMessage::SystemVersion);
 
         // clang-format off
         const std::string expected = R"(
@@ -74,19 +75,19 @@ namespace {
 
     TEST_F(TestMessagingProtocolYAML, createMessage_identifying)
     {
-        const std::string result = sua::MqttMessagingProtocolYAML().createMessage(ctx, "identifying");
+        const std::string result = sua::MqttMessagingProtocolYAML().createMessage(ctx, sua::MqttMessage::Identifying);
         EXPECT_EQ(result, "");
     }
 
     TEST_F(TestMessagingProtocolYAML, createMessage_identified)
     {
-        const std::string result = sua::MqttMessagingProtocolYAML().createMessage(ctx, "identified");
+        const std::string result = sua::MqttMessagingProtocolYAML().createMessage(ctx, sua::MqttMessage::Identified);
         EXPECT_EQ(result, "");
     }
 
     TEST_F(TestMessagingProtocolYAML, createMessage_identifiedAndSkipped)
     {
-        const std::string result = sua::MqttMessagingProtocolYAML().createMessage(ctx, "identificationFailed");
+        const std::string result = sua::MqttMessagingProtocolYAML().createMessage(ctx, sua::MqttMessage::IdentificationFailed);
         EXPECT_EQ(result, "");
     }
 
@@ -96,7 +97,7 @@ namespace {
         d.downloadBytesTotal         = 10485760;
         d.downloadProgressPercentage = 10;
 
-        const std::string result = sua::MqttMessagingProtocolYAML().createMessage(ctx, "downloading");
+        const std::string result = sua::MqttMessagingProtocolYAML().createMessage(ctx, sua::MqttMessage::Downloading);
 
         // clang-format off
         const std::string expected = R"(
@@ -125,7 +126,7 @@ namespace {
         d.downloadBytesTotal         = 10485760;
         d.downloadProgressPercentage = 10;
 
-        const std::string result = sua::MqttMessagingProtocolYAML().createMessage(ctx, "downloaded");
+        const std::string result = sua::MqttMessagingProtocolYAML().createMessage(ctx, sua::MqttMessage::Downloaded);
 
         // clang-format off
         const std::string expected = R"(
@@ -152,7 +153,7 @@ namespace {
     {
         d.installProgressPercentage = 42;
 
-        const std::string result = sua::MqttMessagingProtocolYAML().createMessage(ctx, "installing");
+        const std::string result = sua::MqttMessagingProtocolYAML().createMessage(ctx, sua::MqttMessage::Installing);
 
         // clang-format off
         const std::string expected = R"(
@@ -179,7 +180,7 @@ namespace {
     {
         d.installProgressPercentage = 100;
 
-        const std::string result = sua::MqttMessagingProtocolYAML().createMessage(ctx, "installed");
+        const std::string result = sua::MqttMessagingProtocolYAML().createMessage(ctx, sua::MqttMessage::Installed);
 
         // clang-format off
         const std::string expected = R"(
@@ -204,7 +205,7 @@ namespace {
 
     TEST_F(TestMessagingProtocolYAML, createMessage_currentState)
     {
-        const std::string result = sua::MqttMessagingProtocolYAML().createMessage(ctx, "currentState");
+        const std::string result = sua::MqttMessagingProtocolYAML().createMessage(ctx, sua::MqttMessage::CurrentState);
 
         // clang-format off
         const std::string expected = R"(
@@ -228,7 +229,7 @@ namespace {
 
     TEST_F(TestMessagingProtocolYAML, createMessage_downloadFailed)
     {
-        const std::string result = sua::MqttMessagingProtocolYAML().createMessage(ctx, "downloadFailed");
+        const std::string result = sua::MqttMessagingProtocolYAML().createMessage(ctx, sua::MqttMessage::DownloadFailed);
 
         // clang-format off
         const std::string expected = R"(
@@ -253,7 +254,7 @@ namespace {
 
     TEST_F(TestMessagingProtocolYAML, createMessage_invalidBundle)
     {
-        const std::string result = sua::MqttMessagingProtocolYAML().createMessage(ctx, "skipped");
+        const std::string result = sua::MqttMessagingProtocolYAML().createMessage(ctx, sua::MqttMessage::Skipped);
 
         // clang-format off
         const std::string expected = R"(
@@ -278,7 +279,7 @@ namespace {
 
     TEST_F(TestMessagingProtocolYAML, createMessage_installFailed)
     {
-        const std::string result = sua::MqttMessagingProtocolYAML().createMessage(ctx, "installFailed");
+        const std::string result = sua::MqttMessagingProtocolYAML().createMessage(ctx, sua::MqttMessage::InstallFailed);
 
         // clang-format off
         const std::string expected = R"(
@@ -303,7 +304,7 @@ namespace {
 
     TEST_F(TestMessagingProtocolYAML, createMessage_installFailedFallback)
     {
-        const std::string result = sua::MqttMessagingProtocolYAML().createMessage(ctx, "installFailedFallback");
+        const std::string result = sua::MqttMessagingProtocolYAML().createMessage(ctx, sua::MqttMessage::InstallFailedFallback);
 
         // clang-format off
         const std::string expected = R"(
@@ -328,7 +329,7 @@ namespace {
 
     TEST_F(TestMessagingProtocolYAML, createMessage_updateRejected)
     {
-        const std::string result = sua::MqttMessagingProtocolYAML().createMessage(ctx, "rejected");
+        const std::string result = sua::MqttMessagingProtocolYAML().createMessage(ctx, sua::MqttMessage::Rejected);
 
         // clang-format off
         const std::string expected = R"(
@@ -349,11 +350,6 @@ namespace {
         // clang-format on
 
         EXPECT_EQ_MULTILINE(result, expected);
-    }
-
-    TEST_F(TestMessagingProtocolYAML, createUnknownMessage_throwsLogicError)
-    {
-        EXPECT_THROW(sua::MqttMessagingProtocolYAML().createMessage(ctx, "unknown"), std::logic_error);
     }
 
 }

@@ -32,8 +32,7 @@ namespace sua {
         void start(const MqttConfiguration & configuration) override;
         void stop() override;
 
-        //void send(const std::string& topic, const std::string& content, bool retained = false) override;
-        void send(const std::string& topic, const std::string& messageName, const std::string& message = "", bool retained = false) override;
+        void send(const std::string& topic, MqttMessage message_type, const std::string& message = "", bool retained = false) override;
 
     private:
         Context & _context;

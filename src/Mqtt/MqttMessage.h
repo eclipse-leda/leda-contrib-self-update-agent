@@ -14,25 +14,32 @@
 //
 //    SPDX-License-Identifier: Apache-2.0
 
-#include "FSM/States/SendCurrentState.h"
-#include "FSM/FSM.h"
-#include "Context.h"
-#include "FotaEvent.h"
+#ifndef SDV_SUA_MQTTMESSAGE_H
+#define SDV_SUA_MQTTMESSAGE_H
+
+#include <ostream>
 
 namespace sua {
 
-    SendCurrentState::SendCurrentState()
-        : SendCurrentState("SendCurrentState")
-    { }
+    enum class MqttMessage {
+        SystemVersion,
+        CurrentState,
+        Identifying,
+        Identified,
+        IdentificationFailed,
+        Skipped,
+        Rejected,
+        Downloading,
+        Downloaded,
+        DownloadFailed,
+        Installing,
+        Installed,
+        InstallFailed,
+        InstallFailedFallback
+    };
 
-    SendCurrentState::SendCurrentState(const std::string& name)
-        : State(name)
-    { }
-
-    void SendCurrentState::onEnter(Context& ctx)
-    {
-        send(ctx, IMqttProcessor::TOPIC_STATE, MqttMessage::SystemVersion, true);
-        ctx.stateMachine->handleEvent(FotaEvent::Waiting);
-    }
+    std::ostream & operator<<(std::ostream & os, MqttMessage m);
 
 } // namespace sua
+
+#endif

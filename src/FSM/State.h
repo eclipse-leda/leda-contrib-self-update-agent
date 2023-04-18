@@ -18,6 +18,7 @@
 #define SDV_SUA_STATE_H
 
 #include "FotaEvent.h"
+#include "Mqtt/MqttMessage.h"
 
 namespace sua {
 
@@ -36,8 +37,8 @@ namespace sua {
 
         virtual FotaEvent body(Context& ctx);
 
-        void send(Context& ctx, const std::string& topic, const std::string& messageName, bool retained = false);
-        void send(Context& ctx, const std::string& topic, const std::string& messageName, const std::string& message, bool retained = false);
+        void send(Context& ctx, const std::string& topic, MqttMessage message_type, bool retained = false);
+        void send(Context& ctx, const std::string& topic, MqttMessage message_type, const std::string& message, bool retained = false);
 
     private:
         std::string _name;

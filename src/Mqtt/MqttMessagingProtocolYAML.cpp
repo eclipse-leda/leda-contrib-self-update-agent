@@ -15,12 +15,14 @@
 //    SPDX-License-Identifier: Apache-2.0
 
 #include "MqttMessagingProtocolYAML.h"
+#include "MqttMessage.h"
 #include "Context.h"
 
 #include "yaml/Yaml.hpp"
 #include "spdlog/fmt/fmt.h"
 
 #include <map>
+#include <cassert>
 
 namespace {
 
@@ -92,31 +94,31 @@ namespace sua {
       return {};
     }
 
-    std::string MqttMessagingProtocolYAML::createMessage(const class Context& ctx, const std::string& name, const std::string& message)
+    std::string MqttMessagingProtocolYAML::createMessage(const class Context& ctx, MqttMessage message_type, const std::string& message)
     {
         Yaml::Node root;
         root["apiVersion"]       = "sdv.eclipse.org/v1";
         root["kind"]             = "SelfUpdateBundle";
         root["metadata"]["name"] = "self-update-bundle-example";
 
-        if(name == "systemVersion") {
+        if(message_type == MqttMessage::SystemVersion) {
             root["spec"]["bundleVersion"] = ctx.currentState.version;
             return serialized(root);
         }
 
-        if(name == "identifying") {
+        if(message_type == MqttMessage::Identifying) {
             return "";
         }
 
-        if(name == "identified") {
+        if(message_type == MqttMessage::Identified) {
             return "";
         }
 
-        if(name == "identificationFailed") {
+        if(message_type == MqttMessage::IdentificationFailed) {
             return "";
         }
 
-        if(name == "downloading") {
+        if(message_type == MqttMessage::Downloading) {
             const double mbytes = static_cast<double>(ctx.desiredState.downloadBytesTotal) / 1024.0 / 1024.0;
 
             std::map<std::string, std::string> state;
@@ -126,7 +128,7 @@ namespace sua {
             return serialized(base(ctx.desiredState, state));
         }
 
-        if(name == "downloaded") {
+        if(message_type == MqttMessage::Downloaded) {
             const double mbytes = static_cast<double>(ctx.desiredState.downloadBytesTotal) / 1024.0 / 1024.0;
 
             std::map<std::string, std::string> state;
@@ -136,7 +138,7 @@ namespace sua {
             return serialized(base(ctx.desiredState, state));
         }
 
-        if(name == "installing") {
+        if(message_type == MqttMessage::Installing) {
             std::map<std::string, std::string> state;
             state["state/name"    ] = "installing";
             state["state/progress"] = std::to_string(ctx.desiredState.installProgressPercentage);
@@ -144,7 +146,7 @@ namespace sua {
             return serialized(base(ctx.desiredState, state));
         }
 
-        if(name == "installed") {
+        if(message_type == MqttMessage::Installed) {
             std::map<std::string, std::string> state;
             state["state/name"    ] = "installed";
             state["state/progress"] = "100";
@@ -152,14 +154,14 @@ namespace sua {
             return serialized(base(ctx.desiredState, state));
         }
 
-        if(name == "currentState") {
+        if(message_type == MqttMessage::CurrentState) {
             std::map<std::string, std::string> state;
             state["state/name"    ] = "idle";
             state["state/message" ] = "Idle";
             return serialized(base(ctx.desiredState, state));
         }
 
-        if(name == "downloadFailed") {
+        if(message_type == MqttMessage::DownloadFailed) {
             std::map<std::string, std::string> state;
             state["state/name"    ] = "failed";
             state["state/message" ] = "Download failed";
@@ -167,7 +169,7 @@ namespace sua {
             return serialized(base(ctx.desiredState, state));
         }
 
-        if(name == "skipped") {
+        if(message_type == MqttMessage::Skipped) {
             std::map<std::string, std::string> state;
             state["state/name"    ] = "failed";
             state["state/message" ] = "Invalid bundle";
@@ -175,7 +177,7 @@ namespace sua {
             return serialized(base(ctx.desiredState, state));
         }
 
-        if(name == "installFailed") {
+        if(message_type == MqttMessage::InstallFailed) {
             std::map<std::string, std::string> state;
             state["state/name"    ] = "failed";
             state["state/message" ] = "Install failed";
@@ -183,7 +185,7 @@ namespace sua {
             return serialized(base(ctx.desiredState, state));
         }
 
-        if(name == "installFailedFallback") {
+        if(message_type == MqttMessage::InstallFailedFallback) {
             std::map<std::string, std::string> state;
             state["state/name"    ] = "failed";
             state["state/message" ] = "Stream install failed, trying download mode";
@@ -191,7 +193,7 @@ namespace sua {
             return serialized(base(ctx.desiredState, state));
         }
 
-        if(name == "rejected") {
+        if(message_type == MqttMessage::Rejected) {
             std::map<std::string, std::string> state;
             state["state/name"    ] = "failed";
             state["state/message" ] = "Update rejected";
@@ -199,7 +201,7 @@ namespace sua {
             return serialized(base(ctx.desiredState, state));
         }
 
-        throw std::logic_error(fmt::format("Unknown message type '{}'", name));
+        assert(false);
     }
 
-} // namespace su
+} // namespace sua

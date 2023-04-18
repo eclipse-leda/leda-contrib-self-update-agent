@@ -21,6 +21,8 @@
 
 namespace sua {
 
+    enum class MqttMessage;
+
     class IMqttMessagingProtocol {
     public:
         virtual ~IMqttMessagingProtocol() = default;
@@ -31,7 +33,7 @@ namespace sua {
 
         virtual class DesiredState readCurrentStateRequest(const std::string & input) = 0;
 
-        virtual std::string createMessage(const class Context& ctx, const std::string& name, const std::string& message = "") = 0;
+        virtual std::string createMessage(const class Context& ctx, MqttMessage message_type, const std::string& message = "") = 0;
     };
 
 } // namespace sua

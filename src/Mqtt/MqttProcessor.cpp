@@ -15,6 +15,7 @@
 //    SPDX-License-Identifier: Apache-2.0
 
 #include "Mqtt/MqttProcessor.h"
+#include "Mqtt/MqttMessage.h"
 #include "Context.h"
 #include "FotaEvent.h"
 #include "Logger.h"
@@ -130,15 +131,15 @@ namespace {
             } catch(const nlohmann::json::exception& e) {
                 ctx.desiredState.activityId = nlohmann::json::parse(message).at("activityId");
                 sua::Logger::error("Invalid request for {}: {}", topic, e.what());
-                mqtt->send(sua::IMqttProcessor::TOPIC_FEEDBACK, proto->createMessage(ctx, "identifying"));
-                mqtt->send(sua::IMqttProcessor::TOPIC_FEEDBACK, proto->createMessage(ctx, "identificationFailed", e.what()));
+                mqtt->send(sua::IMqttProcessor::TOPIC_FEEDBACK, sua::MqttMessage::Identifying);
+                mqtt->send(sua::IMqttProcessor::TOPIC_FEEDBACK, sua::MqttMessage::IdentificationFailed, e.what());
             } catch(const std::logic_error & e) {
                 sua::Logger::error("Invalid request for {}: {}", topic, e.what());
             } catch(const std::runtime_error & e) {
                 ctx.desiredState.activityId = nlohmann::json::parse(message).at("activityId");
                 sua::Logger::error("Invalid request for {}: {}", topic, e.what());
-                mqtt->send(sua::IMqttProcessor::TOPIC_FEEDBACK, proto->createMessage(ctx, "identifying"));
-                mqtt->send(sua::IMqttProcessor::TOPIC_FEEDBACK, proto->createMessage(ctx, "identificationFailed", e.what()));
+                mqtt->send(sua::IMqttProcessor::TOPIC_FEEDBACK, sua::MqttMessage::Identifying);
+                mqtt->send(sua::IMqttProcessor::TOPIC_FEEDBACK, sua::MqttMessage::IdentificationFailed, e.what());
             }
         }
 
@@ -204,9 +205,9 @@ namespace sua {
         }
     }
 
-    void MqttProcessor::send(const std::string& topic, const std::string& messageName, const std::string& message, bool retained)
+    void MqttProcessor::send(const std::string& topic, MqttMessage message_type, const std::string& message, bool retained)
     {
-        const auto content = _context.messagingProtocol->createMessage(_context, messageName, message);
+        const auto content = _context.messagingProtocol->createMessage(_context, message_type, message);
 
         auto mqtt_message = mqtt::make_message(topic, content);
         mqtt_message->set_qos(QUALITY);

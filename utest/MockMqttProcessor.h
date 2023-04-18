@@ -23,22 +23,22 @@
 
 class MockMqttProcessor : public sua::MqttProcessor {
 public:
-    MockMqttProcessor(class sua::Context& context, std::vector<std::string>& collection)
+    MockMqttProcessor(class sua::Context& context, std::vector<sua::MqttMessage>& collection)
         : sua::MqttProcessor::MqttProcessor(context)
         , sentMessages(collection)
     { }
 
     void send(const std::string& topic,
-              const std::string& messageName,
+              sua::MqttMessage   message_type,
               const std::string& message,
               bool               retained) override
     {
-        sentMessages.push_back(messageName);
-        sua::MqttProcessor::send(topic, messageName, message, retained);
+        sentMessages.push_back(message_type);
+        sua::MqttProcessor::send(topic, message_type, message, retained);
     }
 
 private:
-    std::vector<std::string>& sentMessages;
+    std::vector<sua::MqttMessage>& sentMessages;
 };
 
 #endif

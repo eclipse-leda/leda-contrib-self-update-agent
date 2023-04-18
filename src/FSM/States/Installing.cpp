@@ -37,7 +37,7 @@ namespace sua {
         subscribe(Installer::EVENT_INSTALLING, [this, &ctx](const std::map<std::string, std::string>& payload) {
             ctx.desiredState.installProgressPercentage = std::stoi(payload.at("percentage"));
             Logger::info("Install progress: {}%", ctx.desiredState.installProgressPercentage);
-            send(ctx, IMqttProcessor::TOPIC_FEEDBACK, "installing");
+            send(ctx, IMqttProcessor::TOPIC_FEEDBACK, MqttMessage::Installing);
         });
 
         std::string install_input;
@@ -56,7 +56,7 @@ namespace sua {
 
         if(result == TechCode::OK) {
             Logger::info("Installation completed");
-            send(ctx, IMqttProcessor::TOPIC_FEEDBACK, "installed");
+            send(ctx, IMqttProcessor::TOPIC_FEEDBACK, MqttMessage::Installed);
 
             if(ctx.fallbackMode) {
                 ctx.downloadMode = false;
@@ -71,7 +71,7 @@ namespace sua {
 
         // for download mode transit to fail state
         if (true == ctx.downloadMode) {
-            send(ctx, IMqttProcessor::TOPIC_FEEDBACK, "installFailed", lastError);
+            send(ctx, IMqttProcessor::TOPIC_FEEDBACK, MqttMessage::InstallFailed, lastError);
 
             if(ctx.fallbackMode) {
                 ctx.downloadMode = false;
@@ -83,7 +83,7 @@ namespace sua {
 
         // for stream mode start again in download mode
         Logger::info("Trying normal download mode as fallback");
-        send(ctx, IMqttProcessor::TOPIC_FEEDBACK, "installFailedFallback", lastError);
+        send(ctx, IMqttProcessor::TOPIC_FEEDBACK, MqttMessage::InstallFailedFallback, lastError);
         ctx.downloadMode = true;
         ctx.fallbackMode = true;
         return FotaEvent::InstallFailedFallback;

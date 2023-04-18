@@ -47,7 +47,7 @@ namespace sua {
             ctx.desiredState.downloadProgressPercentage = std::stoi(payload.at("percentage"));
 
             Logger::info("Download progress: {}%", ctx.desiredState.downloadProgressPercentage);
-            send(ctx, IMqttProcessor::TOPIC_FEEDBACK, "downloading");
+            send(ctx, IMqttProcessor::TOPIC_FEEDBACK, MqttMessage::Downloading);
         });
 
         if (true == ctx.downloadMode) {
@@ -56,7 +56,7 @@ namespace sua {
 
             if(result == TechCode::OK) {
                 Logger::info("Download progress: 100%");
-                send(ctx, IMqttProcessor::TOPIC_FEEDBACK, "downloaded");
+                send(ctx, IMqttProcessor::TOPIC_FEEDBACK, MqttMessage::Downloaded);
 
                 const std::string pathDownloadedFile = ctx.updatesDirectory + "/temp_file";
                 Logger::trace("Downloaded bundle file should exist now as '{}'", pathDownloadedFile);
@@ -67,12 +67,12 @@ namespace sua {
                     return FotaEvent::BundleVersionOK;
                 } else {
                     Logger::info("Downloaded bundle version does not match spec.");
-                    send(ctx, IMqttProcessor::TOPIC_FEEDBACK, "rejected");
+                    send(ctx, IMqttProcessor::TOPIC_FEEDBACK, MqttMessage::Rejected);
                     return FotaEvent::BundleVersionInconsistent;
                 }
             } else {
                 Logger::error("Download failed.");
-                send(ctx, IMqttProcessor::TOPIC_FEEDBACK, "downloadFailed");
+                send(ctx, IMqttProcessor::TOPIC_FEEDBACK, MqttMessage::DownloadFailed);
                 return FotaEvent::DownloadFailed;
             }
         } else {
@@ -84,7 +84,7 @@ namespace sua {
                 return FotaEvent::BundleVersionOK;
             } else {
                 Logger::info("Bundle version does not match spec.");
-                send(ctx, IMqttProcessor::TOPIC_FEEDBACK, "rejected");
+                send(ctx, IMqttProcessor::TOPIC_FEEDBACK, MqttMessage::Rejected);
                 return FotaEvent::BundleVersionInconsistent;
             }
         }
