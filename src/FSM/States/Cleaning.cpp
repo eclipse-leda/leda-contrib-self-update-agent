@@ -15,6 +15,7 @@
 //    SPDX-License-Identifier: Apache-2.0
 
 #include "FSM/States/Cleaning.h"
+#include "Context.h"
 
 namespace sua {
 
@@ -22,9 +23,9 @@ namespace sua {
         : Connected("Cleaning")
     { }
 
-    void Cleaning::onEnter(Context& /*ctx*/)
+    void Cleaning::onEnter(Context& ctx)
     {
-        // Do not send current version (as it was sent from 'Connected' state)
+        ctx.stateMachine->handleEvent(FotaEvent::Waiting);
     }
 
 } // namespace sua

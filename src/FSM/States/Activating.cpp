@@ -23,8 +23,6 @@ namespace sua {
     { }
 
     void Activating::onEnter(Context& /*ctx*/)
-    {
-        // Do not send current version (as it was sent from 'Connected' state)
-    }
+    { }
 
 } // namespace sua
