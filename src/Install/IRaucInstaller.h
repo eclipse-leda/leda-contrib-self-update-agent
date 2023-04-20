@@ -27,6 +27,7 @@ namespace sua {
     public:
         virtual ~IRaucInstaller() = default;
 
+        virtual TechCode    activate()                                  = 0;
         virtual TechCode    installBundle(const std::string & input)    = 0;
         virtual int32_t     installProgressPollInterval() const         = 0;
         virtual int32_t     getInstallProgress()                        = 0;

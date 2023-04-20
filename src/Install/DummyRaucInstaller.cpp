@@ -65,4 +65,9 @@ namespace sua {
         return true;
     }
 
+    TechCode DummyRaucInstaller::activate()
+    {
+        return TechCode::OK;
+    }
+
 } // namespace sua

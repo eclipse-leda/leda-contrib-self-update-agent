@@ -15,6 +15,7 @@
 //    SPDX-License-Identifier: Apache-2.0
 
 #include "FSM/States/Activating.h"
+#include "Context.h"
 
 namespace sua {
 
@@ -22,7 +23,9 @@ namespace sua {
         : Connected("Activating")
     { }
 
-    void Activating::onEnter(Context& /*ctx*/)
-    { }
+    void Activating::onEnter(Context& ctx)
+    {
+        ctx.installerAgent->activate();
+    }
 
 } // namespace sua

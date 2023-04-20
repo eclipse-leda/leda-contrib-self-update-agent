@@ -457,6 +457,37 @@ namespace sua {
         return bundleVersion;
     }
 
+    TechCode DBusRaucInstaller::activate()
+    {
+        Logger::trace("DBusRaucInstaller::activate");
+
+        GError* connectionError = nullptr;
+
+        GVariant* result = g_dbus_connection_call_sync(
+            connection,
+            "de.pengutronix.rauc",
+            "/",
+            "de.pengutronix.rauc.Installer",
+            "Mark",
+            g_variant_new("(ssss)", "active", "other", "", "activated other slot"),
+            NULL,
+            G_DBUS_CALL_FLAGS_NONE,
+            -1,
+            NULL,
+            &connectionError);
+
+        if(nullptr != result) {
+            g_variant_unref(result);
+        } else {
+            Logger::error("Install call to Rauc via D-Bus failed, code = {}, message = {}",
+                          connectionError->code,
+                          connectionError->message);
+            return TechCode::InstallationFailed;
+        }
+
+        return TechCode::OK;
+    }
+
     std::string DBusRaucInstaller::getLastError()
     {
         std::string errorMessage{getDBusRaucProperty("LastError")};
