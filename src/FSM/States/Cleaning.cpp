@@ -16,6 +16,7 @@
 
 #include "FSM/States/Cleaning.h"
 #include "Context.h"
+#include "Logger.h"
 
 namespace sua {
 
@@ -25,6 +26,13 @@ namespace sua {
 
     void Cleaning::onEnter(Context& ctx)
     {
+        const auto path   = ctx.updatesDirectory + "/tempfile";
+        const auto result = remove(path.c_str());
+
+        if(result != 0) {
+            Logger::error("Failed to remove file: '{}', reason: '{}'", path, strerror(errno));
+        }
+
         ctx.stateMachine->handleEvent(FotaEvent::Waiting);
     }
 
