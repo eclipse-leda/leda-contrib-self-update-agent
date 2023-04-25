@@ -152,7 +152,7 @@ namespace sua {
         return result;
     }
 
-    int32_t DBusRaucInstaller::installProgressPollInterval() const
+    int32_t DBusRaucInstaller::getProgressPollInterval() const
     {
         return 2000;
     }

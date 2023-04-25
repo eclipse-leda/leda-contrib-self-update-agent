@@ -29,7 +29,7 @@ namespace sua {
         return TechCode::OK;
     }
 
-    int32_t DummyRaucInstaller::installProgressPollInterval() const
+    int32_t DummyRaucInstaller::getProgressPollInterval() const
     {
         return 0;
     }

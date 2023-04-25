@@ -29,7 +29,12 @@ namespace sua {
 
         virtual TechCode    activate()                                  = 0;
         virtual TechCode    installBundle(const std::string & input)    = 0;
-        virtual int32_t     installProgressPollInterval() const         = 0;
+
+        // Returns configurable poll interval in milliseconds
+        // Value is implementation defined
+        // Do not poll install status more often than this interval
+        virtual int32_t     getProgressPollInterval() const             = 0;
+
         virtual int32_t     getInstallProgress()                        = 0;
         virtual std::string getBundleVersion()                          = 0;
         virtual std::string getBundleVersion(const std::string & input) = 0;
