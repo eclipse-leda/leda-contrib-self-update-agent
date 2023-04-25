@@ -118,13 +118,15 @@ namespace {
                 if(topic == sua::IMqttProcessor::TOPIC_IDENTIFY) {
                     ctx.desiredState = proto->readDesiredState(message);
                     ctx.stateMachine->handleEvent(sua::FotaEvent::Identify);
-                } if(topic == sua::IMqttProcessor::TOPIC_STATE_GET) {
+                } else if(topic == sua::IMqttProcessor::TOPIC_STATE_GET) {
                     ctx.desiredState = proto->readCurrentStateRequest(message);
                     ctx.stateMachine->handleEvent(sua::FotaEvent::GetCurrentState);
-                } if(topic == sua::IMqttProcessor::TOPIC_COMMAND) {
+                } else if(topic == sua::IMqttProcessor::TOPIC_COMMAND) {
                     sua::Command c = proto->readCommand(message);
                     ctx.desiredState.activityId = c.activityId;
-                    ctx.stateMachine->handleEvent(c.command);
+                    ctx.stateMachine->handleEvent(c.event);
+                } else {
+                    sua::Logger::error("Invalid topic: {}", topic);
                 }
             } catch(const nlohmann::json::parse_error & e) {
                 sua::Logger::error("Invalid request for {}, unable to parse json: {}", topic, e.what());

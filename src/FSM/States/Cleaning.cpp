@@ -1,4 +1,4 @@
-//    Copyright 2022 Contributors to the Eclipse Foundation
+//    Copyright 2023 Contributors to the Eclipse Foundation
 //
 //    Licensed under the Apache License, Version 2.0 (the "License");
 //    you may not use this file except in compliance with the License.
@@ -26,11 +26,11 @@ namespace sua {
 
     void Cleaning::onEnter(Context& ctx)
     {
-        const auto path   = ctx.updatesDirectory + "/tempfile";
+        const auto path   = ctx.updatesDirectory + ctx.tempFileName;
         const auto result = remove(path.c_str());
 
         if(result != 0) {
-            Logger::error("Failed to remove file: '{}', reason: '{}'", path, strerror(errno));
+            Logger::error("Failed to remove temporary bundle file: '{}', reason: '{}'", path, strerror(errno));
         }
 
         ctx.stateMachine->handleEvent(FotaEvent::Waiting);

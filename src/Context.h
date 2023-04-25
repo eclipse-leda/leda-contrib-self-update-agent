@@ -53,6 +53,7 @@ namespace sua {
         std::shared_ptr<IMqttProcessor>         mqttProcessor;
         std::shared_ptr<IBundleChecker>         bundleChecker;
         std::string                             updatesDirectory = "/data/selfupdates";
+        std::string                             tempFileName     = "/temp_file";
         bool                                    downloadMode = true;
         bool                                    fallbackMode = false;
 
@@ -62,7 +63,7 @@ namespace sua {
 
     struct Command {
         std::string activityId;
-        FotaEvent   command;
+        FotaEvent   event;
     };
 
 } // namespace sua

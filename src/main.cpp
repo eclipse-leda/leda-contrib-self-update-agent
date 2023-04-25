@@ -210,7 +210,7 @@ int main(int argc, char* argv[])
     ctx.stateMachine      = std::make_shared<sua::FSM>(sua.context());
     ctx.installerAgent    = installerAgent;
     ctx.downloadMode      = downloadMode;
-    ctx.downloaderAgent   = std::make_shared<sua::Downloader>(hostPathToSelfupdateDir);
+    ctx.downloaderAgent   = std::make_shared<sua::Downloader>(hostPathToSelfupdateDir, ctx.tempFileName);
     ctx.messagingProtocol = protocol;
     ctx.updatesDirectory  = hostPathToSelfupdateDir;
     ctx.bundleChecker     = std::make_shared<sua::BundleChecker>();

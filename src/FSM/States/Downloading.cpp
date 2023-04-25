@@ -58,7 +58,7 @@ namespace sua {
                 Logger::info("Download progress: 100%");
                 send(ctx, IMqttProcessor::TOPIC_FEEDBACK, MqttMessage::Downloaded);
 
-                const std::string pathDownloadedFile = ctx.updatesDirectory + "/temp_file";
+                const std::string pathDownloadedFile = ctx.updatesDirectory + ctx.tempFileName;
                 Logger::trace("Downloaded bundle file should exist now as '{}'", pathDownloadedFile);
 
                 if(ctx.bundleChecker->isBundleVersionConsistent(

@@ -149,9 +149,9 @@ namespace sua {
 
     const std::string Downloader::EVENT_DOWNLOADING = "Downloader/Downloading";
 
-    Downloader::Downloader(const std::string& download_dir)
+    Downloader::Downloader(const std::string& download_dir, const std::string& filename)
     {
-        const std::string filepath = download_dir + "/temp_file";
+        const std::string filepath = download_dir + filename;
         strncpy(FILE_DIR, download_dir.c_str(), FILENAME_MAX - 1);
         strncpy(FILE_PATH, filepath.c_str(), FILENAME_MAX - 1);
     }

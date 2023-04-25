@@ -24,19 +24,19 @@ namespace sua {
     {
         // clang-format off
         static const std::map<sua::MqttMessage, std::string> names = {
-            { sua::MqttMessage::SystemVersion        , "SystemVersion"       },
-            { sua::MqttMessage::CurrentState         , "CurrentState"        },
-            { sua::MqttMessage::Identifying          , "Identifying"         },
-            { sua::MqttMessage::Identified           , "Identified"          },
-            { sua::MqttMessage::IdentificationFailed , "IdentificationFailed"},
-            { sua::MqttMessage::Skipped              , "Skipped"             },
-            { sua::MqttMessage::Rejected             , "Rejected"            },
-            { sua::MqttMessage::Downloading          , "Downloading"         },
-            { sua::MqttMessage::Downloaded           , "Downloaded"          },
-            { sua::MqttMessage::DownloadFailed       , "DownloadFailed"      },
-            { sua::MqttMessage::Installing           , "Installing"          },
-            { sua::MqttMessage::Installed            , "Installed"           },
-            { sua::MqttMessage::InstallFailed        , "InstallFailed"       },
+            { sua::MqttMessage::SystemVersion        , "SystemVersion"        },
+            { sua::MqttMessage::CurrentState         , "CurrentState"         },
+            { sua::MqttMessage::Identifying          , "Identifying"          },
+            { sua::MqttMessage::Identified           , "Identified"           },
+            { sua::MqttMessage::IdentificationFailed , "IdentificationFailed" },
+            { sua::MqttMessage::Skipped              , "Skipped"              },
+            { sua::MqttMessage::Rejected             , "Rejected"             },
+            { sua::MqttMessage::Downloading          , "Downloading"          },
+            { sua::MqttMessage::Downloaded           , "Downloaded"           },
+            { sua::MqttMessage::DownloadFailed       , "DownloadFailed"       },
+            { sua::MqttMessage::Installing           , "Installing"           },
+            { sua::MqttMessage::Installed            , "Installed"            },
+            { sua::MqttMessage::InstallFailed        , "InstallFailed"        },
             { sua::MqttMessage::InstallFailedFallback, "InstallFailedFallback"}
         };
         // clang-format on

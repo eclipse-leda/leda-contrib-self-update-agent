@@ -781,7 +781,7 @@ namespace {
         const auto c = ProtocolJSON().readCommand(input);
 
         EXPECT_EQ(c.activityId, "random-uuid-as-string");
-        EXPECT_EQ(c.command, sua::FotaEvent::DownloadStart);
+        EXPECT_EQ(c.event, sua::FotaEvent::DownloadStart);
     }
 
     TEST_F(TestMessagingProtocolJSON, readCommand_INSTALL)
@@ -803,7 +803,7 @@ namespace {
         const auto c = ProtocolJSON().readCommand(input);
 
         EXPECT_EQ(c.activityId, "random-uuid-as-string");
-        EXPECT_EQ(c.command, sua::FotaEvent::InstallStart);
+        EXPECT_EQ(c.event, sua::FotaEvent::InstallStart);
     }
 
     TEST_F(TestMessagingProtocolJSON, readCommand_CLEANUP)
@@ -825,7 +825,7 @@ namespace {
         const auto c = ProtocolJSON().readCommand(input);
 
         EXPECT_EQ(c.activityId, "random-uuid-as-string");
-        EXPECT_EQ(c.command, sua::FotaEvent::Cleanup);
+        EXPECT_EQ(c.event, sua::FotaEvent::Cleanup);
     }
 
     TEST_F(TestMessagingProtocolJSON, readCommand_ACTIVATE)
@@ -847,7 +847,7 @@ namespace {
         const auto c = ProtocolJSON().readCommand(input);
 
         EXPECT_EQ(c.activityId, "random-uuid-as-string");
-        EXPECT_EQ(c.command, sua::FotaEvent::Activate);
+        EXPECT_EQ(c.event, sua::FotaEvent::Activate);
     }
 
     // ROLLBACK
@@ -870,7 +870,7 @@ namespace {
         const auto c = ProtocolJSON().readCommand(input);
 
         EXPECT_EQ(c.activityId, "random-uuid-as-string");
-        EXPECT_EQ(c.command, sua::FotaEvent::Rollback);
+        EXPECT_EQ(c.event, sua::FotaEvent::Rollback);
     }
 
     TEST_F(TestMessagingProtocolJSON, readCommand_UNKNOWN_throwsRuntimeError)

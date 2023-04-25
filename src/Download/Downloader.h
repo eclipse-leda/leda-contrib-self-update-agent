@@ -24,7 +24,7 @@ namespace sua {
     class Downloader : public IDownloader
     {
     public:
-        Downloader(const std::string& download_dir);
+        Downloader(const std::string& download_dir, const std::string& filename);
 
         static const std::string EVENT_DOWNLOADING;
 

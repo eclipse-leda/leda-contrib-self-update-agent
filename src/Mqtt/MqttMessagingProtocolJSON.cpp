@@ -40,20 +40,20 @@ namespace sua {
 
         c.activityId = json.at("activityId");
         if(c.activityId.empty()) {
-            throw std::logic_error("mandatory field 'activityId' is empty");
+            throw std::logic_error("Mandatory field 'activityId' is empty.");
         }
 
         const auto & command = json.at("payload").at("command");
         if(command == "DOWNLOAD") {
-            c.command = FotaEvent::DownloadStart;
+            c.event = FotaEvent::DownloadStart;
         } else if(command == "INSTALL") {
-            c.command = FotaEvent::InstallStart;
+            c.event = FotaEvent::InstallStart;
         } else if(command == "ACTIVATE") {
-            c.command = FotaEvent::Activate;
+            c.event = FotaEvent::Activate;
         } else if(command == "CLEANUP") {
-            c.command = FotaEvent::Cleanup;
+            c.event = FotaEvent::Cleanup;
         } else if(command == "ROLLBACK") {
-            c.command = FotaEvent::Rollback;
+            c.event = FotaEvent::Rollback;
         } else {
             throw std::runtime_error(fmt::format("unknown command '{}'", command));
         }
@@ -134,42 +134,31 @@ namespace sua {
 
     std::string MqttMessagingProtocolJSON::createMessage(const class Context& ctx, MqttMessage message_type, const std::string& message)
     {
-        if(message_type == MqttMessage::SystemVersion) {
+        switch(message_type) {
+        case MqttMessage::SystemVersion:
             if(ctx.desiredState.activityId.empty()) {
                 return writeSystemVersionWithoutActivityId(ctx.currentState.version);
             } else {
                 return writeSystemVersionWithActivityId(ctx.currentState.version, ctx.desiredState.activityId);
             }
-        }
-
-        if(message_type == MqttMessage::Identifying) {
+        case MqttMessage::Identifying:
             return writeFeedbackWithoutPayload(ctx.desiredState, "IDENTIFYING",
                 "Self-update agent has received new desired state request and is evaluating it.");
-        }
-
-        if(message_type == MqttMessage::Identified) {
+        case MqttMessage::Identified:
             return writeFeedbackWithoutPayload(ctx.desiredState,
                 "IDENTIFIED", "Self-update agent is about to perform an OS image update.");
-        }
-
-        if(message_type == MqttMessage::IdentificationFailed) {
+        case MqttMessage::IdentificationFailed:
             return writeFeedbackWithoutPayload(ctx.desiredState,
                 "IDENTIFICATION_FAILED", message);
-        }
-
-        if(message_type == MqttMessage::Skipped) {
+        case MqttMessage::Skipped:
             return writeFeedbackWithoutPayload(ctx.desiredState, "COMPLETED",
                 "Current OS image is equal to the target one from desired state.");
-        }
-
-        if(message_type == MqttMessage::Rejected) {
+        case MqttMessage::Rejected:
             return writeFeedbackWithPayload(ctx.desiredState,
                 "INCOMPLETE", "Update rejected.",
                 "UPDATE_FAILURE", "Bundle version does not match version in desired state request.",
                 message, 0);
-        }
-
-        if(message_type == MqttMessage::Downloading) {
+        case MqttMessage::Downloading: {
             const double mbytes = static_cast<double>(ctx.desiredState.downloadBytesTotal) / 1024.0 / 1024.0;
 
             return writeFeedbackWithPayload(ctx.desiredState,
@@ -177,8 +166,7 @@ namespace sua {
                 "DOWNLOADING", fmt::format("Downloading {:.{}f} MiB...", mbytes, 1),
                 message, ctx.desiredState.downloadProgressPercentage);
         }
-
-        if(message_type == MqttMessage::Downloaded) {
+        case MqttMessage::Downloaded: {
             double mbytes = static_cast<double>(ctx.desiredState.downloadBytesTotal) / 1024.0 / 1024.0;
 
             return writeFeedbackWithPayload(ctx.desiredState,
@@ -186,43 +174,32 @@ namespace sua {
                 "DOWNLOAD_SUCCESS", fmt::format("Downloaded {:.{}f} MiB...", mbytes, 1),
                 message, 100);
         }
-
-        if(message_type == MqttMessage::DownloadFailed) {
+        case MqttMessage::DownloadFailed:
             return writeFeedbackWithPayload(ctx.desiredState,
                 "INCOMPLETE", "Download failed.",
                 "UPDATE_FAILURE", "Download failed.",
                 message, ctx.desiredState.downloadProgressPercentage);
-        }
-
-        if(message_type == MqttMessage::Installing) {
+        case MqttMessage::Installing:
             return writeFeedbackWithPayload(ctx.desiredState,
                 "RUNNING", "Self-update agent is performing an OS image update.",
                 "UPDATING", "RAUC install...",
                 message, ctx.desiredState.installProgressPercentage);
-        }
-
-        if(message_type == MqttMessage::Installed) {
+        case MqttMessage::Installed:
             return writeFeedbackWithPayload(ctx.desiredState,
                 "COMPLETED", "Self-update completed, reboot required.",
                 "UPDATE_SUCCESS", "Writing partition completed, reboot required.",
                 message, 100);
-        }
-
-        if(message_type == MqttMessage::InstallFailed) {
+        case MqttMessage::InstallFailed:
             return writeFeedbackWithPayload(ctx.desiredState,
                 "INCOMPLETE", "Install failed.",
                 "UPDATE_FAILURE", "Writing partition failed.",
                 message, ctx.desiredState.installProgressPercentage);
-        }
-
-        if(message_type == MqttMessage::InstallFailedFallback) {
+        case MqttMessage::InstallFailedFallback:
             return writeFeedbackWithPayload(ctx.desiredState,
                 "RUNNING", "Self-update agent is performing an OS image update.",
                 "UPDATING", "Install in streaming mode failed, trying in download mode.",
                 message, 0);
-        }
-
-        if(message_type == MqttMessage::CurrentState) {
+        case MqttMessage::CurrentState:
             return "";
         }
 

@@ -258,7 +258,7 @@ namespace sua {
         if(nullptr != result) {
             g_variant_unref(result);
         } else {
-            Logger::error("Install call to Rauc via D-Bus failed, code = {}, message = {}",
+            Logger::error("InstallBundle call to Rauc via D-Bus failed, code = {}, message = {}",
                           connectionError->code,
                           connectionError->message);
             return TechCode::InstallationFailed;
@@ -479,7 +479,7 @@ namespace sua {
         if(nullptr != result) {
             g_variant_unref(result);
         } else {
-            Logger::error("Install call to Rauc via D-Bus failed, code = {}, message = {}",
+            Logger::error("Mark-active-slot call to Rauc via D-Bus failed, code = {}, message = {}",
                           connectionError->code,
                           connectionError->message);
             return TechCode::InstallationFailed;
