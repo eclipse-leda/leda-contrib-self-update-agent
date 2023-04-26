@@ -27,7 +27,8 @@ namespace sua {
         DummyRaucInstaller();
         ~DummyRaucInstaller();
 
-        TechCode    activate() override;
+        TechCode    activateBooted() override;
+        TechCode    activateOther() override;
         TechCode    installBundle(const std::string& input) override;
         int32_t     getProgressPollInterval() const override;
         int32_t     getInstallProgress() override;

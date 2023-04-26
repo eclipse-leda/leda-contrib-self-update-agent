@@ -16,6 +16,7 @@
 
 #include "FSM/States/Activating.h"
 #include "Context.h"
+#include "Logger.h"
 
 namespace sua {
 
@@ -25,7 +26,12 @@ namespace sua {
 
     void Activating::onEnter(Context& ctx)
     {
-        ctx.installerAgent->activate();
+        auto slots = ctx.installerAgent->getSlotStatus();
+        for(auto it : slots) {
+            Logger::info("Slot '{}': state='{}' version='{}'", it.first, it.second["state"], it.second["version"]);
+        }
+
+        ctx.installerAgent->activateOther();
     }
 
 } // namespace sua

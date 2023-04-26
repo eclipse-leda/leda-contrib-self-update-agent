@@ -24,6 +24,11 @@ namespace sua {
 
     void Installed::onEnter(Context& ctx)
     {
+        // RAUC automatically activates 'other' partition for next boot after install
+        // Therefore here we deactivate 'other' and activate current 'booted' and
+        // wait for activation command
+        ctx.installerAgent->activateBooted();
+
         ctx.currentState.version = ctx.desiredState.bundleVersion;
 
         Logger::info("System version, installed: '{}'", ctx.currentState.version);

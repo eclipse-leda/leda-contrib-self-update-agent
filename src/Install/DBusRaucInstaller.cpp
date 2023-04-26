@@ -474,9 +474,19 @@ namespace sua {
         return bundleVersion;
     }
 
-    TechCode DBusRaucInstaller::activate()
+    TechCode DBusRaucInstaller::activateBooted()
     {
-        Logger::trace("DBusRaucInstaller::activate");
+        return callDBusRaucMark("booted", "active");
+    }
+
+    TechCode DBusRaucInstaller::activateOther()
+    {
+        return callDBusRaucMark("other", "active");
+    }
+
+    TechCode DBusRaucInstaller::callDBusRaucMark(const std::string& identifier, const std::string& state)
+    {
+        Logger::trace("DBusRaucInstaller::callDBusRaucMark for slot '{}' to new state '{}'", identifier, state);
 
         GError* connectionError = nullptr;
 
@@ -486,7 +496,7 @@ namespace sua {
             "/",
             "de.pengutronix.rauc.Installer",
             "Mark",
-            g_variant_new("(ssss)", "active", "other", "", "activated other slot"),
+            g_variant_new("(ss)", state.c_str(), identifier.c_str()),
             NULL,
             G_DBUS_CALL_FLAGS_NONE,
             -1,

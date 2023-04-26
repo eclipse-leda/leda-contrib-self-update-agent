@@ -29,7 +29,8 @@ namespace sua {
         DBusRaucInstaller();
         ~DBusRaucInstaller();
 
-        TechCode    activate() override;
+        TechCode    activateBooted() override;
+        TechCode    activateOther() override;
         TechCode    installBundle(const std::string& input) override;
         int32_t     getProgressPollInterval() const override;
         int32_t     getInstallProgress() override;
@@ -58,6 +59,7 @@ namespace sua {
         void        subscribeDBusSignals();
         void        unsubscribeDBusSignals();
 
+        TechCode    callDBusRaucMark(const std::string& identifier, const std::string& state);
         TechCode    callDBusRaucInstallBundle(const std::string& bundleName);
         int32_t     getDBusRaucInstallProgress();
         std::string getDBusRaucProperty(const gchar* propertyKey) const;

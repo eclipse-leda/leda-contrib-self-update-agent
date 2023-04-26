@@ -35,7 +35,8 @@ namespace sua {
     public:
         virtual ~IRaucInstaller() = default;
 
-        virtual TechCode    activate()                                  = 0;
+        virtual TechCode    activateBooted()                            = 0;
+        virtual TechCode    activateOther()                             = 0;
         virtual TechCode    installBundle(const std::string & input)    = 0;
 
         // Returns configurable poll interval in milliseconds
