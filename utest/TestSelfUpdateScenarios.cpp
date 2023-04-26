@@ -55,7 +55,16 @@ namespace {
             return input;
         }
 
-        std::string getBundleVersion() override {
+        sua::SlotStatus getSlotStatus() override {
+            sua::SlotStatus s;
+
+            s["rootfs.0"]["state"  ] = "booted";
+            s["rootfs.0"]["version"] = getBootedVersion();
+
+            return s;
+        }
+
+        std::string getBootedVersion() override {
             return installedVersion;
         }
 

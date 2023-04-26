@@ -26,8 +26,8 @@ namespace sua {
 
     void Uninitialized::onEnter(Context& ctx)
     {
-        ctx.currentState.version = ctx.installerAgent->getBundleVersion();
-        Logger::info("System version, installed: '{}'", ctx.currentState.version);
+        ctx.currentState.version = ctx.installerAgent->getBootedVersion();
+        Logger::info("System version (slot): '{}'", ctx.currentState.version);
     }
 
 } // namespace sua

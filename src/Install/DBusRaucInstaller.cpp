@@ -24,7 +24,11 @@
 #include <gio/gio.h>
 
 namespace {
-    const std::string VERSION_UNAVAILABLE = "bundle_version_not_available";
+
+    const std::string MULTIPLE_BOOTED_SLOTS = "error_multiple_booted_slots_detected";
+    const std::string VERSION_UNAVAILABLE   = "bundle_version_not_available";
+    const std::string STATE_UNAVAILABLE     = "slot_state_not_available";
+
 }
 
 namespace sua {
@@ -162,20 +166,33 @@ namespace sua {
         return getDBusRaucInstallProgress();
     }
 
-    std::string DBusRaucInstaller::getBundleVersion()
+    SlotStatus DBusRaucInstaller::getSlotStatus()
     {
-        std::string bundleVersion = getDBusRaucBundleVersion();
+        auto slotStatus = getDBusRaucSlotStatus();
         g_main_context_iteration(g_main_loop_get_context(loop), FALSE);
+        return slotStatus;
+    }
 
-        if(bundleVersion == VERSION_UNAVAILABLE) {
-            bundleVersion = getOsVersionId("EDITION_ID");
+    std::string DBusRaucInstaller::getBootedVersion()
+    {
+        SlotStatus  slotStatus    = getSlotStatus();
+        std::string bootedVersion = "";
 
-            if(bundleVersion == VERSION_UNAVAILABLE) {
-                bundleVersion = getOsVersionId("VERSION_ID");
+        for(auto it : slotStatus) {
+            if(it.second["state"] == "booted") {
+                if(!bootedVersion.empty()) {
+                    return MULTIPLE_BOOTED_SLOTS;
+                }
+
+                bootedVersion = it.second["version"];
             }
         }
 
-        return bundleVersion;
+        if(bootedVersion == VERSION_UNAVAILABLE) {
+            return getOsVersionId();
+        }
+
+        return bootedVersion;
     }
 
     std::string DBusRaucInstaller::getBundleVersion(const std::string& input)
@@ -395,7 +412,7 @@ namespace sua {
         return bundleVersion;
     }
 
-    std::string DBusRaucInstaller::getOsVersionId(const std::string & version_key) const
+    std::string DBusRaucInstaller::getOsVersionId() const
     {
         Logger::trace("DBusRaucInstaller::getOsVersionId");
         std::string versionId = VERSION_UNAVAILABLE;
@@ -409,7 +426,7 @@ namespace sua {
                 std::string key;
                 std::getline(ss, key, '=');
 
-                if(key == version_key) {
+                if(key == "VERSION_ID") {
                     std::string value;
                     std::getline(ss, value, '=');
                     value.erase(std::remove(value.begin(), value.end(), '"'), value.end());

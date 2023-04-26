@@ -19,9 +19,17 @@
 
 #include "TechCodes.h"
 
+#include <map>
 #include <string>
 
 namespace sua {
+
+    // status["rootfs.0"]["version"] = "1.1"
+    // status["rootfs.0"]["state"  ] = "booted"
+    //
+    // status["rootfs.1"]["version"] = "1.0"
+    // status["rootfs.1"]["state"  ] = "inactive"
+    using SlotStatus = std::map<std::string, std::map<std::string, std::string>>;
 
     class IRaucInstaller {
     public:
@@ -36,7 +44,8 @@ namespace sua {
         virtual int32_t     getProgressPollInterval() const             = 0;
 
         virtual int32_t     getInstallProgress()                        = 0;
-        virtual std::string getBundleVersion()                          = 0;
+        virtual SlotStatus  getSlotStatus()                             = 0;
+        virtual std::string getBootedVersion()                          = 0;
         virtual std::string getBundleVersion(const std::string & input) = 0;
         virtual std::string getLastError()                              = 0;
 

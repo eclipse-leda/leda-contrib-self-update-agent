@@ -31,7 +31,8 @@ namespace sua {
         TechCode    installBundle(const std::string& input) override;
         int32_t     getProgressPollInterval() const override;
         int32_t     getInstallProgress() override;
-        std::string getBundleVersion() override;
+        SlotStatus  getSlotStatus() override;
+        std::string getBootedVersion() override;
         std::string getBundleVersion(const std::string& input) override;
         std::string getLastError() override;
 

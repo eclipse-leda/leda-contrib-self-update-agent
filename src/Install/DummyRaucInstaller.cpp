@@ -40,7 +40,17 @@ namespace sua {
         return _progress;
     }
 
-    std::string DummyRaucInstaller::getBundleVersion()
+    SlotStatus DummyRaucInstaller::getSlotStatus()
+    {
+        SlotStatus s;
+
+        s["rootfs.0"]["version"] = getBootedVersion();
+        s["rootfs.0"]["state"  ] = "booted";
+
+        return s;
+    }
+
+    std::string DummyRaucInstaller::getBootedVersion()
     {
         return "dummy_version0";
     }
