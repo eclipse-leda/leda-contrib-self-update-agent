@@ -10,4 +10,5 @@ cd build_amd64/3rdparty/openssl
 	shared \
 	-Wl,-rpath=$rootdir/build_amd64/lib \
 	-Wl,--enable-new-dtags
+make -j
 make install_sw
