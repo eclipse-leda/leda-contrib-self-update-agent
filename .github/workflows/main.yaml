@@ -46,6 +46,7 @@ jobs:
           commit_hash: ${{ github.sha }}
           username: ${{ github.actor }}
           token: ${{ secrets.GITHUB_TOKEN }}
+          suffix: ""
 
   push-container-image:
     if: github.event_name == 'push'
