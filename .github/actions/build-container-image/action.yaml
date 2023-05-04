@@ -32,6 +32,9 @@ inputs:
   token:
     required: true
     description: "Auth token"
+  suffix:
+    required: true
+    description: "Optional suffix for -developer build of container image"
 
 runs:
   using: "composite"
@@ -63,7 +66,7 @@ runs:
       id: build-and-push
       uses: docker/build-push-action@ac9327eae2b366085ac7f6a2d02df8aa8ead720a
       with:
-        push: ${{ github.event_name == 'push' }}
+        push: ${{ (github.event_name == 'push') || (inputs.suffix == '-developer') }}
         context: .
         platforms: linux/${{ inputs.arch }}
         file: Dockerfile.${{ inputs.arch }}
@@ -72,5 +75,5 @@ runs:
           GITHUB_RUN_NUMBER=${{ inputs.run_number }}
           GITHUB_COMMIT_HASH=${{ inputs.commit_hash }}
         tags: |
-          ghcr.io/${{ steps.repo_name.outputs.lowercase }}/self-update-agent:latest_${{ inputs.arch }}
-          ghcr.io/${{ steps.repo_name.outputs.lowercase }}/self-update-agent:build-${{ inputs.run_number }}_${{ inputs.arch }}
+          ghcr.io/${{ steps.repo_name.outputs.lowercase }}/self-update-agent${{ inputs.suffix }}:latest_${{ inputs.arch }}
+          ghcr.io/${{ steps.repo_name.outputs.lowercase }}/self-update-agent${{ inputs.suffix }}:build-${{ inputs.run_number }}_${{ inputs.arch }}
