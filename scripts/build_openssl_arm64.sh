@@ -15,4 +15,5 @@ RANLIB=aarch64-linux-gnu-ranlib \
         shared \
         -Wl,-rpath=$rootdir/build_arm64/lib \
         -Wl,--enable-new-dtags
+make -j
 make install_sw

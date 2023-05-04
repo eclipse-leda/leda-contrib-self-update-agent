@@ -28,8 +28,12 @@ COPY CMakeLists.txt /work/CMakeLists.txt
 RUN cd /work \
     && mkdir -p build_amd64/3rdparty/openssl \
     && mkdir -p dist_amd64 \
-    && ./scripts/build_openssl_amd64.sh > /dev/null \
-    && ./scripts/build_glib_amd64.sh > /dev/null \
+    && ./scripts/build_openssl_amd64.sh > /dev/null
+
+RUN cd /work \
+    && ./scripts/build_glib_amd64.sh > /dev/null
+
+RUN cd /work \
     && cd build_amd64 \
     && cmake \
         -DCMAKE_INSTALL_PREFIX=../dist_amd64 \
@@ -39,8 +43,14 @@ RUN cd /work \
         -DCMAKE_BUILD_TYPE="Release" \
         -DSUA_BUILD_NUMBER=$GITHUB_RUN_NUMBER \
         -DSUA_COMMIT_HASH=$GITHUB_COMMIT_HASH \
-        .. \
-    && make \
+        ..
+
+RUN cd /work \
+    && cd build_amd64 \
+    && make -j
+
+RUN cd /work \
+    && cd build_amd64 \
     && make install
 
 #Define RUNTIME environment, the final image

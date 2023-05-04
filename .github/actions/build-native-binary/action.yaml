@@ -66,7 +66,7 @@ runs:
         -DSUA_BUILD_NUMBER=${{ inputs.run_number }} \
         -DSUA_BUILD_TESTS=NO \
         ..
-      make
+      make -j
       make install
     shell: bash
 
@@ -82,7 +82,7 @@ runs:
         -DSUA_BUILD_NUMBER=${{ inputs.run_number }} \
         -DSUA_BUILD_TESTS=YES \
         ..
-      make
+      make -j
       make install
     shell: bash
 
@@ -91,9 +91,29 @@ runs:
     run: |
       cd dist_${{ inputs.arch }}_testing/utest
       ./TestSelfUpdateAgent > ../../unit_tests_report.txt
+    shell: bash
+
+  - name: Generate reports
+    if: ${{ (inputs.arch=='amd64') && (success() || failure()) }}
+    run: |
+      cd dist_${{ inputs.arch }}_testing/utest
+
       mkdir report
       gcovr --root ../.. --html --html-details --output report/coverage.html -e ../../3rdparty -e ../../utest -e ../../src/main.cpp
+      gcovr --root ../.. --txt --output report/coverage.txt -e ../../3rdparty -e ../../utest -e ../../src/main.cpp
       tar -czvf ../../code-coverage.tar.gz report
+
+      echo -e "### Code Coverage Summary\n" >> report.md
+      echo -e "\`\`\`" >> report.md
+      cat report/coverage.txt >> report.md
+      echo -e "\n\`\`\`\n" >> report.md
+
+      echo -e "### Unit Tests Results\n" >> report.md
+      echo -e "\`\`\`" >> report.md
+      cat ../../unit_tests_report.txt >> report.md
+      echo -e "\n\`\`\`\n" >> report.md
+
+      cat report.md > $GITHUB_STEP_SUMMARY
     shell: bash
 
   - name: Compress artifacts
