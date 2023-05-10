@@ -39,6 +39,9 @@ namespace sua {
         uint64_t downloadBytesDownloaded    = 0;
         int      downloadProgressPercentage = 0;
         int      installProgressPercentage  = 0;
+
+        std::string actionStatus               = "";
+        std::string actionMessage              = "";
     };
 
     struct CurrentState {

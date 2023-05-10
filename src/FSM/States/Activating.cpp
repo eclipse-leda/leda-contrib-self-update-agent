@@ -26,12 +26,22 @@ namespace sua {
 
     void Activating::onEnter(Context& ctx)
     {
+        send(ctx, IMqttProcessor::TOPIC_FEEDBACK, MqttMessage::Activating);
+
         auto slots = ctx.installerAgent->getSlotStatus();
         for(auto it : slots) {
             Logger::info("Slot '{}': state='{}' version='{}'", it.first, it.second["state"], it.second["version"]);
         }
 
-        ctx.installerAgent->activateOther();
+        if(ctx.installerAgent->activateOther() == TechCode::OK) {
+            ctx.desiredState.actionStatus  = "UPDATE_SUCCESS";
+            ctx.desiredState.actionMessage = "Self-update agent has activated the new OS image.";
+            send(ctx, IMqttProcessor::TOPIC_FEEDBACK, MqttMessage::Activated);
+        } else {
+            ctx.desiredState.actionStatus  = "UPDATE_FAILURE";
+            ctx.desiredState.actionMessage = "Self-update agent failed to activate the new OS image.";
+            send(ctx, IMqttProcessor::TOPIC_FEEDBACK, MqttMessage::ActivationFailed);
+        }
     }
 
 } // namespace sua

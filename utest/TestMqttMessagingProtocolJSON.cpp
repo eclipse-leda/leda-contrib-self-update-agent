@@ -522,7 +522,7 @@ namespace {
                 "activityId": "id",
                 "timestamp": 42,
                 "payload": {
-                    "status": "RUNNING",
+                    "status": "DOWNLOADING",
                     "message": "Self-update agent is performing an OS image update.",
                     "actions": [
                         {
@@ -559,7 +559,7 @@ namespace {
                 "activityId": "id",
                 "timestamp": 42,
                 "payload": {
-                    "status": "RUNNING",
+                    "status": "DOWNLOAD_SUCCESS",
                     "message": "Self-update agent is performing an OS image update.",
                     "actions": [
                         {
@@ -594,7 +594,7 @@ namespace {
                 "activityId": "id",
                 "timestamp": 42,
                 "payload": {
-                    "status": "INCOMPLETE",
+                    "status": "DOWNLOAD_FAILURE",
                     "message": "Download failed.",
                     "actions": [
                         {
@@ -602,7 +602,7 @@ namespace {
                                 "id": "self-update:os-image",
                                 "version": "1.0"
                             },
-                            "status": "UPDATE_FAILURE",
+                            "status": "DOWNLOAD_FAILURE",
                             "progress": 66,
                             "message": "Download failed."
                         }
@@ -629,7 +629,7 @@ namespace {
                 "activityId": "id",
                 "timestamp": 42,
                 "payload": {
-                    "status": "RUNNING",
+                    "status": "UPDATING",
                     "message": "Self-update agent is performing an OS image update.",
                     "actions": [
                         {
@@ -664,7 +664,7 @@ namespace {
                 "activityId": "id",
                 "timestamp": 42,
                 "payload": {
-                    "status": "COMPLETED",
+                    "status": "UPDATE_SUCCESS",
                     "message": "Self-update completed, reboot required.",
                     "actions": [
                         {
@@ -672,7 +672,7 @@ namespace {
                                 "id": "self-update:os-image",
                                 "version": "1.0"
                             },
-                            "status": "UPDATE_SUCCESS",
+                            "status": "UPDATING",
                             "progress": 100,
                             "message": "Writing partition completed, reboot required."
                         }
@@ -699,7 +699,7 @@ namespace {
                 "activityId": "id",
                 "timestamp": 42,
                 "payload": {
-                    "status": "INCOMPLETE",
+                    "status": "UPDATE_FAILURE",
                     "message": "Install failed.",
                     "actions": [
                         {
@@ -760,6 +760,141 @@ namespace {
         const std::string result = ProtocolJSON().createMessage(ctx, sua::MqttMessage::CurrentState);
 
         EXPECT_EQ_MULTILINE(result, "");
+    }
+
+    TEST_F(TestMessagingProtocolJSON, createMessage_cleaned)
+    {
+        ctx.desiredState.actionStatus  = "STATUS";
+        ctx.desiredState.actionMessage = "MESSAGE";
+
+        const std::string result = ProtocolJSON().createMessage(ctx, sua::MqttMessage::Cleaned);
+
+        // clang-format off
+        const std::string expected = R"(
+            {
+                "activityId": "id",
+                "timestamp": 42,
+                "payload": {
+                    "status": "CLEANUP_SUCCESS",
+                    "message": "Self-update agent has cleaned up after itself.",
+                    "actions": [
+                        {
+                            "component": {
+                                "id": "self-update:os-image",
+                                "version": "1.0"
+                            },
+                            "status": "STATUS",
+                            "progress": 0,
+                            "message": "MESSAGE"
+                        }
+                    ]
+                }
+            }
+        )";
+        // clang-format on
+
+        EXPECT_NO_THROW(validateJsonSyntax(expected));
+        EXPECT_NO_THROW(validateJsonSyntax(result));
+        EXPECT_EQ_MULTILINE(result, expected);
+    }
+
+    TEST_F(TestMessagingProtocolJSON, createMessage_activating)
+    {
+        const std::string result = ProtocolJSON().createMessage(ctx, sua::MqttMessage::Activating);
+
+        // clang-format off
+        const std::string expected = R"(
+            {
+                "activityId": "id",
+                "timestamp": 42,
+                "payload": {
+                    "status": "ACTIVATING",
+                    "message": "Self-update agent is performing an OS image activation.",
+                    "actions": [
+                        {
+                            "component": {
+                                "id": "self-update:os-image",
+                                "version": "1.0"
+                            },
+                            "status": "UPDATING",
+                            "progress": 0,
+                            "message": "Self-update agent is performing an OS image activation."
+                        }
+                    ]
+                }
+            }
+        )";
+        // clang-format on
+
+        EXPECT_NO_THROW(validateJsonSyntax(expected));
+        EXPECT_NO_THROW(validateJsonSyntax(result));
+        EXPECT_EQ_MULTILINE(result, expected);
+    }
+
+    TEST_F(TestMessagingProtocolJSON, createMessage_activated)
+    {
+        const std::string result = ProtocolJSON().createMessage(ctx, sua::MqttMessage::Activated);
+
+        // clang-format off
+        const std::string expected = R"(
+            {
+                "activityId": "id",
+                "timestamp": 42,
+                "payload": {
+                    "status": "ACTIVATION_SUCCESS",
+                    "message": "Self-update agent has activated the new OS image.",
+                    "actions": [
+                        {
+                            "component": {
+                                "id": "self-update:os-image",
+                                "version": "1.0"
+                            },
+                            "status": "UPDATED",
+                            "progress": 0,
+                            "message": "Self-update agent has activated the new OS image."
+                        }
+                    ]
+                }
+            }
+        )";
+        // clang-format on
+
+        EXPECT_NO_THROW(validateJsonSyntax(expected));
+        EXPECT_NO_THROW(validateJsonSyntax(result));
+        EXPECT_EQ_MULTILINE(result, expected);
+    }
+
+    TEST_F(TestMessagingProtocolJSON, createMessage_activationFailed)
+    {
+        const std::string result = ProtocolJSON().createMessage(ctx, sua::MqttMessage::ActivationFailed);
+
+        // clang-format off
+        const std::string expected = R"(
+            {
+                "activityId": "id",
+                "timestamp": 42,
+                "payload": {
+                    "status": "ACTIVATION_FAILURE",
+                    "message": "Self-update agent has failed to activate the new OS image.",
+                    "actions": [
+                        {
+                            "component": {
+                                "id": "self-update:os-image",
+                                "version": "1.0"
+                            },
+                            "status": "UPDATE_FAILURE",
+                            "progress": 0,
+                            "message": "Self-update agent has failed to activate the new OS image."
+                        }
+                    ]
+                }
+            }
+        )";
+        // clang-format on
+
+        EXPECT_NO_THROW(validateJsonSyntax(expected));
+        EXPECT_NO_THROW(validateJsonSyntax(result));
+        EXPECT_EQ_MULTILINE(result, expected);
     }
 
     TEST_F(TestMessagingProtocolJSON, readCommand_DOWNLOAD)

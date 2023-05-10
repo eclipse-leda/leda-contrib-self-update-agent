@@ -33,6 +33,14 @@ namespace sua {
             Logger::error("Failed to remove temporary bundle file: '{}', reason: '{}'", path, strerror(errno));
         }
 
+        send(ctx, IMqttProcessor::TOPIC_FEEDBACK, MqttMessage::Cleaned);
+
+        if(ctx.desiredState.actionStatus == "UPDATE_SUCCESS") {
+            send(ctx, IMqttProcessor::TOPIC_FEEDBACK, MqttMessage::Complete);
+        } else {
+            send(ctx, IMqttProcessor::TOPIC_FEEDBACK, MqttMessage::Incomplete);
+        }
+
         ctx.stateMachine->handleEvent(FotaEvent::Waiting);
     }
 

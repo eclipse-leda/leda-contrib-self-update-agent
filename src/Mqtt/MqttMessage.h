@@ -35,7 +35,13 @@ namespace sua {
         Installing,
         Installed,
         InstallFailed,
-        InstallFailedFallback
+        InstallFailedFallback,
+        Cleaned,
+        Activating,
+        Activated,
+        ActivationFailed,
+        Complete,
+        Incomplete
     };
 
     std::ostream & operator<<(std::ostream & os, MqttMessage m);

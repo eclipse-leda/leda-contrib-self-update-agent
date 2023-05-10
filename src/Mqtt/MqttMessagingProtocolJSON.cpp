@@ -162,7 +162,7 @@ namespace sua {
             const double mbytes = static_cast<double>(ctx.desiredState.downloadBytesTotal) / 1024.0 / 1024.0;
 
             return writeFeedbackWithPayload(ctx.desiredState,
-                "RUNNING", "Self-update agent is performing an OS image update.",
+                "DOWNLOADING", "Self-update agent is performing an OS image update.",
                 "DOWNLOADING", fmt::format("Downloading {:.{}f} MiB...", mbytes, 1),
                 message, ctx.desiredState.downloadProgressPercentage);
         }
@@ -170,28 +170,28 @@ namespace sua {
             double mbytes = static_cast<double>(ctx.desiredState.downloadBytesTotal) / 1024.0 / 1024.0;
 
             return writeFeedbackWithPayload(ctx.desiredState,
-                "RUNNING", "Self-update agent is performing an OS image update.",
+                "DOWNLOAD_SUCCESS", "Self-update agent is performing an OS image update.",
                 "DOWNLOAD_SUCCESS", fmt::format("Downloaded {:.{}f} MiB...", mbytes, 1),
                 message, 100);
         }
         case MqttMessage::DownloadFailed:
             return writeFeedbackWithPayload(ctx.desiredState,
-                "INCOMPLETE", "Download failed.",
-                "UPDATE_FAILURE", "Download failed.",
+                "DOWNLOAD_FAILURE", "Download failed.",
+                "DOWNLOAD_FAILURE", "Download failed.",
                 message, ctx.desiredState.downloadProgressPercentage);
         case MqttMessage::Installing:
             return writeFeedbackWithPayload(ctx.desiredState,
-                "RUNNING", "Self-update agent is performing an OS image update.",
+                "UPDATING", "Self-update agent is performing an OS image update.",
                 "UPDATING", "RAUC install...",
                 message, ctx.desiredState.installProgressPercentage);
         case MqttMessage::Installed:
             return writeFeedbackWithPayload(ctx.desiredState,
-                "COMPLETED", "Self-update completed, reboot required.",
-                "UPDATE_SUCCESS", "Writing partition completed, reboot required.",
+                "UPDATE_SUCCESS", "Self-update completed, reboot required.",
+                "UPDATING", "Writing partition completed, reboot required.",
                 message, 100);
         case MqttMessage::InstallFailed:
             return writeFeedbackWithPayload(ctx.desiredState,
-                "INCOMPLETE", "Install failed.",
+                "UPDATE_FAILURE", "Install failed.",
                 "UPDATE_FAILURE", "Writing partition failed.",
                 message, ctx.desiredState.installProgressPercentage);
         case MqttMessage::InstallFailedFallback:
@@ -201,6 +201,36 @@ namespace sua {
                 message, 0);
         case MqttMessage::CurrentState:
             return "";
+        case MqttMessage::Cleaned:
+            return writeFeedbackWithPayload(ctx.desiredState,
+                "CLEANUP_SUCCESS", "Self-update agent has cleaned up after itself.",
+                ctx.desiredState.actionStatus, ctx.desiredState.actionMessage,
+                message, 0);
+        case MqttMessage::Activating:
+            return writeFeedbackWithPayload(ctx.desiredState,
+                "ACTIVATING", "Self-update agent is performing an OS image activation.",
+                "UPDATING", "Self-update agent is performing an OS image activation.",
+                message, 0);
+        case MqttMessage::Activated:
+            return writeFeedbackWithPayload(ctx.desiredState,
+                "ACTIVATION_SUCCESS", "Self-update agent has activated the new OS image.",
+                "UPDATED", "Self-update agent has activated the new OS image.",
+                message, 0);
+        case MqttMessage::ActivationFailed:
+            return writeFeedbackWithPayload(ctx.desiredState,
+                "ACTIVATION_FAILURE", "Self-update agent has failed to activate the new OS image.",
+                "UPDATE_FAILURE", "Self-update agent has failed to activate the new OS image.",
+                message, 0);
+        case MqttMessage::Complete:
+            return writeFeedbackWithPayload(ctx.desiredState,
+                "COMPLETE", "Self-update completed.",
+                ctx.desiredState.actionStatus, ctx.desiredState.actionMessage,
+                message, 0);
+        case MqttMessage::Incomplete:
+            return writeFeedbackWithPayload(ctx.desiredState,
+                "INCOMPLETE", "Self-update incomplete.",
+                ctx.desiredState.actionStatus, ctx.desiredState.actionMessage,
+                message, 0);
         }
 
         assert(false);

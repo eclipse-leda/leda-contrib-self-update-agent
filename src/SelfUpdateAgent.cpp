@@ -58,7 +58,7 @@ namespace sua {
             // from "Connected"
             { FotaEvent::ConnectivityLost       , "Connected"       , "Uninitialized"   },
             { FotaEvent::Identify               , "Connected"       , "Downloading"      , FotaEvent::BundleVersionOK           },
-            { FotaEvent::Identify               , "Connected"       , "Failed"           , FotaEvent::BundleVersionUnchanged    },
+            { FotaEvent::Identify               , "Connected"       , "Connected"        , FotaEvent::BundleVersionUnchanged    },
             { FotaEvent::GetCurrentState        , "Connected"       , "SendCurrentState"},
             // from "Downloading"
             { FotaEvent::ConnectivityLost       , "Downloading"     , "Uninitialized"   },
