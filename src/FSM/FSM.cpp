@@ -71,7 +71,9 @@ namespace sua {
             }
 
             if(t.output == FotaEvent::NotUsed) {
-                transitTo(t.to);
+                if(activeState() != t.to) {
+                    transitTo(t.to);
+                }
                 break;
             }
 
@@ -81,7 +83,9 @@ namespace sua {
             }
 
             if(t.output == output) {
-                transitTo(t.to);
+                if(activeState() != t.to) {
+                    transitTo(t.to);
+                }
                 break;
             }
         }

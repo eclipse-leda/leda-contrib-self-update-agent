@@ -37,7 +37,14 @@ namespace sua {
             { sua::MqttMessage::Installing           , "Installing"           },
             { sua::MqttMessage::Installed            , "Installed"            },
             { sua::MqttMessage::InstallFailed        , "InstallFailed"        },
-            { sua::MqttMessage::InstallFailedFallback, "InstallFailedFallback"}
+            { sua::MqttMessage::InstallFailedFallback, "InstallFailedFallback"},
+            { sua::MqttMessage::Cleaned              , "Cleaned"              },
+            { sua::MqttMessage::Activating           , "Activating"           },
+            { sua::MqttMessage::Activated            , "Activated"            },
+            { sua::MqttMessage::ActivationFailed     , "ActivationFailed"     },
+            { sua::MqttMessage::Complete             , "Complete"             },
+            { sua::MqttMessage::Incomplete           , "Incomplete"           },
+
         };
         // clang-format on
 

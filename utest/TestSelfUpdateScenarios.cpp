@@ -235,7 +235,7 @@ namespace {
 
     TEST_F(TestSelfUpdateScenarios, receivesIdentifyRequestWithUnchandedVersion_endsInFailedState)
     {
-        expectedStates   = {"Uninitialized", "Connected", "Failed"};
+        expectedStates   = {"Uninitialized", "Connected"};
         expectedMessages = {M::SystemVersion, M::Identifying, M::Skipped};
 
         sua.init();
@@ -393,7 +393,8 @@ namespace {
     {
         expectedStates   = {"Uninitialized", "Connected", "Downloading", "Installing", "Installed", "Activating", "Cleaning", "Idle"};
         expectedMessages = {M::SystemVersion, M::Identifying, M::Identified, M::Downloaded,
-            M::Installing, M::Installing, M::Installing, M::Installing, M::Installed, M::CurrentState};
+            M::Installing, M::Installing, M::Installing, M::Installing, M::Installed, M::CurrentState,
+            M::Activating, M::Activated, M::Cleaned, M::Complete};
 
         EXPECT_CALL(*downloader, start(_)).WillOnce(Return(sua::TechCode::OK));
         EXPECT_CALL(*installerAgent, succeeded()).WillOnce(Return(true));
