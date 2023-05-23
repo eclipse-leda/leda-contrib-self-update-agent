@@ -64,17 +64,7 @@ namespace sua {
                 const std::string pathDownloadedFile = ctx.updatesDirectory + ctx.tempFileName;
                 Logger::trace("Downloaded bundle file should exist now as '{}'", pathDownloadedFile);
 
-                if(ctx.bundleChecker->isBundleVersionConsistent(
-                    ctx.desiredState.bundleVersion, ctx.installerAgent, pathDownloadedFile)) {
-                    Logger::info("Downloaded bundle version matches spec.");
-                    return FotaEvent::BundleVersionOK;
-                } else {
-                    Logger::info("Downloaded bundle version does not match spec.");
-                    ctx.desiredState.actionStatus  = "DOWNLOAD_FAILURE";
-                    ctx.desiredState.actionMessage = "Bundle version does not match spec.";
-                    send(ctx, IMqttProcessor::TOPIC_FEEDBACK, MqttMessage::Rejected);
-                    return FotaEvent::BundleVersionInconsistent;
-                }
+                return FotaEvent::DownloadSucceded;
             } else {
                 Logger::error("Download failed.");
                 send(ctx, IMqttProcessor::TOPIC_FEEDBACK, MqttMessage::DownloadFailed);

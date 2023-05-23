@@ -3,6 +3,6 @@
     "timestamp": 123456789,
     "payload": {
         "baseline": "BASELINE NAME",
-        "command": "INSTALL"
+        "command": "UPDATE"
     }
 }

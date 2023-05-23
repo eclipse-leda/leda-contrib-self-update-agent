@@ -32,6 +32,7 @@ namespace sua {
         Downloading,
         Downloaded,
         DownloadFailed,
+        VersionChecking,
         Installing,
         Installed,
         InstallFailed,

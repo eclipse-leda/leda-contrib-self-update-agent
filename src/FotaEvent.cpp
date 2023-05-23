@@ -34,6 +34,7 @@ namespace sua {
             { BundleVersionInconsistent , "BundleVersionInconsistent" },
             { DownloadStart             , "DownloadStart"             },
             { DownloadFailed            , "DownloadFailed"            },
+            { DownloadSucceded          , "DownloadSucceded"          },
             { InstallStart              , "InstallStart"              },
             { InstallCompleted          , "InstallCompleted"          },
             { InstallFailed             , "InstallFailed"             },

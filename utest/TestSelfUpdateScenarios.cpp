@@ -30,7 +30,7 @@ namespace {
     static const std::string BUNDLE_RAUC_SETUP_FAILS = "rauc_setup_fails 1.1";
 
     static const std::string COMMAND_DOWNLOAD = "DOWNLOAD";
-    static const std::string COMMAND_INSTALL  = "INSTALL";
+    static const std::string COMMAND_UPDATE   = "UPDATE";
     static const std::string COMMAND_ACTIVATE = "ACTIVATE";
     static const std::string COMMAND_CLEANUP  = "CLEANUP";
 
@@ -294,7 +294,7 @@ namespace {
 
     TEST_F(TestSelfUpdateScenarios, downloadedBundleVersionMismatchWithSpec_endsInFailedState)
     {
-        expectedStates   = {"Uninitialized", "Connected", "Downloading", "Failed"};
+        expectedStates   = {"Uninitialized", "Connected", "Downloading", "Installing", "Failed"};
         expectedMessages = {M::SystemVersion, M::Identifying, M::Identified, M::Downloaded, M::Rejected};
 
         EXPECT_CALL(*downloader, start(_)).WillOnce(Return(sua::TechCode::OK));
@@ -304,6 +304,7 @@ namespace {
 
         triggerIdentify(BUNDLE_11, "1.2");
         trigger(COMMAND_DOWNLOAD);
+        trigger(COMMAND_UPDATE);
 
         EXPECT_EQ(visitedStates, expectedStates);
         EXPECT_EQ(sentMessages, expectedMessages);
@@ -340,7 +341,7 @@ namespace {
 
         triggerIdentify(BUNDLE_RAUC_SETUP_FAILS, "1.1");
         trigger(COMMAND_DOWNLOAD);
-        trigger(COMMAND_INSTALL);
+        trigger(COMMAND_UPDATE);
 
         EXPECT_EQ(visitedStates, expectedStates);
         EXPECT_EQ(sentMessages, expectedMessages);
@@ -362,7 +363,7 @@ namespace {
 
         triggerIdentify(BUNDLE_11, "1.1");
         trigger(COMMAND_DOWNLOAD);
-        trigger(COMMAND_INSTALL);
+        trigger(COMMAND_UPDATE);
 
         EXPECT_EQ(visitedStates, expectedStates);
         EXPECT_EQ(sentMessages, expectedMessages);
@@ -383,7 +384,7 @@ namespace {
 
         triggerIdentify(BUNDLE_11, "1.1");
         trigger(COMMAND_DOWNLOAD);
-        trigger(COMMAND_INSTALL);
+        trigger(COMMAND_UPDATE);
 
         EXPECT_EQ(visitedStates, expectedStates);
         EXPECT_EQ(sentMessages, expectedMessages);
@@ -405,7 +406,7 @@ namespace {
 
         triggerIdentify(BUNDLE_11, "1.1");
         trigger(COMMAND_DOWNLOAD);
-        trigger(COMMAND_INSTALL);
+        trigger(COMMAND_UPDATE);
         trigger(COMMAND_ACTIVATE);
         trigger(COMMAND_CLEANUP);
 

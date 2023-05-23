@@ -34,6 +34,7 @@ namespace sua {
             { sua::MqttMessage::Downloading          , "Downloading"          },
             { sua::MqttMessage::Downloaded           , "Downloaded"           },
             { sua::MqttMessage::DownloadFailed       , "DownloadFailed"       },
+            { sua::MqttMessage::VersionChecking      , "VersionChecking"      },
             { sua::MqttMessage::Installing           , "Installing"           },
             { sua::MqttMessage::Installed            , "Installed"            },
             { sua::MqttMessage::InstallFailed        , "InstallFailed"        },

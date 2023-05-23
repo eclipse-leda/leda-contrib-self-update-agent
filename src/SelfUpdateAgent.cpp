@@ -62,13 +62,13 @@ namespace sua {
             { FotaEvent::GetCurrentState        , "Connected"       , "SendCurrentState"},
             // from "Downloading"
             { FotaEvent::ConnectivityLost       , "Downloading"     , "Uninitialized"   },
-            { FotaEvent::DownloadStart          , "Downloading"     , "Installing"       , FotaEvent::BundleVersionOK           },
-            { FotaEvent::DownloadStart          , "Downloading"     , "Failed"           , FotaEvent::BundleVersionInconsistent },
+            { FotaEvent::DownloadStart          , "Downloading"     , "Installing"       , FotaEvent::DownloadSucceded          },
             { FotaEvent::DownloadStart          , "Downloading"     , "Failed"           , FotaEvent::DownloadFailed            },
             { FotaEvent::Rollback               , "Downloading"     , "Idle"            },
             // from "Installing"
             { FotaEvent::ConnectivityLost       , "Installing"      , "Uninitialized"   },
             { FotaEvent::InstallStart           , "Installing"      , "Installed"        , FotaEvent::InstallCompleted          },
+            { FotaEvent::InstallStart           , "Installing"      , "Failed"           , FotaEvent::BundleVersionInconsistent },
             { FotaEvent::InstallStart           , "Installing"      , "Failed"           , FotaEvent::InstallFailed             },
             { FotaEvent::InstallStart           , "Installing"      , "Downloading"      , FotaEvent::InstallFailedFallback     },
             { FotaEvent::Rollback               , "Installing"      , "Idle"            },

@@ -418,7 +418,17 @@ namespace {
                 "payload": {
                     "status": "IDENTIFIED",
                     "message": "Self-update agent is about to perform an OS image update.",
-                    "actions": []
+                    "actions": [
+                        {
+                            "component": {
+                                "id": "self-update:os-image",
+                                "version": "1.0"
+                            },
+                            "status": "IDENTIFIED",
+                            "progress": 0,
+                            "message": "Self-update agent is about to perform an OS image update."
+                        }
+                    ]
                 }
             }
         )";
@@ -485,7 +495,7 @@ namespace {
                 "activityId": "id",
                 "timestamp": 42,
                 "payload": {
-                    "status": "INCOMPLETE",
+                    "status": "UPDATE_FAILURE",
                     "message": "Update rejected.",
                     "actions": [
                         {
@@ -605,6 +615,39 @@ namespace {
                             "status": "DOWNLOAD_FAILURE",
                             "progress": 66,
                             "message": "Download failed."
+                        }
+                    ]
+                }
+            }
+        )";
+        // clang-format on
+
+        EXPECT_NO_THROW(validateJsonSyntax(expected));
+        EXPECT_NO_THROW(validateJsonSyntax(result));
+        EXPECT_EQ_MULTILINE(result, expected);
+    }
+
+    TEST_F(TestMessagingProtocolJSON, createMessage_versionChecking)
+    {
+        const std::string result = ProtocolJSON().createMessage(ctx, sua::MqttMessage::VersionChecking);
+
+        // clang-format off
+        const std::string expected = R"(
+            {
+                "activityId": "id",
+                "timestamp": 42,
+                "payload": {
+                    "status": "UPDATING",
+                    "message": "Self-update agent is performing an OS image update.",
+                    "actions": [
+                        {
+                            "component": {
+                                "id": "self-update:os-image",
+                                "version": "1.0"
+                            },
+                            "status": "UPDATING",
+                            "progress": 0,
+                            "message": "Checking bundle version and version in desired state request."
                         }
                     ]
                 }
@@ -919,7 +962,7 @@ namespace {
         EXPECT_EQ(c.event, sua::FotaEvent::DownloadStart);
     }
 
-    TEST_F(TestMessagingProtocolJSON, readCommand_INSTALL)
+    TEST_F(TestMessagingProtocolJSON, readCommand_UPDATE)
     {
         // clang-format off
         const std::string input = R"(
@@ -928,7 +971,7 @@ namespace {
                 "timestamp": 123456789,
                 "payload": {
                     "baseline": "BASELINE NAME",
-                    "command": "INSTALL"
+                    "command": "UPDATE"
                 }
             }
         )";

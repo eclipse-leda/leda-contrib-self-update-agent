@@ -46,7 +46,7 @@ namespace sua {
         const auto & command = json.at("payload").at("command");
         if(command == "DOWNLOAD") {
             c.event = FotaEvent::DownloadStart;
-        } else if(command == "INSTALL") {
+        } else if(command == "UPDATE") {
             c.event = FotaEvent::InstallStart;
         } else if(command == "ACTIVATE") {
             c.event = FotaEvent::Activate;
@@ -145,8 +145,10 @@ namespace sua {
             return writeFeedbackWithoutPayload(ctx.desiredState, "IDENTIFYING",
                 "Self-update agent has received new desired state request and is evaluating it.");
         case MqttMessage::Identified:
-            return writeFeedbackWithoutPayload(ctx.desiredState,
-                "IDENTIFIED", "Self-update agent is about to perform an OS image update.");
+            return writeFeedbackWithPayload(ctx.desiredState,
+                "IDENTIFIED", "Self-update agent is about to perform an OS image update.",
+                "IDENTIFIED", "Self-update agent is about to perform an OS image update.",
+                message, 0);
         case MqttMessage::IdentificationFailed:
             return writeFeedbackWithoutPayload(ctx.desiredState,
                 "IDENTIFICATION_FAILED", message);
@@ -155,7 +157,7 @@ namespace sua {
                 "Current OS image is equal to the target one from desired state.");
         case MqttMessage::Rejected:
             return writeFeedbackWithPayload(ctx.desiredState,
-                "INCOMPLETE", "Update rejected.",
+                "UPDATE_FAILURE", "Update rejected.",
                 "UPDATE_FAILURE", "Bundle version does not match version in desired state request.",
                 message, 0);
         case MqttMessage::Downloading: {
@@ -179,6 +181,11 @@ namespace sua {
                 "DOWNLOAD_FAILURE", "Download failed.",
                 "DOWNLOAD_FAILURE", "Download failed.",
                 message, ctx.desiredState.downloadProgressPercentage);
+        case MqttMessage::VersionChecking:
+            return writeFeedbackWithPayload(ctx.desiredState,
+                "UPDATING", "Self-update agent is performing an OS image update.",
+                "UPDATING", "Checking bundle version and version in desired state request.",
+                message, 0);
         case MqttMessage::Installing:
             return writeFeedbackWithPayload(ctx.desiredState,
                 "UPDATING", "Self-update agent is performing an OS image update.",

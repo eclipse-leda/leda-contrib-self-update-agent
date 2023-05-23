@@ -44,6 +44,19 @@ namespace sua {
         if (true == ctx.downloadMode)
         {
             install_input = ctx.updatesDirectory + ctx.tempFileName;
+            send(ctx, IMqttProcessor::TOPIC_FEEDBACK, MqttMessage::VersionChecking);
+
+            if(ctx.bundleChecker->isBundleVersionConsistent(
+                   ctx.desiredState.bundleVersion, ctx.installerAgent, install_input)) {
+                Logger::info("Downloaded bundle version matches spec.");
+            } else {
+                Logger::info("Downloaded bundle version does not match spec.");
+                ctx.desiredState.actionStatus = "UPDATE_FAILURE";
+                ctx.desiredState.actionMessage =
+                    "Bundle version does not match version in desired state request.";
+                send(ctx, IMqttProcessor::TOPIC_FEEDBACK, MqttMessage::Rejected);
+                return FotaEvent::BundleVersionInconsistent;
+            }
         }
         else
         {

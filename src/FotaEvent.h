@@ -32,6 +32,7 @@ namespace sua {
         BundleVersionInconsistent,
         DownloadStart,
         DownloadFailed,
+        DownloadSucceded,
         InstallStart,
         InstallCompleted,
         InstallFailed,
