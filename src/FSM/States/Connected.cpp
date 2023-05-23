@@ -37,7 +37,7 @@ namespace sua {
 
     FotaEvent Connected::body(Context& ctx)
     {
-        Logger::info("System version (installed): '{}'", ctx.currentState.version);
+        Logger::info("System version, installed: '{}'", ctx.currentState.version);
 
         send(ctx, IMqttProcessor::TOPIC_FEEDBACK, "identifying");
 
