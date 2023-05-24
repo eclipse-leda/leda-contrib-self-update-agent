@@ -62,7 +62,7 @@ namespace sua {
             { FotaEvent::GetCurrentState        , "Connected"       , "SendCurrentState"},
             // from "Downloading"
             { FotaEvent::ConnectivityLost       , "Downloading"     , "Uninitialized"   },
-            { FotaEvent::DownloadStart          , "Downloading"     , "Installing"       , FotaEvent::DownloadSucceded          },
+            { FotaEvent::DownloadStart          , "Downloading"     , "Installing"       , FotaEvent::DownloadSucceeded         },
             { FotaEvent::DownloadStart          , "Downloading"     , "Failed"           , FotaEvent::DownloadFailed            },
             { FotaEvent::Rollback               , "Downloading"     , "Idle"            },
             // from "Installing"

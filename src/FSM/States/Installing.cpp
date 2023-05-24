@@ -92,7 +92,7 @@ namespace sua {
             }
 
             ctx.desiredState.actionStatus  = "UPDATE_FAILURE";
-            ctx.desiredState.actionMessage = "Write partition failed.";
+            ctx.desiredState.actionMessage = lastError;
 
             return FotaEvent::InstallFailed;
         }

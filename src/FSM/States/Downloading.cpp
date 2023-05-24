@@ -64,7 +64,7 @@ namespace sua {
                 const std::string pathDownloadedFile = ctx.updatesDirectory + ctx.tempFileName;
                 Logger::trace("Downloaded bundle file should exist now as '{}'", pathDownloadedFile);
 
-                return FotaEvent::DownloadSucceded;
+                return FotaEvent::DownloadSucceeded;
             } else {
                 Logger::error("Download failed.");
                 send(ctx, IMqttProcessor::TOPIC_FEEDBACK, MqttMessage::DownloadFailed);
