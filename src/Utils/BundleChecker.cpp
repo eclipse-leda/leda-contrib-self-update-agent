@@ -24,8 +24,8 @@ namespace sua {
     {
         std::string slotVersion = installer->getBundleVersion();
 
-        Logger::info("Bundle version (slot): '{}'", slotVersion);
-        Logger::info("Bundle version (file): '{}'", updateBundleVersion);
+        Logger::info("System version, installed: '{}'", slotVersion);
+        Logger::info("Bundle version, from file: '{}'", updateBundleVersion);
 
         return slotVersion != updateBundleVersion;
     }
@@ -36,8 +36,8 @@ namespace sua {
     {
         std::string updateBundleVersion = installer->getBundleVersion(bundlePath);
 
-        Logger::info("Bundle version (spec): '{}'", declaredVersion);
-        Logger::info("Bundle version (file): '{}'", updateBundleVersion);
+        Logger::info("Bundle version, from spec: '{}'", declaredVersion);
+        Logger::info("Bundle version, from file: '{}'", updateBundleVersion);
 
         return declaredVersion == updateBundleVersion;
     }
