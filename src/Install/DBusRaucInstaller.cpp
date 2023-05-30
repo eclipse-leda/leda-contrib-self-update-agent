@@ -163,8 +163,13 @@ namespace sua {
         g_main_context_iteration(g_main_loop_get_context(loop), FALSE);
 
         if(bundleVersion == VERSION_UNAVAILABLE) {
-            bundleVersion = getOsVersionId();
+            bundleVersion = getOsVersionId("EDITION_ID");
+
+            if(bundleVersion == VERSION_UNAVAILABLE) {
+                bundleVersion = getOsVersionId("VERSION_ID");
+            }
         }
+
         return bundleVersion;
     }
 
@@ -385,7 +390,7 @@ namespace sua {
         return bundleVersion;
     }
 
-    std::string DBusRaucInstaller::getOsVersionId() const
+    std::string DBusRaucInstaller::getOsVersionId(const std::string & version_key) const
     {
         Logger::trace("DBusRaucInstaller::getOsVersionId");
         std::string versionId = VERSION_UNAVAILABLE;
@@ -399,7 +404,7 @@ namespace sua {
                 std::string key;
                 std::getline(ss, key, '=');
 
-                if(key == "VERSION_ID") {
+                if(key == version_key) {
                     std::string value;
                     std::getline(ss, value, '=');
                     value.erase(std::remove(value.begin(), value.end(), '"'), value.end());
