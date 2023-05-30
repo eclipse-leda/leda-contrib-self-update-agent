@@ -60,7 +60,7 @@ namespace sua {
         std::string getDBusRaucProperty(const gchar* propertyKey) const;
         std::string getDBusRaucBundleVersion() const;
         std::string getDBusRaucBundleVersion(const std::string& input) const;
-        std::string getOsVersionId() const;
+        std::string getOsVersionId(const std::string & version_key) const;
     };
 
 } // namespace sua
