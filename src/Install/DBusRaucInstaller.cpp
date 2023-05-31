@@ -189,7 +189,11 @@ namespace sua {
         }
 
         if(bootedVersion == VERSION_UNAVAILABLE) {
-            return getOsVersionId();
+            bootedVersion = getOsVersionId("EDITION_ID");
+
+            if(bootedVersion == VERSION_UNAVAILABLE) {
+                bootedVersion = getOsVersionId("VERSION_ID");
+            }
         }
 
         return bootedVersion;
@@ -363,10 +367,10 @@ namespace sua {
         return propertyValue;
     }
 
-    std::string DBusRaucInstaller::getDBusRaucBundleVersion() const
+    SlotStatus DBusRaucInstaller::getDBusRaucSlotStatus() const
     {
-        Logger::trace("DBusRaucInstaller::getDBusRaucBundleVersion"); 
-        std::string bundleVersion   = VERSION_UNAVAILABLE;
+        SlotStatus result;
+        Logger::trace("DBusRaucInstaller::getDBusRaucSlotStatus"); 
         GError*     connectionError = nullptr;
         GVariant*   slotStatus      = g_dbus_connection_call_sync(connection,
                                                            "de.pengutronix.rauc",
@@ -384,7 +388,6 @@ namespace sua {
             GVariantIter* slotIter;
             gchar*        slotName;
             GVariant*     slotDict;
-            uint32_t      bootedSlotCount = 0;
             g_variant_get(slotStatus, "(a(sa{sv}))", &slotIter);
             while(g_variant_iter_next(slotIter, "(s@a{sv})", &slotName, &slotDict)) {
                 gchar*       slotState;
@@ -392,27 +395,27 @@ namespace sua {
                 GVariantDict dict;
                 g_variant_dict_init(&dict, slotDict);
                 if(g_variant_dict_lookup(&dict, "state", "s", &slotState)) {
-                    if("booted" == std::string(slotState)) {
-                        bootedSlotCount++;
-                        if(g_variant_dict_lookup(&dict, "bundle.version", "s", &bundle)) {
-                            bundleVersion = bundle;
-                        }
-                    }
-                }
-            }
+                    result[slotName]["state"] = slotState;
 
-            if(bootedSlotCount > 1) {
-                bundleVersion = "error_multiple_booted_slots_detected";
+                    if(g_variant_dict_lookup(&dict, "bundle.version", "s", &bundle)) {
+                        result[slotName]["version"] = bundle;
+                    } else {
+                        result[slotName]["version"] = VERSION_UNAVAILABLE;
+                    }
+                } else {
+                    result[slotName]["state"] = STATE_UNAVAILABLE;
+                }
             }
 
             g_free(slotName);
             g_variant_unref(slotDict);
             g_variant_unref(slotStatus);
         }
-        return bundleVersion;
+
+        return result;
     }
 
-    std::string DBusRaucInstaller::getOsVersionId() const
+    std::string DBusRaucInstaller::getOsVersionId(const std::string & version_key) const
     {
         Logger::trace("DBusRaucInstaller::getOsVersionId");
         std::string versionId = VERSION_UNAVAILABLE;
@@ -426,7 +429,7 @@ namespace sua {
                 std::string key;
                 std::getline(ss, key, '=');
 
-                if(key == "VERSION_ID") {
+                if(key == version_key) {
                     std::string value;
                     std::getline(ss, value, '=');
                     value.erase(std::remove(value.begin(), value.end(), '"'), value.end());

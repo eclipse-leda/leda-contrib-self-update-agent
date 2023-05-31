@@ -295,7 +295,7 @@ namespace {
     TEST_F(TestSelfUpdateScenarios, downloadedBundleVersionMismatchWithSpec_endsInFailedState)
     {
         expectedStates   = {"Uninitialized", "Connected", "Downloading", "Installing", "Failed"};
-        expectedMessages = {M::SystemVersion, M::Identifying, M::Identified, M::Downloaded, M::Rejected};
+        expectedMessages = {M::SystemVersion, M::Identifying, M::Identified, M::Downloaded, M::VersionChecking, M::Rejected};
 
         EXPECT_CALL(*downloader, start(_)).WillOnce(Return(sua::TechCode::OK));
 
@@ -331,7 +331,7 @@ namespace {
     TEST_F(TestSelfUpdateScenarios, installSetupFails_endsInIdleState)
     {
         expectedStates   = {"Uninitialized", "Connected", "Downloading", "Installing", "Failed"};
-        expectedMessages = {M::SystemVersion, M::Identifying, M::Identified, M::Downloaded, M::InstallFailed};
+        expectedMessages = {M::SystemVersion, M::Identifying, M::Identified, M::Downloaded, M::VersionChecking, M::InstallFailed};
 
         EXPECT_CALL(*downloader, start(_)).WillOnce(Return(sua::TechCode::OK));
         installerAgent->bundleUnderTest = BUNDLE_RAUC_SETUP_FAILS;
@@ -351,7 +351,7 @@ namespace {
     {
         expectedStates   = {"Uninitialized", "Connected", "Downloading", "Installing", "Installed"};
         expectedMessages = {M::SystemVersion, M::Identifying, M::Identified, M::Downloaded,
-            M::Installing, M::Installing, M::Installing, M::Installing, M::Installed,
+            M::VersionChecking, M::Installing, M::Installing, M::Installing, M::Installing, M::Installed,
             M::CurrentState};
 
         EXPECT_CALL(*downloader, start(_)).WillOnce(Return(sua::TechCode::OK));
@@ -372,7 +372,7 @@ namespace {
     TEST_F(TestSelfUpdateScenarios, installFails_endsInFailedState)
     {
         expectedStates   = {"Uninitialized", "Connected", "Downloading", "Installing", "Failed"};
-        expectedMessages = {M::SystemVersion, M::Identifying, M::Identified, M::Downloaded,
+        expectedMessages = {M::SystemVersion, M::Identifying, M::Identified, M::Downloaded, M::VersionChecking,
             M::Installing, M::Installing, M::Installing, M::Installing, M::InstallFailed};
 
         EXPECT_CALL(*downloader, start(_)).WillOnce(Return(sua::TechCode::OK));
@@ -393,7 +393,7 @@ namespace {
     TEST_F(TestSelfUpdateScenarios, activationSucceeds_endsInIdleState)
     {
         expectedStates   = {"Uninitialized", "Connected", "Downloading", "Installing", "Installed", "Activating", "Cleaning", "Idle"};
-        expectedMessages = {M::SystemVersion, M::Identifying, M::Identified, M::Downloaded,
+        expectedMessages = {M::SystemVersion, M::Identifying, M::Identified, M::Downloaded, M::VersionChecking,
             M::Installing, M::Installing, M::Installing, M::Installing, M::Installed, M::CurrentState,
             M::Activating, M::Activated, M::Cleaned, M::Complete};
 

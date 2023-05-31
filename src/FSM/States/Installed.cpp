@@ -32,7 +32,7 @@ namespace sua {
         ctx.currentState.version = ctx.desiredState.bundleVersion;
 
         Logger::info("System version, installed: '{}'", ctx.currentState.version);
-        send(ctx, IMqttProcessor::TOPIC_FEEDBACK, "currentState");
+        send(ctx, IMqttProcessor::TOPIC_FEEDBACK, MqttMessage::CurrentState);
     }
 
 } // namespace sua
