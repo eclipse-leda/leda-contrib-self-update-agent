@@ -1,9 +1,0 @@
-apiVersion: "sdv.eclipse.org/v1"
-kind: SelfUpdateBundle
-metadata:
-  name: self-update-bundle-example
-spec:
-  bundleName: swdv-arm64-build42
-  bundleVersion: v1beta3 
-  bundleDownloadUrl: http://127.0.0.1:5555/bundle
-  bundleTarget: base
