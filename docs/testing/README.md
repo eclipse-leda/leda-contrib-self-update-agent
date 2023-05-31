@@ -52,10 +52,11 @@ python3 -m http.server --bind 127.0.0.1 5555
 
 ## Simulate sending the MQTT Start messages
 
-The content of the yaml file shall be adjusted, so that url of hosted bundle is valid.
+The content of the json file shall be adjusted, so that url of hosted bundle is valid.
 
 ```
-mosquitto_pub -t "selfupdate/desiredstate" -f docs/testing/mqtt/start.yaml 
+mosquitto_pub -t "selfupdate/desiredstate" -f docs/testing/mqtt/start.json
+mosquitto_pub -t "selfupdate/desiredstate/command" -f docs/testing/mqtt/command-download.json
 ```
 
 ## Subscribe to MQTT feedback messages
@@ -98,7 +99,7 @@ docker build -t host .
 docker run -it --network=my-network -p 5555:5555 --name fileserver host
 ```
 
-The bundle file will be available under: `fileserver:5555/bundle` url, so the value in `start.yaml` shall be adjusted.
+The bundle file will be available under: `fileserver:5555/bundle` url, so the value in `start.json` shall be adjusted.
 
 ## Deploy SUA
 
@@ -137,7 +138,7 @@ and locate the `IPAddress` value.
 # HowTo send the Start signal to trigger the process
 
 ```
-mosquitto_pub -t "selfupdate/desiredstate" -f docs/testing/mqtt/start.yaml -h ipAddress_of_mosquitto_container
+mosquitto_pub -t "selfupdate/desiredstate" -f docs/testing/mqtt/start.json -h ipAddress_of_mosquitto_container
 ```
 
 After sending this signal, you should be able to observe the SUA behavior on the console.

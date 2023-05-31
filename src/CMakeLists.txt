@@ -25,7 +25,6 @@ include_directories(
     ${CMAKE_SOURCE_DIR}/3rdparty/spdlog/include
     ${CMAKE_SOURCE_DIR}/3rdparty/paho.mqtt.c/src
     ${CMAKE_SOURCE_DIR}/3rdparty/paho.mqtt.cpp/src
-    ${CMAKE_SOURCE_DIR}/3rdparty/mini-yaml
     ${CMAKE_SOURCE_DIR}/3rdparty/glib
     ${CMAKE_SOURCE_DIR}/3rdparty/glib/glib
     ${CMAKE_SOURCE_DIR}/3rdparty/glib/gmodule
@@ -50,7 +49,6 @@ target_link_libraries(${PROJECT_NAME}
     curl_lib
     paho-mqttpp3
     paho-mqtt3a
-    mini-yaml
     gio_lib
     gobject_lib
     gmodule_lib

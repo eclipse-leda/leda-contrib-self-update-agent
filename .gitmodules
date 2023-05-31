@@ -4,9 +4,6 @@
 [submodule "3rdparty/paho.mqtt.cpp"]
 	path = 3rdparty/paho.mqtt.cpp
 	url = https://github.com/eclipse/paho.mqtt.cpp.git
-[submodule "3rdparty/mini-yaml"]
-	path = 3rdparty/mini-yaml
-	url = https://github.com/jimmiebergmann/mini-yaml.git
 [submodule "3rdparty/curl"]
 	path = 3rdparty/curl
 	url = https://github.com/curl/curl.git

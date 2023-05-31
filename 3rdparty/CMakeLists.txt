@@ -12,9 +12,6 @@ add_subdirectory(./paho.mqtt.cpp)
 add_dependencies(paho-mqttpp3 paho-mqtt3a)
 add_dependencies(paho-mqttpp3 paho-mqtt3c)
 
-add_library(mini-yaml SHARED ./mini-yaml/yaml/Yaml.cpp)
-install(TARGETS mini-yaml LIBRARY DESTINATION lib)
-
 set(CMAKE_PREFIX_PATH ${CMAKE_BINARY_DIR}/lib/pkgconfig)
 find_package(OpenSSL REQUIRED)
 set(CURL_USE_OPENSSL  ON)

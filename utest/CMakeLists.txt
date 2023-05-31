@@ -2,7 +2,6 @@ add_executable(TestSelfUpdateAgent
     TestDispatcher.cpp
     TestFSM.cpp
     TestLogger.cpp
-    TestMqttMessagingProtocolYAML.cpp
     TestMqttMessagingProtocolJSON.cpp
     TestSelfUpdateScenarios.cpp
     TestServerAddressParser.cpp
@@ -22,7 +21,6 @@ target_link_libraries(
     curl_lib
     paho-mqttpp3
     paho-mqtt3a
-    mini-yaml
     gio_lib
     gobject_lib
     gmodule_lib

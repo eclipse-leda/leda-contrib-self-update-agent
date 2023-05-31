@@ -107,7 +107,7 @@ MQTT communication is done over 4 MQTT topics:
 |------|  -------- | ----------- |
 | selfupdate/desiredstatefeedback | OUT | This message is being sent by SUA to share current progress of triggered update process. This is the *OUT* counterpart of *selfupdate/desiredstate* input message. |
 
-SUA supports 2 protocols depending on configuration: [link](docs/k8s.md) for Kubernetes-based Custom Objects or [link](docs/bfb.md) for Update Agent API.Default protocol is bfb.
+Detailed description of Update Agent API can be found here: [link](docs/bfb.md).
 
 # Checkout
 SUA links to some 3rd party libraries, which are fetched as submodules, therefore the cloning shall be performed with recursive option:
