@@ -25,3 +25,18 @@ add_subdirectory(curl)
 if(SUA_BUILD_TESTS)
   add_subdirectory(googletest)
 endif()
+
+install(
+    FILES
+        ${CMAKE_BINARY_DIR}/lib/libssl.so.3
+        ${CMAKE_BINARY_DIR}/lib/libcrypto.so.3
+        ${CMAKE_BINARY_DIR}/3rdparty/curl/lib/libcurl.so
+        ${CMAKE_BINARY_DIR}/glib/subprojects/zlib-1.2.11/libz.so
+    DESTINATION ${CMAKE_INSTALL_PREFIX}/lib
+)
+
+install(FILES ${CMAKE_BINARY_DIR}/glib/gio/libgio-2.0.so.0.7300.0             DESTINATION ${CMAKE_INSTALL_PREFIX}/lib RENAME libgio-2.0.so.0)
+install(FILES ${CMAKE_BINARY_DIR}/glib/glib/libglib-2.0.so.0.7300.0           DESTINATION ${CMAKE_INSTALL_PREFIX}/lib RENAME libglib-2.0.so.0)
+install(FILES ${CMAKE_BINARY_DIR}/glib/gmodule/libgmodule-2.0.so.0.7300.0     DESTINATION ${CMAKE_INSTALL_PREFIX}/lib RENAME libgmodule-2.0.so.0)
+install(FILES ${CMAKE_BINARY_DIR}/glib/gobject/libgobject-2.0.so.0.7300.0     DESTINATION ${CMAKE_INSTALL_PREFIX}/lib RENAME libgobject-2.0.so.0)
+install(FILES ${CMAKE_BINARY_DIR}/glib/subprojects/libffi/src/libffi.so.7.1.0 DESTINATION ${CMAKE_INSTALL_PREFIX}/lib RENAME libffi.so.7)

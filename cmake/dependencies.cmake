@@ -12,7 +12,6 @@ else ()
     )
 endif()
 
-
 add_library(ssl_lib SHARED IMPORTED)
 set_property(
     TARGET ssl_lib

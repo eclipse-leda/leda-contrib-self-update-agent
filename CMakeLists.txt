@@ -8,6 +8,7 @@ set(CMAKE_BUILD_WITH_INSTALL_RPATH TRUE)
 set(CMAKE_INSTALL_RPATH ../lib)
 
 option(SUA_BUILD_TESTS "Build unit tests with code-coverage report enabled" OFF)
+option(SUA_MEASURE_CODE_COVERAGE "Measure code coverage" OFF)
 
 include(cmake/dependencies.cmake)
 

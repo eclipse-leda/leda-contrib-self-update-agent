@@ -10,7 +10,7 @@ if(NOT DEFINED SUA_BUILD_NUMBER)
     set(SUA_BUILD_NUMBER "local")
 endif()
 
-if(SUA_BUILD_TESTS)
+if(SUA_MEASURE_CODE_COVERAGE)
     add_compile_options(
         -fprofile-arcs
         -ftest-coverage
@@ -63,16 +63,10 @@ target_link_libraries(${PROJECT_NAME}
     sua
 )
 
-if(SUA_BUILD_TESTS)
+if(SUA_MEASURE_CODE_COVERAGE)
     target_link_libraries(sua gcov)
 endif()
 
 install(TARGETS ${PROJECT_NAME} RUNTIME DESTINATION ${CMAKE_INSTALL_PREFIX}/bin)
 install(TARGETS sua LIBRARY DESTINATION ${CMAKE_INSTALL_PREFIX}/lib)
 
-install(
-    FILES
-        ${CMAKE_BINARY_DIR}/lib/libssl.so.3
-        ${CMAKE_BINARY_DIR}/lib/libcrypto.so.3
-    DESTINATION ${CMAKE_INSTALL_PREFIX}/lib
-)
