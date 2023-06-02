@@ -38,14 +38,14 @@ sequenceDiagram
 
     Note left of s: Command for Download
     m ->> s: Download command
-    s ->> s: download bundle
+    s ->> s: Download bundle
     s ->> m: Feedback (downloading/downloaded/failed)
 
     Note left of s: Command for Update
     m ->> s: Update command
     s ->> r: Flash image to partition
     r ->> r: Flashing...
-    s ->> m: Feedback (updating + %)
+    s ->> m: Feedback (updating with percentage)
     r ->> s: Flash completed/failed
     s ->> m: Feedback (updated/failed)
 
@@ -57,7 +57,7 @@ sequenceDiagram
 
     Note left of s: Command for Cleanup
     m ->> s: Cleanup command
-    s ->> s: Remove temp files
+    s ->> s: Remove temporary files
     s ->> m: Cleanup completed + status from previously failed state<br>(completed/failed)
 
     end
@@ -80,32 +80,32 @@ stateDiagram
 ```
 Important: Uninitialized state is the default entry state or state in case connection is lost. To simplify reading of the diagram arrows from other states to Unitialized have been removed.
 
-MQTT communication is done over 4 MQTT topics:
+MQTT communication is done over 5 MQTT topics:
 
 ## Trigger OTA
 | Topic | Direction | Description |
-|-------|  -------- | ----------- |
+|-------|-----------|-------------|
 | selfupdate/desiredstate | IN | This message triggers the update process. The payload shall contain all data necessary to obtain the update bundle and to install it. |
 
 ## Trigger self-update step/action
 | Topic | Direction | Description |
-|-------|  -------- | ----------- |
+|-------|-----------|-------------|
 | selfupdate/desiredstate/command | IN | This message triggers the single step in update process (download/flash/activate/cleanup). |
 
 ## Report current state
-| Topic| Direction | Description |
-|------|  -------- | ----------- |
-| selfupdate/currentstate | OUT | This message is being sent either once on SUA start or as an answer to response received by selfupdate/currentstate/get. It contains information about currently installed OS version. |
+| Topic | Direction | Description |
+|-------|-----------|-------------|
+| selfupdate/currentstate | OUT | This message is being sent either once on SUA start or as an answer to response received by selfupdate/currentstate/get. It contains information about the currently installed OS version. |
 
 ## Get current state
-| Topic| Direction | Description |
-|------|  -------- | ----------- |
-| selfupdate/currentstate/get | IN | This message can be received at any point of time. Indicates that SUA should send back version of installed OS as current state. |
+| Topic | Direction | Description |
+|-------|-----------|-------------|
+| selfupdate/currentstate/get | IN | This message can be received at any point of time. Indicates that SUA should send back the version of the installed OS as current state. |
 
 ## Report status of self-update process
-| Topic| Direction | Description |
-|------|  -------- | ----------- |
-| selfupdate/desiredstatefeedback | OUT | This message is being sent by SUA to share current progress of triggered update process. This is the *OUT* counterpart of *selfupdate/desiredstate* input message. |
+| Topic | Direction | Description |
+|-------|-----------|-------------|
+| selfupdate/desiredstatefeedback | OUT | This message is being sent by SUA to share the current progress of the triggered update process. This is the *OUT* counterpart of *selfupdate/desiredstate* input message. |
 
 Detailed description of Update Agent API can be found here: [link](docs/bfb.md).
 
