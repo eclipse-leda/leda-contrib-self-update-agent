@@ -1,4 +1,4 @@
-#    Copyright 2022 Contributors to the Eclipse Foundation
+#    Copyright 2023 Contributors to the Eclipse Foundation
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -98,7 +98,7 @@ jobs:
         with:
           path: self-update-agent-${{ matrix.arch }}-build-${{ github.run_number }}.tar.gz
 
-      - name: Upload code coverage results to workspace
+      - name: Upload code-coverage results to workspace
         if: ${{ matrix.arch == 'amd64' }}
         uses: actions/upload-artifact@v3
         with:
