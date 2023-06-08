@@ -1,4 +1,4 @@
-#    Copyright 2022 Contributors to the Eclipse Foundation
+#    Copyright 2023 Contributors to the Eclipse Foundation
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -114,14 +114,14 @@ runs:
         ldd TestSelfUpdateAgent
         LD_LIBRARY_PATH=../lib ./TestSelfUpdateAgent > ../../unit_tests_report_arm64.txt
 
-  - name: Collect code coverage for amd64
+  - name: Collect code-coverage for amd64
     if: ${{ inputs.arch == 'amd64' }}
     run: |
       cd dist_${{ inputs.arch }}_codecov/utest
       ./TestSelfUpdateAgent
     shell: bash
 
-  - name: Generate code coverage report
+  - name: Generate code-coverage report
     if: ${{ (inputs.arch == 'amd64') && (success() || failure()) }}
     run: |
       cd dist_${{ inputs.arch }}_codecov/utest
@@ -131,7 +131,7 @@ runs:
       gcovr --root ../.. --txt --output report/coverage.txt -e ../../3rdparty -e ../../utest -e ../../src/main.cpp
       tar -czvf ../../code-coverage.tar.gz report
 
-      echo -e "### Code Coverage Summary for" ${{ inputs.arch }} "\n" >> report.md
+      echo -e "### Code-coverage summary for" ${{ inputs.arch }} "\n" >> report.md
       echo -e "\`\`\`" >> report.md
       cat report/coverage.txt >> report.md
       echo -e "\n\`\`\`\n" >> report.md
@@ -144,7 +144,7 @@ runs:
     run: |
       cd dist_${{ inputs.arch }}/utest
 
-      echo -e "### Unit Tests Results for" ${{ inputs.arch }} "\n" >> report.md
+      echo -e "### Unit tests results for" ${{ inputs.arch }} "\n" >> report.md
       echo -e "\`\`\`" >> report.md
       cat ../../unit_tests_report_${{ inputs.arch }}.txt >> report.md
       echo -e "\n\`\`\`\n" >> report.md
