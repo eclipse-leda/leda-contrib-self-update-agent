@@ -15,9 +15,10 @@ using ::testing::_;
 #include "Mqtt/MqttMessagingProtocolJSON.h"
 #include "Mqtt/MqttMessage.h"
 #include "Install/DummyRaucInstaller.h"
+#include "Download/Downloader.h"
 
-#include "MockFSM.h"
 #include "MockDownloader.h"
+#include "MockFSM.h"
 #include "MockMqttProcessor.h"
 
 using namespace std::chrono_literals;
@@ -118,7 +119,7 @@ namespace {
                                         "config": [
                                             {
                                                 "key": "image",
-                                                "value": "{}"
+                                                "value": "https://127.0.0.1/bundle"
                                             }
                                         ]
                                     }
@@ -177,8 +178,7 @@ namespace {
             sua::Logger::instance().init();
             sua::Logger::instance().setLogLevel(sua::Logger::Level::All);
 
-            downloader = std::make_shared<MockDownloader>();
-            ctx().downloaderAgent = downloader;
+            ctx().downloaderAgent = std::make_shared<sua::Downloader>(ctx());
 
             fsm = std::make_shared<MockFSM>(sua.context(), visitedStates);
             ctx().stateMachine = fsm;
@@ -191,14 +191,13 @@ namespace {
 
             ctx().messagingProtocol = std::make_shared<sua::MqttMessagingProtocolJSON>();
             ctx().bundleChecker     = std::make_shared<sua::BundleChecker>();
-        }
+       }
 
         sua::SelfUpdateAgent sua;
 
         std::shared_ptr<MockFSM>           fsm;
         std::shared_ptr<MockMqttProcessor> mqttProcessor;
         std::shared_ptr<MockRaucInstaller> installerAgent;
-        std::shared_ptr<MockDownloader>    downloader;
 
         std::string testBrokerHost = "localhost";
         int         testBrokerPort = 1883;
@@ -280,10 +279,13 @@ namespace {
         expectedStates   = {"Uninitialized", "Connected", "Downloading", "Failed"};
         expectedMessages = {M::SystemVersion, M::Identifying, M::Identified, M::DownloadFailed};
 
-        EXPECT_CALL(*downloader, start(_)).WillOnce(Return(sua::TechCode::DownloadFailed));
+        auto downloader = std::make_shared<MockDownloader>();
+        ctx().downloaderAgent = downloader;
 
         sua.init();
         start();
+
+        EXPECT_CALL(*downloader, start(_)).WillOnce(Return(sua::TechCode::DownloadFailed));
 
         triggerIdentify(BUNDLE_11, "1.1");
         trigger(COMMAND_DOWNLOAD);
@@ -295,9 +297,7 @@ namespace {
     TEST_F(TestSelfUpdateScenarios, downloadedBundleVersionMismatchWithSpec_endsInFailedState)
     {
         expectedStates   = {"Uninitialized", "Connected", "Downloading", "Installing", "Failed"};
-        expectedMessages = {M::SystemVersion, M::Identifying, M::Identified, M::Downloaded, M::VersionChecking, M::Rejected};
-
-        EXPECT_CALL(*downloader, start(_)).WillOnce(Return(sua::TechCode::OK));
+        expectedMessages = {M::SystemVersion, M::Identifying, M::Identified, M::Downloading, M::Downloaded, M::VersionChecking, M::Rejected};
 
         sua.init();
         start();
@@ -313,9 +313,8 @@ namespace {
     TEST_F(TestSelfUpdateScenarios, downloadSucceeds_waitsForInstallCommand)
     {
         expectedStates   = {"Uninitialized", "Connected", "Downloading", "Installing"};
-        expectedMessages = {M::SystemVersion, M::Identifying, M::Identified, M::Downloaded};
+        expectedMessages = {M::SystemVersion, M::Identifying, M::Identified, M::Downloading, M::Downloaded};
 
-        EXPECT_CALL(*downloader, start(_)).WillOnce(Return(sua::TechCode::OK));
         installerAgent->bundleUnderTest = BUNDLE_11;
 
         sua.init();
@@ -331,9 +330,8 @@ namespace {
     TEST_F(TestSelfUpdateScenarios, installSetupFails_endsInIdleState)
     {
         expectedStates   = {"Uninitialized", "Connected", "Downloading", "Installing", "Failed"};
-        expectedMessages = {M::SystemVersion, M::Identifying, M::Identified, M::Downloaded, M::VersionChecking, M::InstallFailed};
+        expectedMessages = {M::SystemVersion, M::Identifying, M::Identified, M::Downloading, M::Downloaded, M::VersionChecking, M::InstallFailed};
 
-        EXPECT_CALL(*downloader, start(_)).WillOnce(Return(sua::TechCode::OK));
         installerAgent->bundleUnderTest = BUNDLE_RAUC_SETUP_FAILS;
 
         sua.init();
@@ -350,11 +348,10 @@ namespace {
     TEST_F(TestSelfUpdateScenarios, installSucceeds_waitsInInstalledState)
     {
         expectedStates   = {"Uninitialized", "Connected", "Downloading", "Installing", "Installed"};
-        expectedMessages = {M::SystemVersion, M::Identifying, M::Identified, M::Downloaded,
+        expectedMessages = {M::SystemVersion, M::Identifying, M::Identified, M::Downloading, M::Downloaded,
             M::VersionChecking, M::Installing, M::Installing, M::Installing, M::Installing, M::Installed,
             M::CurrentState};
 
-        EXPECT_CALL(*downloader, start(_)).WillOnce(Return(sua::TechCode::OK));
         EXPECT_CALL(*installerAgent, succeeded()).WillOnce(Return(true));
         installerAgent->bundleUnderTest = BUNDLE_11;
 
@@ -372,10 +369,9 @@ namespace {
     TEST_F(TestSelfUpdateScenarios, installFails_endsInFailedState)
     {
         expectedStates   = {"Uninitialized", "Connected", "Downloading", "Installing", "Failed"};
-        expectedMessages = {M::SystemVersion, M::Identifying, M::Identified, M::Downloaded, M::VersionChecking,
-            M::Installing, M::Installing, M::Installing, M::Installing, M::InstallFailed};
+        expectedMessages = {M::SystemVersion, M::Identifying, M::Identified, M::Downloading, M::Downloaded,
+            M::VersionChecking, M::Installing, M::Installing, M::Installing, M::Installing, M::InstallFailed};
 
-        EXPECT_CALL(*downloader, start(_)).WillOnce(Return(sua::TechCode::OK));
         EXPECT_CALL(*installerAgent, succeeded()).WillOnce(Return(false));
         installerAgent->bundleUnderTest = BUNDLE_11;
 
@@ -393,11 +389,10 @@ namespace {
     TEST_F(TestSelfUpdateScenarios, activationSucceeds_endsInIdleState)
     {
         expectedStates   = {"Uninitialized", "Connected", "Downloading", "Installing", "Installed", "Activating", "Cleaning", "Idle"};
-        expectedMessages = {M::SystemVersion, M::Identifying, M::Identified, M::Downloaded, M::VersionChecking,
+        expectedMessages = {M::SystemVersion, M::Identifying, M::Identified, M::Downloading, M::Downloaded, M::VersionChecking,
             M::Installing, M::Installing, M::Installing, M::Installing, M::Installed, M::CurrentState,
             M::Activating, M::Activated, M::Cleaned, M::Complete};
 
-        EXPECT_CALL(*downloader, start(_)).WillOnce(Return(sua::TechCode::OK));
         EXPECT_CALL(*installerAgent, succeeded()).WillOnce(Return(true));
         installerAgent->bundleUnderTest = BUNDLE_11;
 
