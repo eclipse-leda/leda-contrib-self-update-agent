@@ -1,4 +1,4 @@
-#    Copyright 2022 Contributors to the Eclipse Foundation
+#    Copyright 2023 Contributors to the Eclipse Foundation
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -64,56 +64,92 @@ runs:
         -DOPENSSL_ROOT_DIR=../build_${{ matrix.arch }} \
         -DOPENSSL_CRYPTO_LIBRARY=../build_${{ matrix.arch }}/lib/libcrypto.so \
         -DSUA_BUILD_NUMBER=${{ inputs.run_number }} \
-        -DSUA_BUILD_TESTS=NO \
+        -DSUA_BUILD_TESTS=YES \
+        -DSUA_MEASURE_CODE_COVERAGE=NO \
         ..
       make -j
       make install
     shell: bash
 
-  - name: Build for ${{ inputs.arch }} (with code-coverage enabled)
-    if: ${{ inputs.arch=='amd64' }}
+  - name: Build for amd64 with code-coverage enabled
+    if: ${{ inputs.arch == 'amd64' }}
     run: |
       cd build_${{ inputs.arch }}
       cmake \
-        -DCMAKE_INSTALL_PREFIX=../dist_${{ inputs.arch }}_testing \
+        -DCMAKE_INSTALL_PREFIX=../dist_${{ inputs.arch }}_codecov \
         -DCMAKE_TOOLCHAIN_FILE=../cmake/linux/${{ matrix.arch }}/toolchain.cmake \
         -DOPENSSL_ROOT_DIR=../build_${{ matrix.arch }} \
         -DOPENSSL_CRYPTO_LIBRARY=../build_${{ matrix.arch }}/lib/libcrypto.so \
         -DSUA_BUILD_NUMBER=${{ inputs.run_number }} \
         -DSUA_BUILD_TESTS=YES \
+        -DSUA_MEASURE_CODE_COVERAGE=YES \
         ..
       make -j
       make install
     shell: bash
 
-  - name: Run unit tests
-    if: ${{ inputs.arch=='amd64' }}
+  - name: Run unit tests for amd64
+    if: ${{ inputs.arch == 'amd64' }}
     run: |
-      cd dist_${{ inputs.arch }}_testing/utest
-      ./TestSelfUpdateAgent > ../../unit_tests_report.txt
+      cd dist_${{ inputs.arch }}/utest
+      ls -la
+      chmod +x TestSelfUpdateAgent
+      uname -a
+      file TestSelfUpdateAgent
+      ./TestSelfUpdateAgent > ../../unit_tests_report_${{ inputs.arch }}.txt
     shell: bash
 
-  - name: Generate reports
-    if: ${{ (inputs.arch=='amd64') && (success() || failure()) }}
+  - uses: uraimo/run-on-arch-action@v2
+    name: Run unit tests for arm64
+    if: ${{ inputs.arch == 'arm64' }}
+    with:
+      arch: aarch64
+      distro: ubuntu_latest
+      dockerRunArgs: |
+        --volume "${PWD}:/sua"
+      shell: /bin/sh
+      run: |
+        cd /sua/dist_arm64/utest
+        ls -la ../lib
+        ldd TestSelfUpdateAgent
+        LD_LIBRARY_PATH=../lib ./TestSelfUpdateAgent > ../../unit_tests_report_arm64.txt
+
+  - name: Collect code-coverage for amd64
+    if: ${{ inputs.arch == 'amd64' }}
     run: |
-      cd dist_${{ inputs.arch }}_testing/utest
+      cd dist_${{ inputs.arch }}_codecov/utest
+      ./TestSelfUpdateAgent
+    shell: bash
+
+  - name: Generate code-coverage report
+    if: ${{ (inputs.arch == 'amd64') && (success() || failure()) }}
+    run: |
+      cd dist_${{ inputs.arch }}_codecov/utest
 
       mkdir report
       gcovr --root ../.. --html --html-details --output report/coverage.html -e ../../3rdparty -e ../../utest -e ../../src/main.cpp
       gcovr --root ../.. --txt --output report/coverage.txt -e ../../3rdparty -e ../../utest -e ../../src/main.cpp
       tar -czvf ../../code-coverage.tar.gz report
 
-      echo -e "### Code Coverage Summary\n" >> report.md
+      echo -e "### Code-coverage summary for" ${{ inputs.arch }} "\n" >> report.md
       echo -e "\`\`\`" >> report.md
       cat report/coverage.txt >> report.md
       echo -e "\n\`\`\`\n" >> report.md
 
-      echo -e "### Unit Tests Results\n" >> report.md
+      cat report.md >> $GITHUB_STEP_SUMMARY
+    shell: bash
+
+  - name: Generate unit tests report for ${{ inputs.arch }}
+    if: ${{ success() || failure() }}
+    run: |
+      cd dist_${{ inputs.arch }}/utest
+
+      echo -e "### Unit tests results for" ${{ inputs.arch }} "\n" >> report.md
       echo -e "\`\`\`" >> report.md
-      cat ../../unit_tests_report.txt >> report.md
+      cat ../../unit_tests_report_${{ inputs.arch }}.txt >> report.md
       echo -e "\n\`\`\`\n" >> report.md
 
-      cat report.md > $GITHUB_STEP_SUMMARY
+      cat report.md >> $GITHUB_STEP_SUMMARY
     shell: bash
 
   - name: Compress artifacts

@@ -1,4 +1,4 @@
-#    Copyright 2022 Contributors to the Eclipse Foundation
+#    Copyright 2023 Contributors to the Eclipse Foundation
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -98,17 +98,16 @@ jobs:
         with:
           path: self-update-agent-${{ matrix.arch }}-build-${{ github.run_number }}.tar.gz
 
-      - name: Upload code coverage results to workspace
+      - name: Upload code-coverage results to workspace
         if: ${{ matrix.arch == 'amd64' }}
         uses: actions/upload-artifact@v3
         with:
           path: code-coverage.tar.gz
 
       - name: Upload unit tests results to workspace
-        if: ${{ matrix.arch == 'amd64' }}
         uses: actions/upload-artifact@v3
         with:
-          path: unit_tests_report.txt
+          path: unit_tests_report_${{ matrix.arch }}.txt
 
   upload-native-binary:
     runs-on: ubuntu-latest
@@ -131,7 +130,8 @@ jobs:
           automatic_release_tag: build_${{ github.run_number }}
           title: "Build ${{ github.run_number }}"
           files: |
-            ./artifact/unit_tests_report.txt
+            ./artifact/unit_tests_report_amd64.txt
+            ./artifact/unit_tests_report_arm64.txt
             ./artifact/code-coverage.tar.gz
             ./artifact/self-update-agent-amd64-build-${{ github.run_number }}.tar.gz
             ./artifact/self-update-agent-arm64-build-${{ github.run_number }}.tar.gz
