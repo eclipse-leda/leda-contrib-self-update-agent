@@ -15,6 +15,7 @@
 //    SPDX-License-Identifier: Apache-2.0
 
 #include "Download/Downloader.h"
+#include "Context.h"
 #include "Logger.h"
 #include "Patterns/Dispatcher.h"
 #include "TechCodes.h"
@@ -84,7 +85,7 @@ namespace {
         return written;
     }
 
-    sua::TechCode download(const char* url)
+    sua::TechCode download(sua::Context & context, const char* url)
     {
         CURLcode gres = curl_global_init(CURL_GLOBAL_ALL);
         if(gres != 0) {
@@ -118,6 +119,8 @@ namespace {
 
         curl_easy_setopt(easy_handle, CURLOPT_URL, url);
         curl_easy_getinfo(easy_handle, CURLINFO_RESPONSE_CODE, &response_code);
+        curl_easy_setopt(easy_handle, CURLOPT_CAINFO, context.certificateFileName.c_str());
+        curl_easy_setopt(easy_handle, CURLOPT_SSL_VERIFYPEER, 1);
         curl_easy_setopt(easy_handle, CURLOPT_WRITEFUNCTION, write_data);
         curl_easy_setopt(easy_handle, CURLOPT_WRITEDATA, fp);
         curl_easy_setopt(easy_handle, CURLOPT_FOLLOWLOCATION, 1L);
@@ -149,16 +152,17 @@ namespace sua {
 
     const std::string Downloader::EVENT_DOWNLOADING = "Downloader/Downloading";
 
-    Downloader::Downloader(const std::string& download_dir, const std::string& filename)
+    Downloader::Downloader(Context & context)
+        : _context(context)
     {
-        const std::string filepath = download_dir + filename;
-        strncpy(FILE_DIR, download_dir.c_str(), FILENAME_MAX - 1);
+        const std::string filepath = _context.updatesDirectory + _context.tempFileName;
+        strncpy(FILE_DIR, _context.updatesDirectory.c_str(), FILENAME_MAX - 1);
         strncpy(FILE_PATH, filepath.c_str(), FILENAME_MAX - 1);
     }
 
     TechCode Downloader::start(const std::string & input)
     {
-        return download(input.c_str());
+        return download(_context, input.c_str());
     }
 
 } // namespace sua

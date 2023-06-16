@@ -100,11 +100,38 @@ runs:
       make install
     shell: bash
 
+  - name: Generate SSL key and certificate
+    run: |
+      sudo openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
+        -keyout /etc/ssl/private/selfupdateagent.key \
+        -out /etc/ssl/certs/selfupdateagent.crt \
+        -config utest/sua-certificate.config
+    shell: bash
+
+  - name: Install and configure apache2
+    run: |
+      sudo apt install apache2
+      sudo a2enmod ssl
+      sudo cp utest/sua-apache2.conf /etc/apache2/sites-available/sua-apache2.conf
+      sudo a2ensite sua-apache2
+      sudo service apache2 start
+    shell: bash
+
+  - name: Generate fake bundle
+    run: |
+      head -c 1 < /dev/urandom | sudo tee /var/www/html/bundle
+    shell: bash
+
+  - name: Create /data/selfupdates
+    run: |
+      sudo mkdir -p /data/selfupdates
+      sudo chown `whoami`:`whoami` /data/selfupdates
+    shell: bash
+
   - name: Run unit tests for amd64
     if: ${{ inputs.arch == 'amd64' }}
     run: |
       cd dist_${{ inputs.arch }}/utest
-      file TestSelfUpdateAgent
       ./TestSelfUpdateAgent > ../../unit_tests_report_${{ inputs.arch }}.txt
     shell: bash
 
@@ -116,6 +143,8 @@ runs:
       distro: ubuntu_latest
       dockerRunArgs: |
         --volume "${PWD}:/sua"
+        --volume "/data/selfupdates:/data/selfupdates"
+        --volume "/etc/ssl/certs:/etc/ssl/certs"
         --net=host
       shell: /bin/sh
       install: |

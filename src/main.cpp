@@ -49,6 +49,7 @@ Options:
 -p, --path      path where downloaded update bundles will be stored (default is '/data/selfupdates')
 -s, --server    MQTT broker server to connect (default is 'tcp://mosquitto:1883')
                 (has precedence over SUA_SERVER environment variable)
+-c, --ca        path to certificate to verify connection with bundle server (default is '/etc/ssl/certs/selfupdateagent.crt')
 -v, --version   display version (Git hash and build number) used to build SUA and exit
 )";
 
@@ -57,6 +58,7 @@ int main(int argc, char* argv[])
     std::string server{"tcp://mosquitto:1883"};
     std::string installer{"download"};
     std::string hostPathToSelfupdateDir{"/data/selfupdates"};
+    std::string pathToCertificate{"/etc/ssl/certs/selfupdateagent.crt"};
 
     const char * env_server = std::getenv("SUA_SERVER");
     if(env_server) {
@@ -111,6 +113,16 @@ int main(int argc, char* argv[])
                     return 1;
                 }
                 installer = argValue;
+                continue;
+            }
+
+            if(("-c" == opt) || ("--ca" == opt)) {
+                if (argValue.empty()) {
+                    std::cout << "Missing path to .crt for '" << opt << "'" << std::endl
+                              << help_string << std::endl;
+                    return 1;
+                }
+                pathToCertificate = argValue;
                 continue;
             }
 
@@ -182,20 +194,22 @@ int main(int argc, char* argv[])
 
     sua::SelfUpdateAgent sua;
     sua::Context & ctx = sua.context();
-    ctx.stateMachine      = std::make_shared<sua::FSM>(sua.context());
-    ctx.installerAgent    = installerAgent;
-    ctx.downloadMode      = downloadMode;
-    ctx.downloaderAgent   = std::make_shared<sua::Downloader>(hostPathToSelfupdateDir, ctx.tempFileName);
-    ctx.messagingProtocol = std::make_shared<sua::MqttMessagingProtocolJSON>();
-    ctx.updatesDirectory  = hostPathToSelfupdateDir;
-    ctx.bundleChecker     = std::make_shared<sua::BundleChecker>();
-    ctx.mqttProcessor     = std::make_shared<sua::MqttProcessor>(ctx);
+    ctx.certificateFileName = pathToCertificate;
+    ctx.updatesDirectory    = hostPathToSelfupdateDir;
+    ctx.stateMachine        = std::make_shared<sua::FSM>(sua.context());
+    ctx.installerAgent      = installerAgent;
+    ctx.downloadMode        = downloadMode;
+    ctx.downloaderAgent     = std::make_shared<sua::Downloader>(ctx);
+    ctx.messagingProtocol   = std::make_shared<sua::MqttMessagingProtocolJSON>();
+    ctx.bundleChecker       = std::make_shared<sua::BundleChecker>();
+    ctx.mqttProcessor       = std::make_shared<sua::MqttProcessor>(ctx);
 
     sua::Logger::info("SUA build number       : '{}'", SUA_BUILD_NUMBER );
     sua::Logger::info("SUA commit hash        : '{}'", SUA_COMMIT_HASH  );
     sua::Logger::info("MQTT broker address    : '{}://{}:{}'", transport, conf.brokerHost, conf.brokerPort);
     sua::Logger::info("Install method         : '{}'", installer);
     sua::Logger::info("Updates directory      : '{}'", ctx.updatesDirectory);
+    sua::Logger::info("CA certificate         : '{}'", ctx.certificateFileName);
 
     sua.init();
     sua.start(conf);
