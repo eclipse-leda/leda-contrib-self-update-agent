@@ -14,18 +14,18 @@
 //
 //    SPDX-License-Identifier: Apache-2.0
 
-#ifndef SDV_SUA_TECHCODES_H
-#define SDV_SUA_TECHCODES_H
+#ifndef SDV_SUA_ACTIVATING_H
+#define SDV_SUA_ACTIVATING_H
+
+#include "FSM/States/Connected.h"
 
 namespace sua {
 
-    enum class TechCode {
-        OK                 = 0,
-        DownloadFailed     = 1001,
-        InvalidBundle      = 2001,
-        InstallationFailed = 3001,
-        UpdateRejected     = 4001,
-        UnknownError       = 5001
+    class Activating : public Connected {
+    public:
+        Activating();
+
+        void onEnter(Context& /*ctx*/) override;
     };
 
 } // namespace sua

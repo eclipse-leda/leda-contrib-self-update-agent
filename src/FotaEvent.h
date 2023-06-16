@@ -1,4 +1,4 @@
-//    Copyright 2022 Contributors to the Eclipse Foundation
+//    Copyright 2023 Contributors to the Eclipse Foundation
 //
 //    Licensed under the Apache License, Version 2.0 (the "License");
 //    you may not use this file except in compliance with the License.
@@ -25,17 +25,21 @@ namespace sua {
         Waiting,
         ConnectivityEstablished,
         ConnectivityLost,
-        Start,
+        Identify,
         GetCurrentState,
         BundleVersionOK,
         BundleVersionUnchanged,
         BundleVersionInconsistent,
         DownloadStart,
         DownloadFailed,
+        DownloadSucceeded,
         InstallStart,
         InstallCompleted,
         InstallFailed,
         InstallFailedFallback,
+        Activate,
+        Cleanup,
+        Rollback,
         NotUsed,
     };
 

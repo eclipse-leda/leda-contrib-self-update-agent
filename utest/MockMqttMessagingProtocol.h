@@ -27,6 +27,10 @@ public:
     MOCK_METHOD(sua::DesiredState, readDesiredState, (const std::string & input), (override));
     MOCK_METHOD(sua::DesiredState, readCurrentStateRequest, (const std::string & input), (override));
     MOCK_METHOD(std::string, createMessage, (const sua::Context& ctx, const std::string& name, const std::string& message), (override));
+
+    std::string native_createMessage(const sua::Context& ctx, const std::string& name, const std::string& message) {
+        return sua::IMqttMessagingProtocol::createMessage(ctx, name, message);
+    }
 };
 
 #endif

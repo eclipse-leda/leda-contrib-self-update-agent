@@ -14,24 +14,33 @@
 //
 //    SPDX-License-Identifier: Apache-2.0
 
-#include "FSM/States/SendCurrentState.h"
-#include "FSM/FSM.h"
+#include "FSM/States/Cleaning.h"
 #include "Context.h"
-#include "FotaEvent.h"
+#include "Logger.h"
 
 namespace sua {
 
-    SendCurrentState::SendCurrentState()
-        : SendCurrentState("SendCurrentState")
+    Cleaning::Cleaning()
+        : Connected("Cleaning")
     { }
 
-    SendCurrentState::SendCurrentState(const std::string& name)
-        : State(name)
-    { }
-
-    void SendCurrentState::onEnter(Context& ctx)
+    void Cleaning::onEnter(Context& ctx)
     {
-        send(ctx, IMqttProcessor::TOPIC_STATE, MqttMessage::SystemVersion, true);
+        const auto path   = ctx.updatesDirectory + ctx.tempFileName;
+        const auto result = remove(path.c_str());
+
+        if(result != 0) {
+            Logger::error("Failed to remove temporary bundle file: '{}', reason: '{}'", path, strerror(errno));
+        }
+
+        send(ctx, IMqttProcessor::TOPIC_FEEDBACK, MqttMessage::Cleaned);
+
+        if(ctx.desiredState.actionStatus == "UPDATE_SUCCESS") {
+            send(ctx, IMqttProcessor::TOPIC_FEEDBACK, MqttMessage::Complete);
+        } else {
+            send(ctx, IMqttProcessor::TOPIC_FEEDBACK, MqttMessage::Incomplete);
+        }
+
         ctx.stateMachine->handleEvent(FotaEvent::Waiting);
     }
 

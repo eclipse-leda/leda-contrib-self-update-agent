@@ -14,19 +14,38 @@
 //
 //    SPDX-License-Identifier: Apache-2.0
 
-#ifndef SDV_SUA_TECHCODES_H
-#define SDV_SUA_TECHCODES_H
+#ifndef SDV_SUA_MQTTMESSAGE_H
+#define SDV_SUA_MQTTMESSAGE_H
+
+#include <ostream>
 
 namespace sua {
 
-    enum class TechCode {
-        OK                 = 0,
-        DownloadFailed     = 1001,
-        InvalidBundle      = 2001,
-        InstallationFailed = 3001,
-        UpdateRejected     = 4001,
-        UnknownError       = 5001
+    enum class MqttMessage {
+        SystemVersion,
+        CurrentState,
+        Identifying,
+        Identified,
+        IdentificationFailed,
+        Skipped,
+        Rejected,
+        Downloading,
+        Downloaded,
+        DownloadFailed,
+        VersionChecking,
+        Installing,
+        Installed,
+        InstallFailed,
+        InstallFailedFallback,
+        Cleaned,
+        Activating,
+        Activated,
+        ActivationFailed,
+        Complete,
+        Incomplete
     };
+
+    std::ostream & operator<<(std::ostream & os, MqttMessage m);
 
 } // namespace sua
 

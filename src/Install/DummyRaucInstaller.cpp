@@ -1,4 +1,4 @@
-//    Copyright 2022 Contributors to the Eclipse Foundation
+//    Copyright 2023 Contributors to the Eclipse Foundation
 //
 //    Licensed under the Apache License, Version 2.0 (the "License");
 //    you may not use this file except in compliance with the License.
@@ -26,18 +26,31 @@ namespace sua {
 
     TechCode DummyRaucInstaller::installBundle(const std::string& input)
     {
+        _progress = 0;
         return TechCode::OK;
+    }
+
+    int32_t DummyRaucInstaller::getProgressPollInterval() const
+    {
+        return 0;
     }
 
     int32_t DummyRaucInstaller::getInstallProgress()
     {
-        static int progress = 0;
-        progress += 1;
-        progress = std::min(100, progress);
-        return progress;
+        return _progress;
     }
 
-    std::string DummyRaucInstaller::getBundleVersion()
+    SlotStatus DummyRaucInstaller::getSlotStatus()
+    {
+        SlotStatus s;
+
+        s["rootfs.0"]["version"] = getBootedVersion();
+        s["rootfs.0"]["state"  ] = "booted";
+
+        return s;
+    }
+
+    std::string DummyRaucInstaller::getBootedVersion()
     {
         return "dummy_version0";
     }
@@ -50,6 +63,27 @@ namespace sua {
     std::string DummyRaucInstaller::getLastError()
     {
         return "";
+    }
+
+    bool DummyRaucInstaller::installing()
+    {
+        _progress = std::min(100, _progress + 20);
+        return _progress != 100;
+    }
+
+    bool DummyRaucInstaller::succeeded()
+    {
+        return true;
+    }
+
+    TechCode DummyRaucInstaller::activateBooted()
+    {
+        return TechCode::OK;
+    }
+
+    TechCode DummyRaucInstaller::activateOther()
+    {
+        return TechCode::OK;
     }
 
 } // namespace sua

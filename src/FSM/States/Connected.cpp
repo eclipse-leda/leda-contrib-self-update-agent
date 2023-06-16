@@ -32,24 +32,24 @@ namespace sua {
 
     void Connected::onEnter(Context& ctx)
     {
-        send(ctx, IMqttProcessor::TOPIC_STATE, "systemVersion", true);
+        send(ctx, IMqttProcessor::TOPIC_STATE, MqttMessage::SystemVersion, true);
     }
 
     FotaEvent Connected::body(Context& ctx)
     {
         Logger::info("System version, installed: '{}'", ctx.currentState.version);
 
-        send(ctx, IMqttProcessor::TOPIC_FEEDBACK, "identifying");
+        send(ctx, IMqttProcessor::TOPIC_FEEDBACK, MqttMessage::Identifying);
 
         if(ctx.bundleChecker->isUpdateBundleVersionDifferent(ctx.desiredState.bundleVersion,
                                                              ctx.installerAgent)) {
             Logger::info("Bundle file and slot versions differ.");
-            send(ctx, IMqttProcessor::TOPIC_FEEDBACK, "identified");
+            send(ctx, IMqttProcessor::TOPIC_FEEDBACK, MqttMessage::Identified);
             return FotaEvent::BundleVersionOK;
         }
 
         Logger::info("Bundle version unchanged");
-        send(ctx, IMqttProcessor::TOPIC_FEEDBACK, "skipped");
+        send(ctx, IMqttProcessor::TOPIC_FEEDBACK, MqttMessage::Skipped);
         return FotaEvent::BundleVersionUnchanged;
     }
 

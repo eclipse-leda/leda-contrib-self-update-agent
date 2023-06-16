@@ -60,7 +60,6 @@ COPY --from=build /work/dist_amd64/bin/sdv-self-update-agent /sua/bin/sdv-self-u
 COPY --from=build /work/dist_amd64/lib/libpaho-mqttpp3.so.1 /sua/lib/
 COPY --from=build /work/dist_amd64/lib/libpaho-mqtt3a.so.1 /sua/lib/
 COPY --from=build /work/dist_amd64/lib/libpaho-mqtt3c.so.1 /sua/lib/
-COPY --from=build /work/dist_amd64/lib/libmini-yaml.so /sua/lib/
 COPY --from=build /work/dist_amd64/lib/libcurl.so     /sua/lib/
 COPY --from=build /work/dist_amd64/lib/libcrypto.so.3 /sua/lib/
 COPY --from=build /work/dist_amd64/lib/libssl.so.3    /sua/lib/

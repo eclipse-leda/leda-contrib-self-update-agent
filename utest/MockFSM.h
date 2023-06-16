@@ -23,15 +23,18 @@
 
 class MockFSM : public sua::FSM {
 public:
-    MockFSM(sua::Context& context)
+    MockFSM(sua::Context& context, std::vector<std::string>& collection)
         : sua::FSM(context)
+        , visitedStates(collection)
     { }
 
-    MOCK_METHOD(void, transitTo, (const std::string& name), (override));
-
-    void native_transitTo(const std::string& name) {
+    void transitTo(const std::string& name) override {
+        visitedStates.push_back(name);
         sua::FSM::transitTo(name);
     }
+
+private:
+    std::vector<std::string>& visitedStates;
 };
 
 #endif

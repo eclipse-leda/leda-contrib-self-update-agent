@@ -14,20 +14,30 @@
 //
 //    SPDX-License-Identifier: Apache-2.0
 
-#ifndef SDV_SUA_TECHCODES_H
-#define SDV_SUA_TECHCODES_H
+#include "JsonUtils.h"
+
+#include <regex>
 
 namespace sua {
 
-    enum class TechCode {
-        OK                 = 0,
-        DownloadFailed     = 1001,
-        InvalidBundle      = 2001,
-        InstallationFailed = 3001,
-        UpdateRejected     = 4001,
-        UnknownError       = 5001
-    };
+    std::string jsonTemplate(std::string tpl)
+    {
+        // required because lib-fmt expects curly brackets escaped as {{ and }}
+        // to properly handle placeholders 3 steps are done:
+        //   { -> {{
+        //   } -> }}
+        // this makes placeholder {} look like {{}}
+        //   {{}} -> {}
 
-} // namespace sua
+        // escape opening
+        tpl = std::regex_replace(tpl, std::regex("\\{"), "{{");
+        // espace closing
+        tpl = std::regex_replace(tpl, std::regex("\\}"), "}}");
+        // unescape placeholder
+        tpl = std::regex_replace(tpl, std::regex("\\{\\{\\}\\}"), "{}");
 
-#endif
+        return tpl;
+    }
+
+}
+

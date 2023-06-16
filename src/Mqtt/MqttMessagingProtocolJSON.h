@@ -1,4 +1,4 @@
-//    Copyright 2022 Contributors to the Eclipse Foundation
+//    Copyright 2023 Contributors to the Eclipse Foundation
 //
 //    Licensed under the Apache License, Version 2.0 (the "License");
 //    you may not use this file except in compliance with the License.
@@ -23,11 +23,13 @@ namespace sua {
 
     class MqttMessagingProtocolJSON : public IMqttMessagingProtocol {
     public:
+        Command readCommand(const std::string & input) override;
+
         DesiredState readDesiredState(const std::string & input) override;
 
         DesiredState readCurrentStateRequest(const std::string & input) override;
 
-        std::string createMessage(const class Context& ctx, const std::string& name, const std::string& message = "") override;
+        std::string createMessage(const class Context& ctx, MqttMessage message_type, const std::string& message = "") override;
 
     protected:
         virtual uint64_t epochTime() const;

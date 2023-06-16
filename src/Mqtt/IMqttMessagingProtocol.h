@@ -1,4 +1,4 @@
-//    Copyright 2022 Contributors to the Eclipse Foundation
+//    Copyright 2023 Contributors to the Eclipse Foundation
 //
 //    Licensed under the Apache License, Version 2.0 (the "License");
 //    you may not use this file except in compliance with the License.
@@ -21,15 +21,19 @@
 
 namespace sua {
 
+    enum class MqttMessage;
+
     class IMqttMessagingProtocol {
     public:
         virtual ~IMqttMessagingProtocol() = default;
+
+        virtual class Command readCommand(const std::string & input) = 0;
 
         virtual class DesiredState readDesiredState(const std::string & input) = 0;
 
         virtual class DesiredState readCurrentStateRequest(const std::string & input) = 0;
 
-        virtual std::string createMessage(const class Context& ctx, const std::string& name, const std::string& message = "") = 0;
+        virtual std::string createMessage(const class Context& ctx, MqttMessage message_type, const std::string& message = "") = 0;
     };
 
 } // namespace sua

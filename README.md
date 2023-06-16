@@ -24,62 +24,90 @@ sequenceDiagram
     participant m as MQTT Broker 
     participant s as SUA
     participant r as RAUC
+
     s -->> m: connect
-    loop Wait for message: selfupdate/desiredstate
+
+    loop Wait for OTA trigger
+
     Note left of s: Initial start
-    s ->> m: selfupdate/currentstate
+    s ->> m: Current state (installed version from booted partition)
+
     Note left of s: Trigger for OTA
-    m ->> s: selfupdate/desiredstate
-    s ->> m: selfupdate/desiredstatefeedback: downloading 0%
-    s ->> s: download bundle
-    s ->> m: selfupdate/desiredstatefeedback: downloading 51%
-    s ->> r: install
-    s ->> m: selfupdate/desiredstatefeedback: installing 0%
-    r ->> r: install
-    r ->> s: share progress: e.g. 51%
-    s ->> m: selfupdate/desiredstatefeedback: installing 51%
-    r ->> s: installation ready
-    s ->> m: selfupdate/desiredstatefeedback: installed 
-    s ->> m: selfupdate/desiredstatefeedback: idle 
+    m ->> s: Desired state request (new version and url to bundle)
+    s ->> m: Feedback (update actions are identified)
+
+    Note left of s: Command for Download
+    m ->> s: Download command
+    s ->> s: Download bundle
+    s ->> m: Feedback (downloading/downloaded/failed)
+
+    Note left of s: Command for Update
+    m ->> s: Update command
+    s ->> r: Flash image to partition
+    r ->> r: Flashing...
+    s ->> m: Feedback (updating with percentage)
+    r ->> s: Flash completed/failed
+    s ->> m: Feedback (updated/failed)
+
+    Note left of s: Command for Activate
+    m ->> s: Activate command
+    s ->> r: Switch partitions (booted <-> other)
+    r ->> s: Switch completed/failed
+    s ->> m: Feedback (activated/failed)
+
+    Note left of s: Command for Cleanup
+    m ->> s: Cleanup command
+    s ->> s: Remove temporary files
+    s ->> m: Cleanup completed + status from previously failed state<br>(completed/failed)
+
     end
 ```
 
 ```mermaid
 stateDiagram
     Uninitialized --> Connected: Connected
-    Connected --> Downloading: Start
-    Downloading --> Installing: Bundle version OK
-    Installing --> Installed: Install complete
-    Installing --> Failed: RAUC write failed
-    Downloading --> Failed: Version mismatch/download failed
-    Installed --> Idle
-    Failed --> Idle
+    Connected --> Identified: Start (OTA trigger)
+    Identified --> Downloading: Command download
+    Identified --> Failed: If OTA trigger is invalid
+    Downloading --> Updating: Command update
+    Downloading --> Failed: If download has failed
+    Updating --> Activate: Command activate
+    Updating --> Failed: If update has failed
+    Activate --> Cleanup: Command cleanup
+    Activate --> Failed: If activate has failed
+    Failed --> Cleanup: Command cleanup
+    Cleanup --> Idle
 ```
 Important: Uninitialized state is the default entry state or state in case connection is lost. To simplify reading of the diagram arrows from other states to Unitialized have been removed.
 
-MQTT communication is done via 3 MQTT topics:
+MQTT communication is done over 5 MQTT topics:
 
-## selfupdate/desiredstate
+## Trigger OTA
 | Topic | Direction | Description |
-|-------|  -------- | ----------- |
+|-------|-----------|-------------|
 | selfupdate/desiredstate | IN | This message triggers the update process. The payload shall contain all data necessary to obtain the update bundle and to install it. |
 
-## selfupdate/currentstate
-| Topic| Direction | Description |
-|------|  -------- | ----------- |
-| selfupdate/currentstate | OUT | This message is being sent either once on SUA start or as an answer to response received by selfupdate/currentstate/get. It contains information about currently installed OS version. |
+## Trigger self-update step/action
+| Topic | Direction | Description |
+|-------|-----------|-------------|
+| selfupdate/desiredstate/command | IN | This message triggers the single step in update process (download/flash/activate/cleanup). |
 
-## selfupdate/currentstate/get
-| Topic| Direction | Description |
-|------|  -------- | ----------- |
-| selfupdate/currentstate/get | IN | This message can be received at any point of time. Indicates that SUA should send back version of installed OS as current state. |
+## Report current state
+| Topic | Direction | Description |
+|-------|-----------|-------------|
+| selfupdate/currentstate | OUT | This message is being sent either once on SUA start or as an answer to response received by selfupdate/currentstate/get. It contains information about the currently installed OS version. |
 
-## selfupdate/desiredstatefeedback
-| Topic| Direction | Description |
-|------|  -------- | ----------- |
-| selfupdate/desiredstatefeedback | OUT | This message is being sent by SUA to share current progress of triggered update process. This is the *OUT* counterpart of *selfupdate/desiredstate* input message. |
+## Get current state
+| Topic | Direction | Description |
+|-------|-----------|-------------|
+| selfupdate/currentstate/get | IN | This message can be received at any point of time. Indicates that SUA should send back the version of the installed OS as current state. |
 
-SUA supports 2 protocols depending on configuration: [link](docs/k8s.md) for Kubernetes-based Custom Objects or [link](docs/bfb.md) for Update Agent API.Default protocol is bfb.
+## Report status of self-update process
+| Topic | Direction | Description |
+|-------|-----------|-------------|
+| selfupdate/desiredstatefeedback | OUT | This message is being sent by SUA to share the current progress of the triggered update process. This is the *OUT* counterpart of *selfupdate/desiredstate* input message. |
+
+Detailed description of Update Agent API can be found here: [link](docs/bfb.md).
 
 # Checkout
 SUA links to some 3rd party libraries, which are fetched as submodules, therefore the cloning shall be performed with recursive option:

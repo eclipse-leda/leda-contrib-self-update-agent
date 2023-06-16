@@ -1,6 +1,7 @@
 #include "gtest/gtest.h"
 
 #include "Mqtt/MqttMessagingProtocolJSON.h"
+#include "Mqtt/MqttMessage.h"
 #include "Context.h"
 #include "Utils.h"
 #include  "nlohmann/json.hpp"
@@ -301,7 +302,7 @@ namespace {
         SUA_BUILD_NUMBER = "42";
 
         ctx.desiredState.activityId = "";
-        const std::string result = ProtocolJSON().createMessage(ctx, "systemVersion");
+        const std::string result = ProtocolJSON().createMessage(ctx, sua::MqttMessage::SystemVersion);
 
         // clang-format off
         const std::string expected = R"(
@@ -343,7 +344,7 @@ namespace {
     {
         SUA_BUILD_NUMBER = "42";
 
-        const std::string result = ProtocolJSON().createMessage(ctx, "systemVersion");
+        const std::string result = ProtocolJSON().createMessage(ctx, sua::MqttMessage::SystemVersion);
 
         // clang-format off
         const std::string expected = R"(
@@ -384,7 +385,7 @@ namespace {
 
     TEST_F(TestMessagingProtocolJSON, createMessage_identifying)
     {
-        const std::string result = ProtocolJSON().createMessage(ctx, "identifying");
+        const std::string result = ProtocolJSON().createMessage(ctx, sua::MqttMessage::Identifying);
 
         // clang-format off
         const std::string expected = R"(
@@ -407,7 +408,7 @@ namespace {
 
     TEST_F(TestMessagingProtocolJSON, createMessage_identified)
     {
-        const std::string result = ProtocolJSON().createMessage(ctx, "identified");
+        const std::string result = ProtocolJSON().createMessage(ctx, sua::MqttMessage::Identified);
 
         // clang-format off
         const std::string expected = R"(
@@ -417,7 +418,17 @@ namespace {
                 "payload": {
                     "status": "IDENTIFIED",
                     "message": "Self-update agent is about to perform an OS image update.",
-                    "actions": []
+                    "actions": [
+                        {
+                            "component": {
+                                "id": "self-update:os-image",
+                                "version": "1.0"
+                            },
+                            "status": "IDENTIFIED",
+                            "progress": 0,
+                            "message": "Self-update agent is about to perform an OS image update."
+                        }
+                    ]
                 }
             }
         )";
@@ -430,7 +441,7 @@ namespace {
 
     TEST_F(TestMessagingProtocolJSON, createMessage_identificationFailed)
     {
-        const std::string result = ProtocolJSON().createMessage(ctx, "identificationFailed", "test");
+        const std::string result = ProtocolJSON().createMessage(ctx, sua::MqttMessage::IdentificationFailed, "test");
 
         // clang-format off
         const std::string expected = R"(
@@ -453,7 +464,7 @@ namespace {
 
     TEST_F(TestMessagingProtocolJSON, createMessage_skipped)
     {
-        const std::string result = ProtocolJSON().createMessage(ctx, "skipped");
+        const std::string result = ProtocolJSON().createMessage(ctx, sua::MqttMessage::Skipped);
 
         // clang-format off
         const std::string expected = R"(
@@ -476,7 +487,7 @@ namespace {
 
     TEST_F(TestMessagingProtocolJSON, createMessage_rejected)
     {
-        const std::string result = ProtocolJSON().createMessage(ctx, "rejected");
+        const std::string result = ProtocolJSON().createMessage(ctx, sua::MqttMessage::Rejected);
 
         // clang-format off
         const std::string expected = R"(
@@ -484,7 +495,7 @@ namespace {
                 "activityId": "id",
                 "timestamp": 42,
                 "payload": {
-                    "status": "INCOMPLETE",
+                    "status": "UPDATE_FAILURE",
                     "message": "Update rejected.",
                     "actions": [
                         {
@@ -513,7 +524,7 @@ namespace {
         d.downloadBytesTotal         = 10485760;
         d.downloadProgressPercentage = 10;
 
-        const std::string result = ProtocolJSON().createMessage(ctx, "downloading");
+        const std::string result = ProtocolJSON().createMessage(ctx, sua::MqttMessage::Downloading);
 
         // clang-format off
         const std::string expected = R"(
@@ -521,7 +532,7 @@ namespace {
                 "activityId": "id",
                 "timestamp": 42,
                 "payload": {
-                    "status": "RUNNING",
+                    "status": "DOWNLOADING",
                     "message": "Self-update agent is performing an OS image update.",
                     "actions": [
                         {
@@ -550,7 +561,7 @@ namespace {
         d.downloadBytesTotal         = 10485760;
         d.downloadProgressPercentage = 10;
 
-        const std::string result = ProtocolJSON().createMessage(ctx, "downloaded");
+        const std::string result = ProtocolJSON().createMessage(ctx, sua::MqttMessage::Downloaded);
 
         // clang-format off
         const std::string expected = R"(
@@ -558,7 +569,7 @@ namespace {
                 "activityId": "id",
                 "timestamp": 42,
                 "payload": {
-                    "status": "RUNNING",
+                    "status": "DOWNLOAD_SUCCESS",
                     "message": "Self-update agent is performing an OS image update.",
                     "actions": [
                         {
@@ -585,7 +596,7 @@ namespace {
     {
         d.downloadProgressPercentage = 66;
 
-        const std::string result = ProtocolJSON().createMessage(ctx, "downloadFailed");
+        const std::string result = ProtocolJSON().createMessage(ctx, sua::MqttMessage::DownloadFailed);
 
         // clang-format off
         const std::string expected = R"(
@@ -593,7 +604,7 @@ namespace {
                 "activityId": "id",
                 "timestamp": 42,
                 "payload": {
-                    "status": "INCOMPLETE",
+                    "status": "DOWNLOAD_FAILURE",
                     "message": "Download failed.",
                     "actions": [
                         {
@@ -601,9 +612,42 @@ namespace {
                                 "id": "self-update:os-image",
                                 "version": "1.0"
                             },
-                            "status": "UPDATE_FAILURE",
+                            "status": "DOWNLOAD_FAILURE",
                             "progress": 66,
                             "message": "Download failed."
+                        }
+                    ]
+                }
+            }
+        )";
+        // clang-format on
+
+        EXPECT_NO_THROW(validateJsonSyntax(expected));
+        EXPECT_NO_THROW(validateJsonSyntax(result));
+        EXPECT_EQ_MULTILINE(result, expected);
+    }
+
+    TEST_F(TestMessagingProtocolJSON, createMessage_versionChecking)
+    {
+        const std::string result = ProtocolJSON().createMessage(ctx, sua::MqttMessage::VersionChecking);
+
+        // clang-format off
+        const std::string expected = R"(
+            {
+                "activityId": "id",
+                "timestamp": 42,
+                "payload": {
+                    "status": "UPDATING",
+                    "message": "Self-update agent is performing an OS image update.",
+                    "actions": [
+                        {
+                            "component": {
+                                "id": "self-update:os-image",
+                                "version": "1.0"
+                            },
+                            "status": "UPDATING",
+                            "progress": 0,
+                            "message": "Checking bundle version and version in desired state request."
                         }
                     ]
                 }
@@ -620,7 +664,7 @@ namespace {
     {
         d.installProgressPercentage = 42;
 
-        const std::string result = ProtocolJSON().createMessage(ctx, "installing");
+        const std::string result = ProtocolJSON().createMessage(ctx, sua::MqttMessage::Installing);
 
         // clang-format off
         const std::string expected = R"(
@@ -628,7 +672,7 @@ namespace {
                 "activityId": "id",
                 "timestamp": 42,
                 "payload": {
-                    "status": "RUNNING",
+                    "status": "UPDATING",
                     "message": "Self-update agent is performing an OS image update.",
                     "actions": [
                         {
@@ -655,7 +699,7 @@ namespace {
     {
         d.installProgressPercentage = 100;
 
-        const std::string result = ProtocolJSON().createMessage(ctx, "installed");
+        const std::string result = ProtocolJSON().createMessage(ctx, sua::MqttMessage::Installed);
 
         // clang-format off
         const std::string expected = R"(
@@ -663,7 +707,7 @@ namespace {
                 "activityId": "id",
                 "timestamp": 42,
                 "payload": {
-                    "status": "COMPLETED",
+                    "status": "UPDATE_SUCCESS",
                     "message": "Self-update completed, reboot required.",
                     "actions": [
                         {
@@ -671,7 +715,7 @@ namespace {
                                 "id": "self-update:os-image",
                                 "version": "1.0"
                             },
-                            "status": "UPDATE_SUCCESS",
+                            "status": "UPDATING",
                             "progress": 100,
                             "message": "Writing partition completed, reboot required."
                         }
@@ -690,7 +734,7 @@ namespace {
     {
         d.installProgressPercentage = 66;
 
-        const std::string result = ProtocolJSON().createMessage(ctx, "installFailed");
+        const std::string result = ProtocolJSON().createMessage(ctx, sua::MqttMessage::InstallFailed);
 
         // clang-format off
         const std::string expected = R"(
@@ -698,7 +742,7 @@ namespace {
                 "activityId": "id",
                 "timestamp": 42,
                 "payload": {
-                    "status": "INCOMPLETE",
+                    "status": "UPDATE_FAILURE",
                     "message": "Install failed.",
                     "actions": [
                         {
@@ -723,7 +767,7 @@ namespace {
 
     TEST_F(TestMessagingProtocolJSON, createMessage_installFailedFallback)
     {
-        const std::string result = ProtocolJSON().createMessage(ctx, "installFailedFallback");
+        const std::string result = ProtocolJSON().createMessage(ctx, sua::MqttMessage::InstallFailedFallback);
 
         // clang-format off
         const std::string expected = R"(
@@ -756,14 +800,274 @@ namespace {
 
     TEST_F(TestMessagingProtocolJSON, createMessage_currentState)
     {
-        const std::string result = ProtocolJSON().createMessage(ctx, "currentState");
+        const std::string result = ProtocolJSON().createMessage(ctx, sua::MqttMessage::CurrentState);
 
         EXPECT_EQ_MULTILINE(result, "");
     }
 
-    TEST_F(TestMessagingProtocolJSON, createUnknownMessage_throwsLogicError)
+    TEST_F(TestMessagingProtocolJSON, createMessage_cleaned)
     {
-        EXPECT_THROW(ProtocolJSON().createMessage(ctx, "unknown"), std::logic_error);
+        ctx.desiredState.actionStatus  = "STATUS";
+        ctx.desiredState.actionMessage = "MESSAGE";
+
+        const std::string result = ProtocolJSON().createMessage(ctx, sua::MqttMessage::Cleaned);
+
+        // clang-format off
+        const std::string expected = R"(
+            {
+                "activityId": "id",
+                "timestamp": 42,
+                "payload": {
+                    "status": "CLEANUP_SUCCESS",
+                    "message": "Self-update agent has cleaned up after itself.",
+                    "actions": [
+                        {
+                            "component": {
+                                "id": "self-update:os-image",
+                                "version": "1.0"
+                            },
+                            "status": "STATUS",
+                            "progress": 0,
+                            "message": "MESSAGE"
+                        }
+                    ]
+                }
+            }
+        )";
+        // clang-format on
+
+        EXPECT_NO_THROW(validateJsonSyntax(expected));
+        EXPECT_NO_THROW(validateJsonSyntax(result));
+        EXPECT_EQ_MULTILINE(result, expected);
+    }
+
+    TEST_F(TestMessagingProtocolJSON, createMessage_activating)
+    {
+        const std::string result = ProtocolJSON().createMessage(ctx, sua::MqttMessage::Activating);
+
+        // clang-format off
+        const std::string expected = R"(
+            {
+                "activityId": "id",
+                "timestamp": 42,
+                "payload": {
+                    "status": "ACTIVATING",
+                    "message": "Self-update agent is performing an OS image activation.",
+                    "actions": [
+                        {
+                            "component": {
+                                "id": "self-update:os-image",
+                                "version": "1.0"
+                            },
+                            "status": "UPDATING",
+                            "progress": 0,
+                            "message": "Self-update agent is performing an OS image activation."
+                        }
+                    ]
+                }
+            }
+        )";
+        // clang-format on
+
+        EXPECT_NO_THROW(validateJsonSyntax(expected));
+        EXPECT_NO_THROW(validateJsonSyntax(result));
+        EXPECT_EQ_MULTILINE(result, expected);
+    }
+
+    TEST_F(TestMessagingProtocolJSON, createMessage_activated)
+    {
+        const std::string result = ProtocolJSON().createMessage(ctx, sua::MqttMessage::Activated);
+
+        // clang-format off
+        const std::string expected = R"(
+            {
+                "activityId": "id",
+                "timestamp": 42,
+                "payload": {
+                    "status": "ACTIVATION_SUCCESS",
+                    "message": "Self-update agent has activated the new OS image.",
+                    "actions": [
+                        {
+                            "component": {
+                                "id": "self-update:os-image",
+                                "version": "1.0"
+                            },
+                            "status": "UPDATED",
+                            "progress": 0,
+                            "message": "Self-update agent has activated the new OS image."
+                        }
+                    ]
+                }
+            }
+        )";
+        // clang-format on
+
+        EXPECT_NO_THROW(validateJsonSyntax(expected));
+        EXPECT_NO_THROW(validateJsonSyntax(result));
+        EXPECT_EQ_MULTILINE(result, expected);
+    }
+
+    TEST_F(TestMessagingProtocolJSON, createMessage_activationFailed)
+    {
+        const std::string result = ProtocolJSON().createMessage(ctx, sua::MqttMessage::ActivationFailed);
+
+        // clang-format off
+        const std::string expected = R"(
+            {
+                "activityId": "id",
+                "timestamp": 42,
+                "payload": {
+                    "status": "ACTIVATION_FAILURE",
+                    "message": "Self-update agent has failed to activate the new OS image.",
+                    "actions": [
+                        {
+                            "component": {
+                                "id": "self-update:os-image",
+                                "version": "1.0"
+                            },
+                            "status": "UPDATE_FAILURE",
+                            "progress": 0,
+                            "message": "Self-update agent has failed to activate the new OS image."
+                        }
+                    ]
+                }
+            }
+        )";
+        // clang-format on
+
+        EXPECT_NO_THROW(validateJsonSyntax(expected));
+        EXPECT_NO_THROW(validateJsonSyntax(result));
+        EXPECT_EQ_MULTILINE(result, expected);
+    }
+
+    TEST_F(TestMessagingProtocolJSON, readCommand_DOWNLOAD)
+    {
+        // clang-format off
+        const std::string input = R"(
+            {
+                "activityId": "random-uuid-as-string",
+                "timestamp": 123456789,
+                "payload": {
+                    "baseline": "BASELINE NAME",
+                    "command": "DOWNLOAD"
+                }
+            }
+        )";
+        // clang-format on
+
+        EXPECT_NO_THROW(validateJsonSyntax(input));
+        const auto c = ProtocolJSON().readCommand(input);
+
+        EXPECT_EQ(c.activityId, "random-uuid-as-string");
+        EXPECT_EQ(c.event, sua::FotaEvent::DownloadStart);
+    }
+
+    TEST_F(TestMessagingProtocolJSON, readCommand_UPDATE)
+    {
+        // clang-format off
+        const std::string input = R"(
+            {
+                "activityId": "random-uuid-as-string",
+                "timestamp": 123456789,
+                "payload": {
+                    "baseline": "BASELINE NAME",
+                    "command": "UPDATE"
+                }
+            }
+        )";
+        // clang-format on
+
+        EXPECT_NO_THROW(validateJsonSyntax(input));
+        const auto c = ProtocolJSON().readCommand(input);
+
+        EXPECT_EQ(c.activityId, "random-uuid-as-string");
+        EXPECT_EQ(c.event, sua::FotaEvent::InstallStart);
+    }
+
+    TEST_F(TestMessagingProtocolJSON, readCommand_CLEANUP)
+    {
+        // clang-format off
+        const std::string input = R"(
+            {
+                "activityId": "random-uuid-as-string",
+                "timestamp": 123456789,
+                "payload": {
+                    "baseline": "BASELINE NAME",
+                    "command": "CLEANUP"
+                }
+            }
+        )";
+        // clang-format on
+
+        EXPECT_NO_THROW(validateJsonSyntax(input));
+        const auto c = ProtocolJSON().readCommand(input);
+
+        EXPECT_EQ(c.activityId, "random-uuid-as-string");
+        EXPECT_EQ(c.event, sua::FotaEvent::Cleanup);
+    }
+
+    TEST_F(TestMessagingProtocolJSON, readCommand_ACTIVATE)
+    {
+        // clang-format off
+        const std::string input = R"(
+            {
+                "activityId": "random-uuid-as-string",
+                "timestamp": 123456789,
+                "payload": {
+                    "baseline": "BASELINE NAME",
+                    "command": "ACTIVATE"
+                }
+            }
+        )";
+        // clang-format on
+
+        EXPECT_NO_THROW(validateJsonSyntax(input));
+        const auto c = ProtocolJSON().readCommand(input);
+
+        EXPECT_EQ(c.activityId, "random-uuid-as-string");
+        EXPECT_EQ(c.event, sua::FotaEvent::Activate);
+    }
+
+    // ROLLBACK
+    TEST_F(TestMessagingProtocolJSON, readCommand_ROLLBACK)
+    {
+        // clang-format off
+        const std::string input = R"(
+            {
+                "activityId": "random-uuid-as-string",
+                "timestamp": 123456789,
+                "payload": {
+                    "baseline": "BASELINE NAME",
+                    "command": "ROLLBACK"
+                }
+            }
+        )";
+        // clang-format on
+
+        EXPECT_NO_THROW(validateJsonSyntax(input));
+        const auto c = ProtocolJSON().readCommand(input);
+
+        EXPECT_EQ(c.activityId, "random-uuid-as-string");
+        EXPECT_EQ(c.event, sua::FotaEvent::Rollback);
+    }
+
+    TEST_F(TestMessagingProtocolJSON, readCommand_UNKNOWN_throwsRuntimeError)
+    {
+        // clang-format off
+        const std::string input = R"(
+            {
+                "activityId": "random-uuid-as-string",
+                "timestamp": 123456789,
+                "payload": {
+                    "baseline": "BASELINE NAME",
+                    "command": "UNKNOWN"
+                }
+            }
+        )";
+        // clang-format on
+
+        EXPECT_NO_THROW(validateJsonSyntax(input));
+        EXPECT_THROW(ProtocolJSON().readCommand(input), std::runtime_error);
     }
 
 }

@@ -1,4 +1,4 @@
-//    Copyright 2022 Contributors to the Eclipse Foundation
+//    Copyright 2023 Contributors to the Eclipse Foundation
 //
 //    Licensed under the Apache License, Version 2.0 (the "License");
 //    you may not use this file except in compliance with the License.
@@ -30,7 +30,6 @@ namespace sua {
     void Installing::onEnter(Context& ctx)
     {
         ctx.desiredState.installProgressPercentage = 0;
-        ctx.stateMachine->handleEvent(FotaEvent::InstallStart);
     }
 
     FotaEvent Installing::body(Context& ctx)
@@ -38,13 +37,26 @@ namespace sua {
         subscribe(Installer::EVENT_INSTALLING, [this, &ctx](const std::map<std::string, std::string>& payload) {
             ctx.desiredState.installProgressPercentage = std::stoi(payload.at("percentage"));
             Logger::info("Install progress: {}%", ctx.desiredState.installProgressPercentage);
-            send(ctx, IMqttProcessor::TOPIC_FEEDBACK, "installing");
+            send(ctx, IMqttProcessor::TOPIC_FEEDBACK, MqttMessage::Installing);
         });
 
         std::string install_input;
         if (true == ctx.downloadMode)
         {
-            install_input = ctx.updatesDirectory + "/temp_file";
+            install_input = ctx.updatesDirectory + ctx.tempFileName;
+            send(ctx, IMqttProcessor::TOPIC_FEEDBACK, MqttMessage::VersionChecking);
+
+            if(ctx.bundleChecker->isBundleVersionConsistent(
+                   ctx.desiredState.bundleVersion, ctx.installerAgent, install_input)) {
+                Logger::info("Downloaded bundle version matches spec.");
+            } else {
+                Logger::info("Downloaded bundle version does not match spec.");
+                ctx.desiredState.actionStatus = "UPDATE_FAILURE";
+                ctx.desiredState.actionMessage =
+                    "Bundle version does not match version in desired state request.";
+                send(ctx, IMqttProcessor::TOPIC_FEEDBACK, MqttMessage::Rejected);
+                return FotaEvent::BundleVersionInconsistent;
+            }
         }
         else
         {
@@ -57,7 +69,7 @@ namespace sua {
 
         if(result == TechCode::OK) {
             Logger::info("Installation completed");
-            send(ctx, IMqttProcessor::TOPIC_FEEDBACK, "installed");
+            send(ctx, IMqttProcessor::TOPIC_FEEDBACK, MqttMessage::Installed);
 
             if(ctx.fallbackMode) {
                 ctx.downloadMode = false;
@@ -72,19 +84,22 @@ namespace sua {
 
         // for download mode transit to fail state
         if (true == ctx.downloadMode) {
-            send(ctx, IMqttProcessor::TOPIC_FEEDBACK, "installFailed", lastError);
+            send(ctx, IMqttProcessor::TOPIC_FEEDBACK, MqttMessage::InstallFailed, lastError);
 
             if(ctx.fallbackMode) {
                 ctx.downloadMode = false;
                 ctx.fallbackMode = false;
             }
 
+            ctx.desiredState.actionStatus  = "UPDATE_FAILURE";
+            ctx.desiredState.actionMessage = lastError;
+
             return FotaEvent::InstallFailed;
         }
 
         // for stream mode start again in download mode
         Logger::info("Trying normal download mode as fallback");
-        send(ctx, IMqttProcessor::TOPIC_FEEDBACK, "installFailedFallback", lastError);
+        send(ctx, IMqttProcessor::TOPIC_FEEDBACK, MqttMessage::InstallFailedFallback, lastError);
         ctx.downloadMode = true;
         ctx.fallbackMode = true;
         return FotaEvent::InstallFailedFallback;

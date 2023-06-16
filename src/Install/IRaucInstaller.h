@@ -1,4 +1,4 @@
-//    Copyright 2022 Contributors to the Eclipse Foundation
+//    Copyright 2023 Contributors to the Eclipse Foundation
 //
 //    Licensed under the Apache License, Version 2.0 (the "License");
 //    you may not use this file except in compliance with the License.
@@ -19,17 +19,34 @@
 
 #include "TechCodes.h"
 
+#include <map>
 #include <string>
 
 namespace sua {
+
+    // status["rootfs.0"]["version"] = "1.1"
+    // status["rootfs.0"]["state"  ] = "booted"
+    //
+    // status["rootfs.1"]["version"] = "1.0"
+    // status["rootfs.1"]["state"  ] = "inactive"
+    using SlotStatus = std::map<std::string, std::map<std::string, std::string>>;
 
     class IRaucInstaller {
     public:
         virtual ~IRaucInstaller() = default;
 
+        virtual TechCode    activateBooted()                            = 0;
+        virtual TechCode    activateOther()                             = 0;
         virtual TechCode    installBundle(const std::string & input)    = 0;
+
+        // Returns configurable poll interval in milliseconds
+        // Value is implementation defined
+        // Do not poll install status more often than this interval
+        virtual int32_t     getProgressPollInterval() const             = 0;
+
         virtual int32_t     getInstallProgress()                        = 0;
-        virtual std::string getBundleVersion()                          = 0;
+        virtual SlotStatus  getSlotStatus()                             = 0;
+        virtual std::string getBootedVersion()                          = 0;
         virtual std::string getBundleVersion(const std::string & input) = 0;
         virtual std::string getLastError()                              = 0;
 

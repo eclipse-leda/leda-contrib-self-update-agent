@@ -1,4 +1,4 @@
-//    Copyright 2022 Contributors to the Eclipse Foundation
+//    Copyright 2023 Contributors to the Eclipse Foundation
 //
 //    Licensed under the Apache License, Version 2.0 (the "License");
 //    you may not use this file except in compliance with the License.
@@ -15,6 +15,8 @@
 //    SPDX-License-Identifier: Apache-2.0
 
 #include "SelfUpdateAgent.h"
+#include "FSM/States/Activating.h"
+#include "FSM/States/Cleaning.h"
 #include "FSM/States/Connected.h"
 #include "FSM/States/Downloading.h"
 #include "FSM/States/Failed.h"
@@ -36,6 +38,8 @@ namespace sua {
     {
         // clang-format off
         auto factory = std::make_shared<StateFactory>();
+        factory->addStateT<Activating      >("Activating"      );
+        factory->addStateT<Cleaning        >("Cleaning"        );
         factory->addStateT<Connected       >("Connected"       );
         factory->addStateT<Downloading     >("Downloading"     );
         factory->addStateT<Failed          >("Failed"          );
@@ -53,29 +57,40 @@ namespace sua {
             { FotaEvent::ConnectivityEstablished, "Uninitialized"   , "Connected"       },
             // from "Connected"
             { FotaEvent::ConnectivityLost       , "Connected"       , "Uninitialized"   },
-            { FotaEvent::Start                  , "Connected"       , "Failed"           , FotaEvent::BundleVersionUnchanged },
-            { FotaEvent::Start                  , "Connected"       , "Downloading"      , FotaEvent::BundleVersionOK        },
+            { FotaEvent::Identify               , "Connected"       , "Downloading"      , FotaEvent::BundleVersionOK           },
+            { FotaEvent::Identify               , "Connected"       , "Connected"        , FotaEvent::BundleVersionUnchanged    },
             { FotaEvent::GetCurrentState        , "Connected"       , "SendCurrentState"},
-            // from "Failed"
-            { FotaEvent::ConnectivityLost       , "Failed"          , "Uninitialized"   },
-            { FotaEvent::Waiting                , "Failed"          , "Idle"            },
             // from "Downloading"
             { FotaEvent::ConnectivityLost       , "Downloading"     , "Uninitialized"   },
-            { FotaEvent::DownloadStart          , "Downloading"     , "Installing"       , FotaEvent::BundleVersionOK           },
-            { FotaEvent::DownloadStart          , "Downloading"     , "Failed"           , FotaEvent::BundleVersionInconsistent },
+            { FotaEvent::DownloadStart          , "Downloading"     , "Installing"       , FotaEvent::DownloadSucceeded         },
             { FotaEvent::DownloadStart          , "Downloading"     , "Failed"           , FotaEvent::DownloadFailed            },
+            { FotaEvent::Rollback               , "Downloading"     , "Idle"            },
             // from "Installing"
             { FotaEvent::ConnectivityLost       , "Installing"      , "Uninitialized"   },
             { FotaEvent::InstallStart           , "Installing"      , "Installed"        , FotaEvent::InstallCompleted          },
+            { FotaEvent::InstallStart           , "Installing"      , "Failed"           , FotaEvent::BundleVersionInconsistent },
             { FotaEvent::InstallStart           , "Installing"      , "Failed"           , FotaEvent::InstallFailed             },
             { FotaEvent::InstallStart           , "Installing"      , "Downloading"      , FotaEvent::InstallFailedFallback     },
+            { FotaEvent::Rollback               , "Installing"      , "Idle"            },
             // from "Installed"
             { FotaEvent::ConnectivityLost       , "Installed"       , "Uninitialized"   },
-            { FotaEvent::Waiting                , "Installed"       , "Idle"            },
+            { FotaEvent::Activate               , "Installed"       , "Activating"      },
+            { FotaEvent::Rollback               , "Installed"       , "Idle"            },
+            // from "Activating"
+            { FotaEvent::ConnectivityLost       , "Activating"      , "Uninitialized"   },
+            { FotaEvent::Cleanup                , "Activating"      , "Cleaning"        },
+            { FotaEvent::Rollback               , "Activating"      , "Idle"            },
+            // from "Failed"
+            { FotaEvent::ConnectivityLost       , "Failed"          , "Uninitialized"   },
+            { FotaEvent::Cleanup                , "Failed"          , "Cleaning"        },
+            { FotaEvent::Rollback               , "Failed"          , "Idle"            },
+            // from "Cleaning"
+            { FotaEvent::ConnectivityLost       , "Cleaning"        , "Uninitialized"   },
+            { FotaEvent::Waiting                , "Cleaning"        , "Idle"            },
             // from "Idle"
             { FotaEvent::ConnectivityLost       , "Idle"            , "Uninitialized"   },
-            { FotaEvent::Start                  , "Idle"            , "Failed"           , FotaEvent::BundleVersionUnchanged },
-            { FotaEvent::Start                  , "Idle"            , "Downloading"      , FotaEvent::BundleVersionOK        },
+            { FotaEvent::Identify               , "Idle"            , "Downloading"      , FotaEvent::BundleVersionOK           },
+            { FotaEvent::Identify               , "Idle"            , "Failed"           , FotaEvent::BundleVersionUnchanged    },
             { FotaEvent::GetCurrentState        , "Idle"            , "SendCurrentState"},
             // from "SendCurrentState"
             { FotaEvent::ConnectivityLost       , "SendCurrentState", "Uninitialized"   },
@@ -93,8 +108,7 @@ namespace sua {
         assert(_context.messagingProtocol != nullptr);
         assert(_context.bundleChecker     != nullptr);
 
-        _context.mqttProcessor = std::make_shared<MqttProcessor>(config, _context);
-        _context.mqttProcessor->start();
+        _context.mqttProcessor->start(config);
     }
 
     Context& SelfUpdateAgent::context()

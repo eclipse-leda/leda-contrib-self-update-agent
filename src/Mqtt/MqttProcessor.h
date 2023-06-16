@@ -1,4 +1,4 @@
-//    Copyright 2022 Contributors to the Eclipse Foundation
+//    Copyright 2023 Contributors to the Eclipse Foundation
 //
 //    Licensed under the Apache License, Version 2.0 (the "License");
 //    you may not use this file except in compliance with the License.
@@ -26,13 +26,13 @@ namespace sua {
 
     class MqttProcessor : public IMqttProcessor {
     public:
-        MqttProcessor(const class MqttConfiguration & configuration, class Context & context);
+        MqttProcessor(class Context & context);
         ~MqttProcessor() = default;
 
-        void start() override;
+        void start(const MqttConfiguration & configuration) override;
         void stop() override;
 
-        void send(const std::string& topic, const std::string& content, bool retained = false) override;
+        void send(const std::string& topic, MqttMessage message_type, const std::string& message = "", bool retained = false) override;
 
     private:
         Context & _context;

@@ -1,4 +1,4 @@
-//    Copyright 2022 Contributors to the Eclipse Foundation
+//    Copyright 2023 Contributors to the Eclipse Foundation
 //
 //    Licensed under the Apache License, Version 2.0 (the "License");
 //    you may not use this file except in compliance with the License.
@@ -21,19 +21,22 @@
 
 namespace sua {
 
+    enum class MqttMessage;
+
     class IMqttProcessor {
     public:
-        static constexpr const char * TOPIC_START     = "selfupdate/desiredstate";
+        static constexpr const char * TOPIC_IDENTIFY  = "selfupdate/desiredstate";
+        static constexpr const char * TOPIC_COMMAND   = "selfupdate/desiredstate/command";
         static constexpr const char * TOPIC_FEEDBACK  = "selfupdate/desiredstatefeedback";
         static constexpr const char * TOPIC_STATE     = "selfupdate/currentstate";
         static constexpr const char * TOPIC_STATE_GET = "selfupdate/currentstate/get";
 
         virtual ~IMqttProcessor() = default;
 
-        virtual void start() = 0;
+        virtual void start(const class MqttConfiguration & configuration) = 0;
         virtual void stop() = 0;
 
-        virtual void send(const std::string& topic, const std::string& content, bool retained = false) = 0;
+        virtual void send(const std::string& topic, MqttMessage message_type, const std::string& message = "", bool retained = false) = 0;
     };
 
 } // namespace sua

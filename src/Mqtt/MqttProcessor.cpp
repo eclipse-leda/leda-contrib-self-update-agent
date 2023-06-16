@@ -15,6 +15,7 @@
 //    SPDX-License-Identifier: Apache-2.0
 
 #include "Mqtt/MqttProcessor.h"
+#include "Mqtt/MqttMessage.h"
 #include "Context.h"
 #include "FotaEvent.h"
 #include "Logger.h"
@@ -88,8 +89,9 @@ namespace {
         void connected(const std::string& cause) override
         {
             sua::Logger::trace("MqttCallback::connected");
-            _mqttClient.subscribe(sua::IMqttProcessor::TOPIC_START, QUALITY, nullptr, _actionListener);
+            _mqttClient.subscribe(sua::IMqttProcessor::TOPIC_IDENTIFY, QUALITY, nullptr, _actionListener);
             _mqttClient.subscribe(sua::IMqttProcessor::TOPIC_STATE_GET, QUALITY, nullptr, _actionListener);
+            _mqttClient.subscribe(sua::IMqttProcessor::TOPIC_COMMAND, QUALITY, nullptr, _actionListener);
             _context.stateMachine->handleEvent(sua::FotaEvent::ConnectivityEstablished);
         }
 
@@ -113,27 +115,33 @@ namespace {
             sua::Logger::trace("Received request, topic={}", topic);
 
             try {
-                if(topic == sua::IMqttProcessor::TOPIC_START) {
+                if(topic == sua::IMqttProcessor::TOPIC_IDENTIFY) {
                     ctx.desiredState = proto->readDesiredState(message);
-                    ctx.stateMachine->handleEvent(sua::FotaEvent::Start);
-                } if(topic == sua::IMqttProcessor::TOPIC_STATE_GET) {
+                    ctx.stateMachine->handleEvent(sua::FotaEvent::Identify);
+                } else if(topic == sua::IMqttProcessor::TOPIC_STATE_GET) {
                     ctx.desiredState = proto->readCurrentStateRequest(message);
                     ctx.stateMachine->handleEvent(sua::FotaEvent::GetCurrentState);
+                } else if(topic == sua::IMqttProcessor::TOPIC_COMMAND) {
+                    sua::Command c = proto->readCommand(message);
+                    ctx.desiredState.activityId = c.activityId;
+                    ctx.stateMachine->handleEvent(c.event);
+                } else {
+                    sua::Logger::error("Invalid topic: {}", topic);
                 }
             } catch(const nlohmann::json::parse_error & e) {
                 sua::Logger::error("Invalid request for {}, unable to parse json: {}", topic, e.what());
             } catch(const nlohmann::json::exception& e) {
                 ctx.desiredState.activityId = nlohmann::json::parse(message).at("activityId");
                 sua::Logger::error("Invalid request for {}: {}", topic, e.what());
-                mqtt->send(sua::IMqttProcessor::TOPIC_FEEDBACK, proto->createMessage(ctx, "identifying"));
-                mqtt->send(sua::IMqttProcessor::TOPIC_FEEDBACK, proto->createMessage(ctx, "identificationFailed", e.what()));
+                mqtt->send(sua::IMqttProcessor::TOPIC_FEEDBACK, sua::MqttMessage::Identifying);
+                mqtt->send(sua::IMqttProcessor::TOPIC_FEEDBACK, sua::MqttMessage::IdentificationFailed, e.what());
             } catch(const std::logic_error & e) {
                 sua::Logger::error("Invalid request for {}: {}", topic, e.what());
             } catch(const std::runtime_error & e) {
                 ctx.desiredState.activityId = nlohmann::json::parse(message).at("activityId");
                 sua::Logger::error("Invalid request for {}: {}", topic, e.what());
-                mqtt->send(sua::IMqttProcessor::TOPIC_FEEDBACK, proto->createMessage(ctx, "identifying"));
-                mqtt->send(sua::IMqttProcessor::TOPIC_FEEDBACK, proto->createMessage(ctx, "identificationFailed", e.what()));
+                mqtt->send(sua::IMqttProcessor::TOPIC_FEEDBACK, sua::MqttMessage::Identifying);
+                mqtt->send(sua::IMqttProcessor::TOPIC_FEEDBACK, sua::MqttMessage::IdentificationFailed, e.what());
             }
         }
 
@@ -151,14 +159,15 @@ namespace {
 
 namespace sua {
 
-    MqttProcessor::MqttProcessor(const MqttConfiguration & configuration, Context & context)
+    MqttProcessor::MqttProcessor(Context & context)
         : _context(context)
-        , _config(configuration)
-        , _client(configuration.brokerHost, _clientId)
+        , _client("", _clientId)
     { }
 
-    void MqttProcessor::start()
+    void MqttProcessor::start(const MqttConfiguration & configuration)
     {
+        _config = configuration;
+
         Logger::info("MQTT broker address: '{}:{}'", _config.brokerHost, _config.brokerPort);
 
         static mqtt::connect_options options;
@@ -198,16 +207,14 @@ namespace sua {
         }
     }
 
-    void MqttProcessor::send(const std::string& topic, const std::string& content, bool retained)
+    void MqttProcessor::send(const std::string& topic, MqttMessage message_type, const std::string& message, bool retained)
     {
-        if(content.empty()) {
-            return;
-        }
+        const auto content = _context.messagingProtocol->createMessage(_context, message_type, message);
 
-        auto message = mqtt::make_message(topic, content);
-        message->set_qos(QUALITY);
-        message->set_retained(retained);
-        _client.publish(message);
+        auto mqtt_message = mqtt::make_message(topic, content);
+        mqtt_message->set_qos(QUALITY);
+        mqtt_message->set_retained(retained);
+        _client.publish(mqtt_message);
 
         if(!_client.is_connected() || !_client.get_pending_delivery_tokens().empty()) {
             _client.reconnect();

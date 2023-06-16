@@ -1,4 +1,4 @@
-//    Copyright 2022 Contributors to the Eclipse Foundation
+//    Copyright 2023 Contributors to the Eclipse Foundation
 //
 //    Licensed under the Apache License, Version 2.0 (the "License");
 //    you may not use this file except in compliance with the License.
@@ -43,8 +43,8 @@ namespace sua {
 
         int32_t        progressPercentage          = 0;
         int32_t        progressNotificationLimiter = 0;
-        uint32_t       waitingCount                = 0;        // [sec]
-        const uint32_t waitingTimeout              = 15 * 60;  // [sec]
+        uint32_t       waitingTime                 = 0;              // ms
+        const uint32_t waitingTimeout              = 15 * 60 * 1000; // ms
 
         while(_installerAgent->installing()) {
             progressPercentage = _installerAgent->getInstallProgress();
@@ -58,14 +58,14 @@ namespace sua {
                 }
             }
 
-            if(waitingCount >= waitingTimeout) {
+            if(waitingTime >= waitingTimeout) {
                 Logger::error("Waiting for completion more than {} secs => assuming failed installation", waitingTimeout);
                 return TechCode::InstallationFailed;
             }
 
             if(progressPercentage < 100) {
-                std::this_thread::sleep_for(2000ms);
-                waitingCount += 2;
+                std::this_thread::sleep_for(std::chrono::milliseconds(_installerAgent->getProgressPollInterval()));
+                waitingTime += _installerAgent->getProgressPollInterval();
             }
         }
 

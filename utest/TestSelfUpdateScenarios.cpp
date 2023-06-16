@@ -1,336 +1,417 @@
 #include "gtest/gtest.h"
 #include "gmock/gmock.h"
 
+#include <chrono>
+#include <thread>
+#include <regex>
+
 using ::testing::Return;
-using ::testing::WithArg;
-using ::testing::Invoke;
 using ::testing::_;
 
 #include "Logger.h"
 #include "SelfUpdateAgent.h"
 #include "Utils/BundleChecker.h"
+#include "Utils/JsonUtils.h"
+#include "Mqtt/MqttMessagingProtocolJSON.h"
+#include "Mqtt/MqttMessage.h"
+#include "Install/DummyRaucInstaller.h"
 
 #include "MockFSM.h"
 #include "MockDownloader.h"
-#include "MockMqttMessagingProtocol.h"
 #include "MockMqttProcessor.h"
-#include "MockRaucInstaller.h"
+
+using namespace std::chrono_literals;
+using M = sua::MqttMessage;
 
 namespace {
 
+    static const std::string BUNDLE_10 = "bundle 1.0";
+    static const std::string BUNDLE_11 = "bundle 1.1";
+    static const std::string BUNDLE_RAUC_SETUP_FAILS = "rauc_setup_fails 1.1";
+
+    static const std::string COMMAND_DOWNLOAD = "DOWNLOAD";
+    static const std::string COMMAND_UPDATE   = "UPDATE";
+    static const std::string COMMAND_ACTIVATE = "ACTIVATE";
+    static const std::string COMMAND_CLEANUP  = "CLEANUP";
+
+    class MockRaucInstaller : public sua::DummyRaucInstaller {
+    public:
+        sua::TechCode installBundle(const std::string& input) override {
+            const std::string bundle = getBundleName(input);
+
+            if(bundle == BUNDLE_RAUC_SETUP_FAILS) {
+                return sua::TechCode::InstallationFailed;
+            }
+
+            installedVersion = getBundleVersion(bundle);
+            return sua::TechCode::OK;
+        }
+
+        std::string getBundleName(const std::string& input) {
+            if((input == "/data/selfupdates/temp_file") && !bundleUnderTest.empty()) {
+                return bundleUnderTest;
+            }
+
+            return input;
+        }
+
+        sua::SlotStatus getSlotStatus() override {
+            sua::SlotStatus s;
+
+            s["rootfs.0"]["state"  ] = "booted";
+            s["rootfs.0"]["version"] = getBootedVersion();
+
+            return s;
+        }
+
+        std::string getBootedVersion() override {
+            return installedVersion;
+        }
+
+        std::string getBundleVersion(const std::string& input) override {
+            if((input == "/data/selfupdates/temp_file") && !bundleUnderTest.empty()) {
+                return getBundleVersion(bundleUnderTest);
+            }
+
+            std::string       bundle;
+            std::string       version;
+            std::stringstream ss(input);
+            ss >> bundle >> version;
+            return version;
+        }
+
+        MOCK_METHOD(bool, succeeded, (), (override));
+
+        std::string installedVersion = "1.0";
+
+        // succeeded download shadows bundle name by replacing it to /data/selfupdates/temp_file
+        // this is a workaround to get the version from the bundle name
+        // set it in all test cases doing install
+        std::string bundleUnderTest;
+    };
+
     class TestSelfUpdateScenarios : public ::testing::Test {
     public:
-        TestSelfUpdateScenarios() {
-
-        }
-
-        TestSelfUpdateScenarios & test() {
-            return *this;
-        }
-
-        void willSend(const std::string & topic, const std::string & name, const bool retained = false) {
-            EXPECT_CALL(*mqttProcessor, send(topic, _, retained))
-                .Times(1)
-                .RetiresOnSaturation();
-
-            EXPECT_CALL(*messagingProtocol, createMessage(_, name, _))
-                .Times(1)
-                .RetiresOnSaturation();
-        }
-
-        void willSend(const std::string & topic, const std::string & name, const std::string & message) {
-            EXPECT_CALL(*mqttProcessor, send(topic, _, false))
-                .Times(1)
-                .RetiresOnSaturation();
-
-            EXPECT_CALL(*messagingProtocol, createMessage(_, name, message))
-                .Times(1)
-                .RetiresOnSaturation();
-        }
-
-        void currentVersionIs(const std::string & version) {
-            EXPECT_CALL(*installerAgent, getBundleVersion())
-                .WillOnce(Return(version))
-                .RetiresOnSaturation();
-        }
-
-        void bundleVersionIs(const std::string & version) {
-            EXPECT_CALL(*installerAgent, getBundleVersion(_))
-                .WillOnce(Return(version))
-                .RetiresOnSaturation();
-        }
-
-        void willTransitTo(const std::string & name) {
-            EXPECT_CALL(*fsm, transitTo(name))
-                .WillOnce(
-                    WithArg<0>(Invoke(fsm.get(), &MockFSM::native_transitTo)
-                ))
-                .RetiresOnSaturation();
-        }
-
-        void downloadWillFail() {
-            EXPECT_CALL(*downloader, start(_))
-                .WillOnce(Return(sua::TechCode::DownloadFailed))
-                .RetiresOnSaturation();
-        }
-
-        void downloadWillSucceed() {
-            EXPECT_CALL(*downloader, start(_))
-                .WillOnce(Return(sua::TechCode::OK))
-                .RetiresOnSaturation();
-        }
-
-        void installSetupWillFail()
-        {
-            EXPECT_CALL(*installerAgent, installBundle(_))
-                .WillOnce(Return(sua::TechCode::InstallationFailed))
-                .RetiresOnSaturation();
-        }
-
-        void installSetupWillSucceed()
-        {
-            EXPECT_CALL(*installerAgent, installBundle(_))
-                .WillOnce(Return(sua::TechCode::OK))
-                .RetiresOnSaturation();
-        }
-
-        void installStatusWillBeSuccess()
-        {
-            EXPECT_CALL(*installerAgent, succeeded())
-                .WillOnce(Return(true))
-                .RetiresOnSaturation();
-        }
-
-        void installProgressWillBe(const int value)
-        {
-            EXPECT_CALL(*installerAgent, getInstallProgress())
-                .WillOnce(Return(value))
-                .RetiresOnSaturation();
-        }
-
-        void installStatusWillBe(const bool value)
-        {
-            EXPECT_CALL(*installerAgent, installing())
-                .WillOnce(Return(value))
-                .RetiresOnSaturation();
-        }
-
-        void lastErrorWillBe(const std::string & text)
-        {
-            EXPECT_CALL(*installerAgent, getLastError())
-                .WillOnce(Return(text))
-                .RetiresOnSaturation();
-        }
-
         sua::Context & ctx() {
             return sua.context();
         }
 
+        void start() {
+            sua.start({testBrokerHost, testBrokerPort});
+            std::this_thread::sleep_for(1s);
+        }
+
+        void triggerIdentify(const std::string & bundle, const std::string & version) {
+            // clang-format off
+            const std::string json = sua::jsonTemplate(R"(
+                {
+                    "activityId": "random-uuid-as-string",
+                    "timestamp": 123456789,
+                    "payload": {
+                        "domains": [
+                            {
+                                "id": "self-update",
+                                "components": [
+                                    {
+                                        "id": "os-image",
+                                        "version": "{}",
+                                        "config": [
+                                            {
+                                                "key": "image",
+                                                "value": "{}"
+                                            }
+                                        ]
+                                    }
+                                ]
+                            }
+                        ]
+                    }
+                }
+            )");
+            // clang-format on
+
+            execute(sua::IMqttProcessor::TOPIC_IDENTIFY, fmt::format(json, version, bundle));
+        }
+
+        void trigger(const std::string & action) {
+            // clang-format off
+            const std::string json = sua::jsonTemplate(R"(
+                {
+                    "activityId": "random-uuid-as-string",
+                    "timestamp": 123456789,
+                    "payload": {
+                        "baseline": "BASELINE NAME",
+                        "command": "{}"
+                    }
+                }
+            )");
+            // clang-format on
+
+            execute(sua::IMqttProcessor::TOPIC_COMMAND, fmt::format(json, action));
+        }
+
+        void triggerCurrentStateRequest() {
+            // clang-format off
+            const std::string json = R"(
+                {
+                    "activityId": "random-uuid-as-string",
+                    "timestamp": 123456789
+                }
+            )";
+            // clang-format on
+
+            execute(sua::IMqttProcessor::TOPIC_STATE_GET, json);
+        }
+
+        void execute(const std::string& topic, const std::string& json) {
+            std::stringstream ss;
+            ss << "mosquitto_pub";
+            ss << " -h " << testBrokerHost;
+            ss << " -t " << topic;
+            ss << " -m '" << json << "'";
+            std::system(ss.str().c_str());
+            std::this_thread::sleep_for(1s);
+        }
+
         void SetUp() override {
-            sua::Logger::instance().setLogLevel(sua::Logger::Level::None);
+            sua::Logger::instance().init();
+            sua::Logger::instance().setLogLevel(sua::Logger::Level::All);
 
             downloader = std::make_shared<MockDownloader>();
             ctx().downloaderAgent = downloader;
 
-            fsm = std::make_shared<MockFSM>(sua.context());
+            fsm = std::make_shared<MockFSM>(sua.context(), visitedStates);
             ctx().stateMachine = fsm;
-
-            messagingProtocol = std::make_shared<MockMqttMessagingProtocol>();
-            ctx().messagingProtocol = messagingProtocol;
-
-            mqttProcessor = std::make_shared<MockMqttProcessor>();
-            ctx().mqttProcessor = mqttProcessor;
 
             installerAgent = std::make_shared<MockRaucInstaller>();
             ctx().installerAgent = installerAgent;
-        
-            ctx().bundleChecker = std::make_shared<sua::BundleChecker>();
+ 
+            mqttProcessor = std::make_shared<MockMqttProcessor>(sua.context(), sentMessages);
+            ctx().mqttProcessor = mqttProcessor;
+
+            ctx().messagingProtocol = std::make_shared<sua::MqttMessagingProtocolJSON>();
+            ctx().bundleChecker     = std::make_shared<sua::BundleChecker>();
         }
 
         sua::SelfUpdateAgent sua;
 
-        std::shared_ptr<MockFSM>                   fsm;
-        std::shared_ptr<MockMqttMessagingProtocol> messagingProtocol;
-        std::shared_ptr<MockMqttProcessor>         mqttProcessor;
-        std::shared_ptr<MockRaucInstaller>         installerAgent;
-        std::shared_ptr<MockDownloader>            downloader;
+        std::shared_ptr<MockFSM>           fsm;
+        std::shared_ptr<MockMqttProcessor> mqttProcessor;
+        std::shared_ptr<MockRaucInstaller> installerAgent;
+        std::shared_ptr<MockDownloader>    downloader;
+
+        std::string testBrokerHost = "localhost";
+        int         testBrokerPort = 1883;
+
+        std::string bundleUnderTest;
+
+        std::vector<std::string> visitedStates;
+        std::vector<std::string> expectedStates;
+
+        std::vector<sua::MqttMessage> sentMessages;
+        std::vector<sua::MqttMessage> expectedMessages;
     };
 
-    TEST_F(TestSelfUpdateScenarios, doNotConnect)
+    TEST_F(TestSelfUpdateScenarios, doesNotConnect)
     {
-        currentVersionIs("1.0");
-        willTransitTo("Uninitialized");
-        
+        expectedStates = {"Uninitialized"};
+
         sua.init();
+
+        EXPECT_EQ(visitedStates, expectedStates);
     }
 
-    TEST_F(TestSelfUpdateScenarios, sendsCurrentVersion)
+    TEST_F(TestSelfUpdateScenarios, connectsAndSendsCurrentVersion)
     {
-        currentVersionIs("1.0");
-        willTransitTo("Uninitialized");
-        willTransitTo("Connected");
-        willSend("selfupdate/currentstate", "systemVersion", true);
+        expectedStates   = {"Uninitialized", "Connected"};
+        expectedMessages = {M::SystemVersion};
 
         sua.init();
-        ctx().stateMachine->handleEvent(sua::FotaEvent::ConnectivityEstablished);
+        start();
+
+        EXPECT_EQ(visitedStates, expectedStates);
+        EXPECT_EQ(sentMessages, expectedMessages);
     }
 
-    TEST_F(TestSelfUpdateScenarios, receivesUnchandedVersion_skipsUpdate)
+    TEST_F(TestSelfUpdateScenarios, receivesIdentifyRequestWithUnchandedVersion_endsInFailedState)
     {
-        currentVersionIs("1.0");
-        willTransitTo("Uninitialized");
-
-        willTransitTo("Connected");
-        willSend("selfupdate/currentstate", "systemVersion", true);
-        currentVersionIs("1.0");
-        willSend("selfupdate/desiredstatefeedback", "identifying");
-        willSend("selfupdate/desiredstatefeedback", "skipped");
-
-        willTransitTo("Failed");
-        willTransitTo("Idle");
+        expectedStates   = {"Uninitialized", "Connected"};
+        expectedMessages = {M::SystemVersion, M::Identifying, M::Skipped};
 
         sua.init();
-        ctx().desiredState.bundleVersion = "1.0";
-        ctx().stateMachine->handleEvent(sua::FotaEvent::ConnectivityEstablished);
-        ctx().stateMachine->handleEvent(sua::FotaEvent::Start);
+        start();
+
+        triggerIdentify(BUNDLE_10, "1.0");
+
+        EXPECT_EQ(visitedStates, expectedStates);
+        EXPECT_EQ(sentMessages, expectedMessages);
     }
 
     TEST_F(TestSelfUpdateScenarios, receivesCurrentStateRequest_sendsCurrentVersion)
     {
-        currentVersionIs("1.0");
-        willTransitTo("Uninitialized");
-        
-        willTransitTo("Connected");
-        willSend("selfupdate/currentstate", "systemVersion", true);
-
-        willTransitTo("SendCurrentState");
-        willSend("selfupdate/currentstate", "systemVersion", true);
-
-        willTransitTo("Idle");
+        expectedStates = {"Uninitialized", "Connected", "SendCurrentState", "Idle"};
+        expectedMessages = {M::SystemVersion, M::SystemVersion};
 
         sua.init();
-        ctx().stateMachine->handleEvent(sua::FotaEvent::ConnectivityEstablished);
-        ctx().stateMachine->handleEvent(sua::FotaEvent::GetCurrentState);
+        start();
+
+        triggerCurrentStateRequest();
+
+        EXPECT_EQ(visitedStates, expectedStates);
+        EXPECT_EQ(sentMessages, expectedMessages);
     }
 
-    TEST_F(TestSelfUpdateScenarios, receivesUpdateRequestAndDownloadFails_rejectsUpdate)
+    TEST_F(TestSelfUpdateScenarios, receivesIdentifyRequest_waitsForDownloadCommand)
     {
-        currentVersionIs("1.0");
-        willTransitTo("Uninitialized");
-
-        willTransitTo("Connected");
-        willSend("selfupdate/currentstate", "systemVersion", true);
-        currentVersionIs("1.0");
-        willSend("selfupdate/desiredstatefeedback", "identifying");
-        willSend("selfupdate/desiredstatefeedback", "identified");
-
-        willTransitTo("Downloading");
-        downloadWillFail();
-        willSend("selfupdate/desiredstatefeedback", "downloadFailed");
-
-        willTransitTo("Failed");
-        willTransitTo("Idle");
+        expectedStates   = {"Uninitialized", "Connected", "Downloading"};
+        expectedMessages = {M::SystemVersion, M::Identifying, M::Identified};
 
         sua.init();
-        ctx().desiredState.bundleVersion = "1.1";
-        ctx().stateMachine->handleEvent(sua::FotaEvent::ConnectivityEstablished);
-        ctx().stateMachine->handleEvent(sua::FotaEvent::Start);
+        start();
+
+        triggerIdentify(BUNDLE_11, "1.1");
+
+        EXPECT_EQ(visitedStates, expectedStates);
+        EXPECT_EQ(sentMessages, expectedMessages);
     }
 
-    TEST_F(TestSelfUpdateScenarios, receivesUpdateRequestAndBundleVersionMismatch_rejectsUpdate)
+    TEST_F(TestSelfUpdateScenarios, downloadFails_endsInFailedState)
     {
-        willTransitTo("Uninitialized");
-        currentVersionIs("1.0");
+        expectedStates   = {"Uninitialized", "Connected", "Downloading", "Failed"};
+        expectedMessages = {M::SystemVersion, M::Identifying, M::Identified, M::DownloadFailed};
 
-        willTransitTo("Connected");
-        willSend("selfupdate/currentstate", "systemVersion", true);
-        currentVersionIs("1.0");
-        willSend("selfupdate/desiredstatefeedback", "identifying");
-        willSend("selfupdate/desiredstatefeedback", "identified");
-
-        willTransitTo("Downloading");
-        downloadWillSucceed();
-        bundleVersionIs("1.2");
-        willSend("selfupdate/desiredstatefeedback", "downloaded");
-        willSend("selfupdate/desiredstatefeedback", "rejected");
-
-        willTransitTo("Failed");
-        willTransitTo("Idle");
+        EXPECT_CALL(*downloader, start(_)).WillOnce(Return(sua::TechCode::DownloadFailed));
 
         sua.init();
-        ctx().desiredState.bundleVersion = "1.1";
-        ctx().stateMachine->handleEvent(sua::FotaEvent::ConnectivityEstablished);
-        ctx().stateMachine->handleEvent(sua::FotaEvent::Start);
+        start();
+
+        triggerIdentify(BUNDLE_11, "1.1");
+        trigger(COMMAND_DOWNLOAD);
+
+        EXPECT_EQ(visitedStates, expectedStates);
+        EXPECT_EQ(sentMessages, expectedMessages);
     }
 
-    TEST_F(TestSelfUpdateScenarios, receivesUpdateRequestAndInstallSetupFails_sendsInstallFailed)
+    TEST_F(TestSelfUpdateScenarios, downloadedBundleVersionMismatchWithSpec_endsInFailedState)
     {
-        willTransitTo("Uninitialized");
-        currentVersionIs("1.0");
+        expectedStates   = {"Uninitialized", "Connected", "Downloading", "Installing", "Failed"};
+        expectedMessages = {M::SystemVersion, M::Identifying, M::Identified, M::Downloaded, M::VersionChecking, M::Rejected};
 
-        willTransitTo("Connected");
-        willSend("selfupdate/currentstate", "systemVersion", true);
-        currentVersionIs("1.0");
-        willSend("selfupdate/desiredstatefeedback", "identifying");
-        willSend("selfupdate/desiredstatefeedback", "identified");
-
-        willTransitTo("Downloading");
-        downloadWillSucceed();
-        bundleVersionIs("1.1");
-        willSend("selfupdate/desiredstatefeedback", "downloaded");
-
-        willTransitTo("Installing");
-        installSetupWillFail();
-        lastErrorWillBe("test");
-        willSend("selfupdate/desiredstatefeedback", "installFailed");
-
-        willTransitTo("Failed");
-        willTransitTo("Idle");
+        EXPECT_CALL(*downloader, start(_)).WillOnce(Return(sua::TechCode::OK));
 
         sua.init();
-        ctx().desiredState.bundleVersion = "1.1";
-        ctx().stateMachine->handleEvent(sua::FotaEvent::ConnectivityEstablished);
-        ctx().stateMachine->handleEvent(sua::FotaEvent::Start);
+        start();
+
+        triggerIdentify(BUNDLE_11, "1.2");
+        trigger(COMMAND_DOWNLOAD);
+        trigger(COMMAND_UPDATE);
+
+        EXPECT_EQ(visitedStates, expectedStates);
+        EXPECT_EQ(sentMessages, expectedMessages);
     }
 
-    TEST_F(TestSelfUpdateScenarios, receivesUpdateRequestAndInstallSucceeds_sendsInstalled)
+    TEST_F(TestSelfUpdateScenarios, downloadSucceeds_waitsForInstallCommand)
     {
-        willTransitTo("Uninitialized");
-        currentVersionIs("1.0");
+        expectedStates   = {"Uninitialized", "Connected", "Downloading", "Installing"};
+        expectedMessages = {M::SystemVersion, M::Identifying, M::Identified, M::Downloaded};
 
-        willTransitTo("Connected");
-        willSend("selfupdate/currentstate", "systemVersion", true);
-        currentVersionIs("1.0");
-        willSend("selfupdate/desiredstatefeedback", "identifying");
-        willSend("selfupdate/desiredstatefeedback", "identified");
-
-        willTransitTo("Downloading");
-        downloadWillSucceed();
-        bundleVersionIs("1.1");
-        willSend("selfupdate/desiredstatefeedback", "downloaded");
-
-        willTransitTo("Installing");
-        installSetupWillSucceed();
-        // gmock is checking expecations in reverse order
-        installStatusWillBe(false); // completed (!installing)
-        installStatusWillBe(true); // installing
-        installStatusWillBe(true); // installing
-        installProgressWillBe(99);
-        installProgressWillBe(50);
-        installStatusWillBeSuccess();
-        willSend("selfupdate/desiredstatefeedback", "installing");
-        willSend("selfupdate/desiredstatefeedback", "installing");
-        willSend("selfupdate/desiredstatefeedback", "installed");
-
-        willTransitTo("Installed");
-        willSend("selfupdate/desiredstatefeedback", "currentState");
-
-        willTransitTo("Idle");
+        EXPECT_CALL(*downloader, start(_)).WillOnce(Return(sua::TechCode::OK));
+        installerAgent->bundleUnderTest = BUNDLE_11;
 
         sua.init();
-        ctx().desiredState.bundleVersion = "1.1";
-        ctx().stateMachine->handleEvent(sua::FotaEvent::ConnectivityEstablished);
-        ctx().stateMachine->handleEvent(sua::FotaEvent::Start);
+        start();
+
+        triggerIdentify(BUNDLE_11, "1.1");
+        trigger(COMMAND_DOWNLOAD);
+
+        EXPECT_EQ(visitedStates, expectedStates);
+        EXPECT_EQ(sentMessages, expectedMessages);
+    }
+
+    TEST_F(TestSelfUpdateScenarios, installSetupFails_endsInIdleState)
+    {
+        expectedStates   = {"Uninitialized", "Connected", "Downloading", "Installing", "Failed"};
+        expectedMessages = {M::SystemVersion, M::Identifying, M::Identified, M::Downloaded, M::VersionChecking, M::InstallFailed};
+
+        EXPECT_CALL(*downloader, start(_)).WillOnce(Return(sua::TechCode::OK));
+        installerAgent->bundleUnderTest = BUNDLE_RAUC_SETUP_FAILS;
+
+        sua.init();
+        start();
+
+        triggerIdentify(BUNDLE_RAUC_SETUP_FAILS, "1.1");
+        trigger(COMMAND_DOWNLOAD);
+        trigger(COMMAND_UPDATE);
+
+        EXPECT_EQ(visitedStates, expectedStates);
+        EXPECT_EQ(sentMessages, expectedMessages);
+    }
+
+    TEST_F(TestSelfUpdateScenarios, installSucceeds_waitsInInstalledState)
+    {
+        expectedStates   = {"Uninitialized", "Connected", "Downloading", "Installing", "Installed"};
+        expectedMessages = {M::SystemVersion, M::Identifying, M::Identified, M::Downloaded,
+            M::VersionChecking, M::Installing, M::Installing, M::Installing, M::Installing, M::Installed,
+            M::CurrentState};
+
+        EXPECT_CALL(*downloader, start(_)).WillOnce(Return(sua::TechCode::OK));
+        EXPECT_CALL(*installerAgent, succeeded()).WillOnce(Return(true));
+        installerAgent->bundleUnderTest = BUNDLE_11;
+
+        sua.init();
+        start();
+
+        triggerIdentify(BUNDLE_11, "1.1");
+        trigger(COMMAND_DOWNLOAD);
+        trigger(COMMAND_UPDATE);
+
+        EXPECT_EQ(visitedStates, expectedStates);
+        EXPECT_EQ(sentMessages, expectedMessages);
+    }
+
+    TEST_F(TestSelfUpdateScenarios, installFails_endsInFailedState)
+    {
+        expectedStates   = {"Uninitialized", "Connected", "Downloading", "Installing", "Failed"};
+        expectedMessages = {M::SystemVersion, M::Identifying, M::Identified, M::Downloaded, M::VersionChecking,
+            M::Installing, M::Installing, M::Installing, M::Installing, M::InstallFailed};
+
+        EXPECT_CALL(*downloader, start(_)).WillOnce(Return(sua::TechCode::OK));
+        EXPECT_CALL(*installerAgent, succeeded()).WillOnce(Return(false));
+        installerAgent->bundleUnderTest = BUNDLE_11;
+
+        sua.init();
+        start();
+
+        triggerIdentify(BUNDLE_11, "1.1");
+        trigger(COMMAND_DOWNLOAD);
+        trigger(COMMAND_UPDATE);
+
+        EXPECT_EQ(visitedStates, expectedStates);
+        EXPECT_EQ(sentMessages, expectedMessages);
+    }
+
+    TEST_F(TestSelfUpdateScenarios, activationSucceeds_endsInIdleState)
+    {
+        expectedStates   = {"Uninitialized", "Connected", "Downloading", "Installing", "Installed", "Activating", "Cleaning", "Idle"};
+        expectedMessages = {M::SystemVersion, M::Identifying, M::Identified, M::Downloaded, M::VersionChecking,
+            M::Installing, M::Installing, M::Installing, M::Installing, M::Installed, M::CurrentState,
+            M::Activating, M::Activated, M::Cleaned, M::Complete};
+
+        EXPECT_CALL(*downloader, start(_)).WillOnce(Return(sua::TechCode::OK));
+        EXPECT_CALL(*installerAgent, succeeded()).WillOnce(Return(true));
+        installerAgent->bundleUnderTest = BUNDLE_11;
+
+        sua.init();
+        start();
+
+        triggerIdentify(BUNDLE_11, "1.1");
+        trigger(COMMAND_DOWNLOAD);
+        trigger(COMMAND_UPDATE);
+        trigger(COMMAND_ACTIVATE);
+        trigger(COMMAND_CLEANUP);
+
+        EXPECT_EQ(visitedStates, expectedStates);
+        EXPECT_EQ(sentMessages, expectedMessages);
     }
 
 }

@@ -1,4 +1,4 @@
-//    Copyright 2022 Contributors to the Eclipse Foundation
+//    Copyright 2023 Contributors to the Eclipse Foundation
 //
 //    Licensed under the Apache License, Version 2.0 (the "License");
 //    you may not use this file except in compliance with the License.
@@ -15,44 +15,50 @@
 //    SPDX-License-Identifier: Apache-2.0
 
 #include "MqttMessagingProtocolJSON.h"
+#include "MqttMessage.h"
 #include "Context.h"
+#include "Utils/JsonUtils.h"
+#include "version.h"
 
 #include "spdlog/fmt/fmt.h"
 #include "nlohmann/json.hpp"
-#include "version.h"
 
-#include <regex>
-#include <iostream>
 #include <chrono>
-
-namespace {
-
-    std::string jsonTemplate(std::string tpl)
-    {
-        // required because lib-fmt expects curly brackets escaped as {{ and }}
-        // to properly handle placeholders 3 steps are done:
-        //   { -> {{
-        //   } -> }}
-        // this makes placeholder {} look like {{}}
-        //   {{}} -> {}
-
-        // escape opening
-        tpl = std::regex_replace(tpl, std::regex("\\{"), "{{");
-        // espace closing
-        tpl = std::regex_replace(tpl, std::regex("\\}"), "}}");
-        // unescape placeholder
-        tpl = std::regex_replace(tpl, std::regex("\\{\\{\\}\\}"), "{}");
-
-        return tpl;
-    }
-
-}
 
 namespace sua {
 
     uint64_t MqttMessagingProtocolJSON::epochTime() const
     {
         return std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+    }
+
+    Command MqttMessagingProtocolJSON::readCommand(const std::string & input)
+    {
+        Command c;
+        std::stringstream ss(input);
+        nlohmann::json json = nlohmann::json::parse(ss);
+
+        c.activityId = json.at("activityId");
+        if(c.activityId.empty()) {
+            throw std::logic_error("Mandatory field 'activityId' is empty.");
+        }
+
+        const auto & command = json.at("payload").at("command");
+        if(command == "DOWNLOAD") {
+            c.event = FotaEvent::DownloadStart;
+        } else if(command == "UPDATE") {
+            c.event = FotaEvent::InstallStart;
+        } else if(command == "ACTIVATE") {
+            c.event = FotaEvent::Activate;
+        } else if(command == "CLEANUP") {
+            c.event = FotaEvent::Cleanup;
+        } else if(command == "ROLLBACK") {
+            c.event = FotaEvent::Rollback;
+        } else {
+            throw std::runtime_error(fmt::format("unknown command '{}'", command));
+        }
+
+        return c;
     }
 
     DesiredState MqttMessagingProtocolJSON::readDesiredState(const std::string & input)
@@ -126,101 +132,115 @@ namespace sua {
         return s;
     }
 
-    std::string MqttMessagingProtocolJSON::createMessage(const class Context& ctx, const std::string& name, const std::string& message)
+    std::string MqttMessagingProtocolJSON::createMessage(const class Context& ctx, MqttMessage message_type, const std::string& message)
     {
-        if(name == "systemVersion") {
+        switch(message_type) {
+        case MqttMessage::SystemVersion:
             if(ctx.desiredState.activityId.empty()) {
                 return writeSystemVersionWithoutActivityId(ctx.currentState.version);
             } else {
                 return writeSystemVersionWithActivityId(ctx.currentState.version, ctx.desiredState.activityId);
             }
-        }
-
-        if(name == "identifying") {
+        case MqttMessage::Identifying:
             return writeFeedbackWithoutPayload(ctx.desiredState, "IDENTIFYING",
                 "Self-update agent has received new desired state request and is evaluating it.");
-        }
-
-        if(name == "identified") {
-            return writeFeedbackWithoutPayload(ctx.desiredState,
-                "IDENTIFIED", "Self-update agent is about to perform an OS image update.");
-        }
-
-        if(name == "identificationFailed") {
+        case MqttMessage::Identified:
+            return writeFeedbackWithPayload(ctx.desiredState,
+                "IDENTIFIED", "Self-update agent is about to perform an OS image update.",
+                "IDENTIFIED", "Self-update agent is about to perform an OS image update.",
+                message, 0);
+        case MqttMessage::IdentificationFailed:
             return writeFeedbackWithoutPayload(ctx.desiredState,
                 "IDENTIFICATION_FAILED", message);
-        }
-
-        if(name == "skipped") {
+        case MqttMessage::Skipped:
             return writeFeedbackWithoutPayload(ctx.desiredState, "COMPLETED",
                 "Current OS image is equal to the target one from desired state.");
-        }
-
-        if(name == "rejected") {
+        case MqttMessage::Rejected:
             return writeFeedbackWithPayload(ctx.desiredState,
-                "INCOMPLETE", "Update rejected.",
+                "UPDATE_FAILURE", "Update rejected.",
                 "UPDATE_FAILURE", "Bundle version does not match version in desired state request.",
                 message, 0);
-        }
-
-        if(name == "downloading") {
+        case MqttMessage::Downloading: {
             const double mbytes = static_cast<double>(ctx.desiredState.downloadBytesTotal) / 1024.0 / 1024.0;
 
             return writeFeedbackWithPayload(ctx.desiredState,
-                "RUNNING", "Self-update agent is performing an OS image update.",
+                "DOWNLOADING", "Self-update agent is performing an OS image update.",
                 "DOWNLOADING", fmt::format("Downloading {:.{}f} MiB...", mbytes, 1),
                 message, ctx.desiredState.downloadProgressPercentage);
         }
-
-        if(name == "downloaded") {
+        case MqttMessage::Downloaded: {
             double mbytes = static_cast<double>(ctx.desiredState.downloadBytesTotal) / 1024.0 / 1024.0;
 
             return writeFeedbackWithPayload(ctx.desiredState,
-                "RUNNING", "Self-update agent is performing an OS image update.",
+                "DOWNLOAD_SUCCESS", "Self-update agent is performing an OS image update.",
                 "DOWNLOAD_SUCCESS", fmt::format("Downloaded {:.{}f} MiB...", mbytes, 1),
                 message, 100);
         }
-
-        if(name == "downloadFailed") {
+        case MqttMessage::DownloadFailed:
             return writeFeedbackWithPayload(ctx.desiredState,
-                "INCOMPLETE", "Download failed.",
-                "UPDATE_FAILURE", "Download failed.",
+                "DOWNLOAD_FAILURE", "Download failed.",
+                "DOWNLOAD_FAILURE", "Download failed.",
                 message, ctx.desiredState.downloadProgressPercentage);
-        }
-
-        if(name == "installing") {
+        case MqttMessage::VersionChecking:
             return writeFeedbackWithPayload(ctx.desiredState,
-                "RUNNING", "Self-update agent is performing an OS image update.",
+                "UPDATING", "Self-update agent is performing an OS image update.",
+                "UPDATING", "Checking bundle version and version in desired state request.",
+                message, 0);
+        case MqttMessage::Installing:
+            return writeFeedbackWithPayload(ctx.desiredState,
+                "UPDATING", "Self-update agent is performing an OS image update.",
                 "UPDATING", "RAUC install...",
                 message, ctx.desiredState.installProgressPercentage);
-        }
-
-        if(name == "installed") {
+        case MqttMessage::Installed:
             return writeFeedbackWithPayload(ctx.desiredState,
-                "COMPLETED", "Self-update completed, reboot required.",
-                "UPDATE_SUCCESS", "Writing partition completed, reboot required.",
+                "UPDATE_SUCCESS", "Self-update completed, reboot required.",
+                "UPDATING", "Writing partition completed, reboot required.",
                 message, 100);
-        }
-
-        if(name == "installFailed") {
+        case MqttMessage::InstallFailed:
             return writeFeedbackWithPayload(ctx.desiredState,
-                "INCOMPLETE", "Install failed.",
+                "UPDATE_FAILURE", "Install failed.",
                 "UPDATE_FAILURE", "Writing partition failed.",
                 message, ctx.desiredState.installProgressPercentage);
-        }
-
-        if(name == "installFailedFallback") {
+        case MqttMessage::InstallFailedFallback:
             return writeFeedbackWithPayload(ctx.desiredState,
                 "RUNNING", "Self-update agent is performing an OS image update.",
                 "UPDATING", "Install in streaming mode failed, trying in download mode.",
                 message, 0);
-        }
-
-        if(name == "currentState") {
+        case MqttMessage::CurrentState:
             return "";
+        case MqttMessage::Cleaned:
+            return writeFeedbackWithPayload(ctx.desiredState,
+                "CLEANUP_SUCCESS", "Self-update agent has cleaned up after itself.",
+                ctx.desiredState.actionStatus, ctx.desiredState.actionMessage,
+                message, 0);
+        case MqttMessage::Activating:
+            return writeFeedbackWithPayload(ctx.desiredState,
+                "ACTIVATING", "Self-update agent is performing an OS image activation.",
+                "UPDATING", "Self-update agent is performing an OS image activation.",
+                message, 0);
+        case MqttMessage::Activated:
+            return writeFeedbackWithPayload(ctx.desiredState,
+                "ACTIVATION_SUCCESS", "Self-update agent has activated the new OS image.",
+                "UPDATED", "Self-update agent has activated the new OS image.",
+                message, 0);
+        case MqttMessage::ActivationFailed:
+            return writeFeedbackWithPayload(ctx.desiredState,
+                "ACTIVATION_FAILURE", "Self-update agent has failed to activate the new OS image.",
+                "UPDATE_FAILURE", "Self-update agent has failed to activate the new OS image.",
+                message, 0);
+        case MqttMessage::Complete:
+            return writeFeedbackWithPayload(ctx.desiredState,
+                "COMPLETE", "Self-update completed.",
+                ctx.desiredState.actionStatus, ctx.desiredState.actionMessage,
+                message, 0);
+        case MqttMessage::Incomplete:
+            return writeFeedbackWithPayload(ctx.desiredState,
+                "INCOMPLETE", "Self-update incomplete.",
+                ctx.desiredState.actionStatus, ctx.desiredState.actionMessage,
+                message, 0);
         }
 
-        throw std::logic_error(fmt::format("Unknown message type '{}'", name));
+        assert(false);
     }
 
     std::string MqttMessagingProtocolJSON::writeFeedbackWithoutPayload(const DesiredState & desiredState,

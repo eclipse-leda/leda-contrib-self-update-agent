@@ -1,4 +1,4 @@
-//    Copyright 2022 Contributors to the Eclipse Foundation
+//    Copyright 2023 Contributors to the Eclipse Foundation
 //
 //    Licensed under the Apache License, Version 2.0 (the "License");
 //    you may not use this file except in compliance with the License.
@@ -24,12 +24,15 @@ namespace sua {
 
     void Installed::onEnter(Context& ctx)
     {
+        // RAUC automatically activates 'other' partition for next boot after install
+        // Therefore here we deactivate 'other' and activate current 'booted' and
+        // wait for activation command
+        ctx.installerAgent->activateBooted();
+
         ctx.currentState.version = ctx.desiredState.bundleVersion;
 
         Logger::info("System version, installed: '{}'", ctx.currentState.version);
-        send(ctx, IMqttProcessor::TOPIC_FEEDBACK, "currentState");
-
-        ctx.stateMachine->handleEvent(FotaEvent::Waiting);
+        send(ctx, IMqttProcessor::TOPIC_FEEDBACK, MqttMessage::CurrentState);
     }
 
 } // namespace sua

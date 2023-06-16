@@ -1,4 +1,4 @@
-//    Copyright 2022 Contributors to the Eclipse Foundation
+//    Copyright 2023 Contributors to the Eclipse Foundation
 //
 //    Licensed under the Apache License, Version 2.0 (the "License");
 //    you may not use this file except in compliance with the License.
@@ -14,22 +14,15 @@
 //
 //    SPDX-License-Identifier: Apache-2.0
 
-#ifndef SDV_SUA_MQTTMESSAGINGPROTOCOLYAML_H
-#define SDV_SUA_MQTTMESSAGINGPROTOCOLYAML_H
+#ifndef SDV_SUA_JSONUTILS_H
+#define SDV_SUA_JSONUTILS_H
 
-#include "IMqttMessagingProtocol.h"
+#include <string>
 
 namespace sua {
-    
-    class MqttMessagingProtocolYAML : public IMqttMessagingProtocol {
-    public:
-        DesiredState readDesiredState(const std::string & input) override;
 
-        DesiredState readCurrentStateRequest(const std::string & input) override;
+    std::string jsonTemplate(std::string tpl);
 
-        std::string createMessage(const class Context& ctx, const std::string& name, const std::string& message = "") override;
-    };
-
-} // namespace sua
+}
 
 #endif

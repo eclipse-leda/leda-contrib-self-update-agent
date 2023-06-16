@@ -33,7 +33,13 @@ namespace sua {
         ctx.desiredState.downloadBytesTotal         = 0;
         ctx.desiredState.downloadBytesDownloaded    = 0;
         ctx.desiredState.downloadProgressPercentage = 0;
-        ctx.stateMachine->handleEvent(FotaEvent::DownloadStart);
+
+        ctx.desiredState.actionStatus  = "";
+        ctx.desiredState.actionMessage = "";
+
+        if(ctx.fallbackMode) {
+            ctx.stateMachine->handleEvent(FotaEvent::DownloadStart);
+        }
     }
 
     FotaEvent Downloading::body(Context& ctx)
@@ -44,7 +50,7 @@ namespace sua {
             ctx.desiredState.downloadProgressPercentage = std::stoi(payload.at("percentage"));
 
             Logger::info("Download progress: {}%", ctx.desiredState.downloadProgressPercentage);
-            send(ctx, IMqttProcessor::TOPIC_FEEDBACK, "downloading");
+            send(ctx, IMqttProcessor::TOPIC_FEEDBACK, MqttMessage::Downloading);
         });
 
         if (true == ctx.downloadMode) {
@@ -53,23 +59,17 @@ namespace sua {
 
             if(result == TechCode::OK) {
                 Logger::info("Download progress: 100%");
-                send(ctx, IMqttProcessor::TOPIC_FEEDBACK, "downloaded");
+                send(ctx, IMqttProcessor::TOPIC_FEEDBACK, MqttMessage::Downloaded);
 
-                const std::string pathDownloadedFile = ctx.updatesDirectory + "/temp_file";
+                const std::string pathDownloadedFile = ctx.updatesDirectory + ctx.tempFileName;
                 Logger::trace("Downloaded bundle file should exist now as '{}'", pathDownloadedFile);
 
-                if(ctx.bundleChecker->isBundleVersionConsistent(
-                    ctx.desiredState.bundleVersion, ctx.installerAgent, pathDownloadedFile)) {
-                    Logger::info("Downloaded bundle version matches spec.");
-                    return FotaEvent::BundleVersionOK;
-                } else {
-                    Logger::info("Downloaded bundle version does not match spec.");
-                    send(ctx, IMqttProcessor::TOPIC_FEEDBACK, "rejected");
-                    return FotaEvent::BundleVersionInconsistent;
-                }
+                return FotaEvent::DownloadSucceeded;
             } else {
                 Logger::error("Download failed.");
-                send(ctx, IMqttProcessor::TOPIC_FEEDBACK, "downloadFailed");
+                send(ctx, IMqttProcessor::TOPIC_FEEDBACK, MqttMessage::DownloadFailed);
+                ctx.desiredState.actionStatus  = "DOWNLOAD_FAILURE";
+                ctx.desiredState.actionMessage = "Download failed.";
                 return FotaEvent::DownloadFailed;
             }
         } else {
@@ -81,7 +81,9 @@ namespace sua {
                 return FotaEvent::BundleVersionOK;
             } else {
                 Logger::info("Bundle version does not match spec.");
-                send(ctx, IMqttProcessor::TOPIC_FEEDBACK, "rejected");
+                ctx.desiredState.actionStatus  = "DOWNLOAD_FAILURE";
+                ctx.desiredState.actionMessage = "Bundle version does not match spec.";
+                send(ctx, IMqttProcessor::TOPIC_FEEDBACK, MqttMessage::Rejected);
                 return FotaEvent::BundleVersionInconsistent;
             }
         }

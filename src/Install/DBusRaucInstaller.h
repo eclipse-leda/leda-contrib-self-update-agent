@@ -29,9 +29,13 @@ namespace sua {
         DBusRaucInstaller();
         ~DBusRaucInstaller();
 
+        TechCode    activateBooted() override;
+        TechCode    activateOther() override;
         TechCode    installBundle(const std::string& input) override;
+        int32_t     getProgressPollInterval() const override;
         int32_t     getInstallProgress() override;
-        std::string getBundleVersion() override;
+        SlotStatus  getSlotStatus() override;
+        std::string getBootedVersion() override;
         std::string getBundleVersion(const std::string& input) override;
         std::string getLastError() override;
 
@@ -55,10 +59,11 @@ namespace sua {
         void        subscribeDBusSignals();
         void        unsubscribeDBusSignals();
 
+        TechCode    callDBusRaucMark(const std::string& identifier, const std::string& state);
         TechCode    callDBusRaucInstallBundle(const std::string& bundleName);
         int32_t     getDBusRaucInstallProgress();
         std::string getDBusRaucProperty(const gchar* propertyKey) const;
-        std::string getDBusRaucBundleVersion() const;
+        SlotStatus  getDBusRaucSlotStatus() const;
         std::string getDBusRaucBundleVersion(const std::string& input) const;
         std::string getOsVersionId(const std::string & version_key) const;
     };

@@ -22,7 +22,7 @@ namespace sua {
     bool BundleChecker::isUpdateBundleVersionDifferent(const std::string & updateBundleVersion,
                                                        std::shared_ptr<IRaucInstaller> installer)
     {
-        std::string slotVersion = installer->getBundleVersion();
+        std::string slotVersion = installer->getBootedVersion();
 
         Logger::info("System version, installed: '{}'", slotVersion);
         Logger::info("Bundle version, from file: '{}'", updateBundleVersion);

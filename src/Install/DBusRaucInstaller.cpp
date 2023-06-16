@@ -24,7 +24,11 @@
 #include <gio/gio.h>
 
 namespace {
-    const std::string VERSION_UNAVAILABLE = "bundle_version_not_available";
+
+    const std::string MULTIPLE_BOOTED_SLOTS = "error_multiple_booted_slots_detected";
+    const std::string VERSION_UNAVAILABLE   = "bundle_version_not_available";
+    const std::string STATE_UNAVAILABLE     = "slot_state_not_available";
+
 }
 
 namespace sua {
@@ -152,25 +156,47 @@ namespace sua {
         return result;
     }
 
+    int32_t DBusRaucInstaller::getProgressPollInterval() const
+    {
+        return 2000;
+    }
+
     int32_t DBusRaucInstaller::getInstallProgress()
     {
         return getDBusRaucInstallProgress();
     }
 
-    std::string DBusRaucInstaller::getBundleVersion()
+    SlotStatus DBusRaucInstaller::getSlotStatus()
     {
-        std::string bundleVersion = getDBusRaucBundleVersion();
+        auto slotStatus = getDBusRaucSlotStatus();
         g_main_context_iteration(g_main_loop_get_context(loop), FALSE);
+        return slotStatus;
+    }
 
-        if(bundleVersion == VERSION_UNAVAILABLE) {
-            bundleVersion = getOsVersionId("EDITION_ID");
+    std::string DBusRaucInstaller::getBootedVersion()
+    {
+        SlotStatus  slotStatus    = getSlotStatus();
+        std::string bootedVersion = "";
 
-            if(bundleVersion == VERSION_UNAVAILABLE) {
-                bundleVersion = getOsVersionId("VERSION_ID");
+        for(auto it : slotStatus) {
+            if(it.second["state"] == "booted") {
+                if(!bootedVersion.empty()) {
+                    return MULTIPLE_BOOTED_SLOTS;
+                }
+
+                bootedVersion = it.second["version"];
             }
         }
 
-        return bundleVersion;
+        if(bootedVersion == VERSION_UNAVAILABLE) {
+            bootedVersion = getOsVersionId("EDITION_ID");
+
+            if(bootedVersion == VERSION_UNAVAILABLE) {
+                bootedVersion = getOsVersionId("VERSION_ID");
+            }
+        }
+
+        return bootedVersion;
     }
 
     std::string DBusRaucInstaller::getBundleVersion(const std::string& input)
@@ -253,7 +279,7 @@ namespace sua {
         if(nullptr != result) {
             g_variant_unref(result);
         } else {
-            Logger::error("Install call to Rauc via D-Bus failed, code = {}, message = {}",
+            Logger::error("InstallBundle call to Rauc via D-Bus failed, code = {}, message = {}",
                           connectionError->code,
                           connectionError->message);
             return TechCode::InstallationFailed;
@@ -341,10 +367,10 @@ namespace sua {
         return propertyValue;
     }
 
-    std::string DBusRaucInstaller::getDBusRaucBundleVersion() const
+    SlotStatus DBusRaucInstaller::getDBusRaucSlotStatus() const
     {
-        Logger::trace("DBusRaucInstaller::getDBusRaucBundleVersion"); 
-        std::string bundleVersion   = VERSION_UNAVAILABLE;
+        SlotStatus result;
+        Logger::trace("DBusRaucInstaller::getDBusRaucSlotStatus"); 
         GError*     connectionError = nullptr;
         GVariant*   slotStatus      = g_dbus_connection_call_sync(connection,
                                                            "de.pengutronix.rauc",
@@ -362,7 +388,6 @@ namespace sua {
             GVariantIter* slotIter;
             gchar*        slotName;
             GVariant*     slotDict;
-            uint32_t      bootedSlotCount = 0;
             g_variant_get(slotStatus, "(a(sa{sv}))", &slotIter);
             while(g_variant_iter_next(slotIter, "(s@a{sv})", &slotName, &slotDict)) {
                 gchar*       slotState;
@@ -370,24 +395,24 @@ namespace sua {
                 GVariantDict dict;
                 g_variant_dict_init(&dict, slotDict);
                 if(g_variant_dict_lookup(&dict, "state", "s", &slotState)) {
-                    if("booted" == std::string(slotState)) {
-                        bootedSlotCount++;
-                        if(g_variant_dict_lookup(&dict, "bundle.version", "s", &bundle)) {
-                            bundleVersion = bundle;
-                        }
-                    }
-                }
-            }
+                    result[slotName]["state"] = slotState;
 
-            if(bootedSlotCount > 1) {
-                bundleVersion = "error_multiple_booted_slots_detected";
+                    if(g_variant_dict_lookup(&dict, "bundle.version", "s", &bundle)) {
+                        result[slotName]["version"] = bundle;
+                    } else {
+                        result[slotName]["version"] = VERSION_UNAVAILABLE;
+                    }
+                } else {
+                    result[slotName]["state"] = STATE_UNAVAILABLE;
+                }
             }
 
             g_free(slotName);
             g_variant_unref(slotDict);
             g_variant_unref(slotStatus);
         }
-        return bundleVersion;
+
+        return result;
     }
 
     std::string DBusRaucInstaller::getOsVersionId(const std::string & version_key) const
@@ -450,6 +475,47 @@ namespace sua {
 
         Logger::trace("Retrieved version of the incoming bundle is: '{}'", bundleVersion);
         return bundleVersion;
+    }
+
+    TechCode DBusRaucInstaller::activateBooted()
+    {
+        return callDBusRaucMark("booted", "active");
+    }
+
+    TechCode DBusRaucInstaller::activateOther()
+    {
+        return callDBusRaucMark("other", "active");
+    }
+
+    TechCode DBusRaucInstaller::callDBusRaucMark(const std::string& identifier, const std::string& state)
+    {
+        Logger::trace("DBusRaucInstaller::callDBusRaucMark for slot '{}' to new state '{}'", identifier, state);
+
+        GError* connectionError = nullptr;
+
+        GVariant* result = g_dbus_connection_call_sync(
+            connection,
+            "de.pengutronix.rauc",
+            "/",
+            "de.pengutronix.rauc.Installer",
+            "Mark",
+            g_variant_new("(ss)", state.c_str(), identifier.c_str()),
+            NULL,
+            G_DBUS_CALL_FLAGS_NONE,
+            -1,
+            NULL,
+            &connectionError);
+
+        if(nullptr != result) {
+            g_variant_unref(result);
+        } else {
+            Logger::error("Mark-active-slot call to Rauc via D-Bus failed, code = {}, message = {}",
+                          connectionError->code,
+                          connectionError->message);
+            return TechCode::InstallationFailed;
+        }
+
+        return TechCode::OK;
     }
 
     std::string DBusRaucInstaller::getLastError()

@@ -1,0 +1,8 @@
+{
+    "activityId": "random-uuid-as-string",
+    "timestamp": 123456789,
+    "payload": {
+        "baseline": "BASELINE NAME",
+        "command": "CLEANUP"
+    }
+}

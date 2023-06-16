@@ -18,8 +18,8 @@
 #include "Install/DBusRaucInstaller.h"
 #include "Install/DummyRaucInstaller.h"
 #include "Mqtt/MqttMessagingProtocolJSON.h"
-#include "Mqtt/MqttMessagingProtocolYAML.h"
 #include "Mqtt/MqttConfiguration.h"
+#include "Mqtt/MqttProcessor.h"
 #include "Utils/BundleChecker.h"
 #include "Utils/ServerAddressParser.h"
 #include "SelfUpdateAgent.h"
@@ -43,7 +43,6 @@ SUA_SERVER    sets and overrides MQTT server address to connect
 
 Options:
 -h, --help      display this help and exit
--a, --api       use 'k8s' or 'bfb' format for mqtt communication (default is 'bfb')
 -i, --installer set install method 'download' to download update bundles and let Rauc install them,
                 'stream' to let Rauc install bundles directly from HTTP-server,
                 or 'dummy' for neither download nor installation (default is 'download')
@@ -56,7 +55,6 @@ Options:
 int main(int argc, char* argv[])
 {
     std::string server{"tcp://mosquitto:1883"};
-    std::string api{"bfb"};
     std::string installer{"download"};
     std::string hostPathToSelfupdateDir{"/data/selfupdates"};
 
@@ -93,16 +91,6 @@ int main(int argc, char* argv[])
                     return 1;
                 }
                 hostPathToSelfupdateDir = argValue;
-                continue;
-            }
-
-            if(("-a" == opt) || ("--api" == opt)) {
-                if (argValue.empty()) {
-                    std::cout << "Missing format value for '" << opt << "'" << std::endl
-                              << help_string << std::endl;
-                    return 1;
-                }
-                api = argValue;
                 continue;
             }
 
@@ -159,11 +147,6 @@ int main(int argc, char* argv[])
         failure_detected = true;
     }
 
-    if((api != "k8s") && (api != "bfb")) {
-        std::cout << "Unsupported api '" << api << "', valid are 'k8s' and 'bfb' only." << std::endl;
-        failure_detected = true;
-    }
-
     if((installer != "download") && (installer != "stream") && (installer != "dummy")) {
         std::cout << "Unsupported installer '" << installer
                   << "', valid are 'download', 'stream' and 'dummy' only." << std::endl;
@@ -177,13 +160,6 @@ int main(int argc, char* argv[])
     sua::Logger::instance().init();
     sua::Logger::instance().setLogLevel(sua::Logger::Level::All);
     sua::Logger::info("SelfUpdateAgent started");
-
-    std::shared_ptr<sua::IMqttMessagingProtocol> protocol;
-    if(api == "k8s") {
-        protocol = std::make_shared<sua::MqttMessagingProtocolYAML>();
-    } else {
-        protocol = std::make_shared<sua::MqttMessagingProtocolJSON>();
-    }
 
     std::shared_ptr<sua::IRaucInstaller> installerAgent;
     bool downloadMode = true;
@@ -209,15 +185,15 @@ int main(int argc, char* argv[])
     ctx.stateMachine      = std::make_shared<sua::FSM>(sua.context());
     ctx.installerAgent    = installerAgent;
     ctx.downloadMode      = downloadMode;
-    ctx.downloaderAgent   = std::make_shared<sua::Downloader>(hostPathToSelfupdateDir);
-    ctx.messagingProtocol = protocol;
+    ctx.downloaderAgent   = std::make_shared<sua::Downloader>(hostPathToSelfupdateDir, ctx.tempFileName);
+    ctx.messagingProtocol = std::make_shared<sua::MqttMessagingProtocolJSON>();
     ctx.updatesDirectory  = hostPathToSelfupdateDir;
     ctx.bundleChecker     = std::make_shared<sua::BundleChecker>();
+    ctx.mqttProcessor     = std::make_shared<sua::MqttProcessor>(ctx);
 
     sua::Logger::info("SUA build number       : '{}'", SUA_BUILD_NUMBER );
     sua::Logger::info("SUA commit hash        : '{}'", SUA_COMMIT_HASH  );
     sua::Logger::info("MQTT broker address    : '{}://{}:{}'", transport, conf.brokerHost, conf.brokerPort);
-    sua::Logger::info("Communication protocol : '{}'", api);
     sua::Logger::info("Install method         : '{}'", installer);
     sua::Logger::info("Updates directory      : '{}'", ctx.updatesDirectory);
 

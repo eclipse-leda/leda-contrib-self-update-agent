@@ -39,6 +39,9 @@ namespace sua {
         uint64_t downloadBytesDownloaded    = 0;
         int      downloadProgressPercentage = 0;
         int      installProgressPercentage  = 0;
+
+        std::string actionStatus               = "";
+        std::string actionMessage              = "";
     };
 
     struct CurrentState {
@@ -53,11 +56,17 @@ namespace sua {
         std::shared_ptr<IMqttProcessor>         mqttProcessor;
         std::shared_ptr<IBundleChecker>         bundleChecker;
         std::string                             updatesDirectory = "/data/selfupdates";
+        std::string                             tempFileName     = "/temp_file";
         bool                                    downloadMode = true;
         bool                                    fallbackMode = false;
 
         DesiredState desiredState;
         CurrentState currentState;
+    };
+
+    struct Command {
+        std::string activityId;
+        FotaEvent   event;
     };
 
 } // namespace sua

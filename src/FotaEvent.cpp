@@ -1,4 +1,4 @@
-//    Copyright 2022 Contributors to the Eclipse Foundation
+//    Copyright 2023 Contributors to the Eclipse Foundation
 //
 //    Licensed under the Apache License, Version 2.0 (the "License");
 //    you may not use this file except in compliance with the License.
@@ -27,17 +27,21 @@ namespace sua {
             { Waiting                   , "Waiting"                   },
             { ConnectivityEstablished   , "ConnectivityEstablished"   },
             { ConnectivityLost          , "ConnectivityLost"          },
-            { Start                     , "Start"                     },
+            { Identify                  , "Identify"                  },
             { GetCurrentState           , "GetCurrentState"           },
             { BundleVersionOK           , "BundleVersionOK"           },
             { BundleVersionUnchanged    , "BundleVersionUnchanged"    },
             { BundleVersionInconsistent , "BundleVersionInconsistent" },
             { DownloadStart             , "DownloadStart"             },
             { DownloadFailed            , "DownloadFailed"            },
+            { DownloadSucceeded         , "DownloadSucceeded"         },
             { InstallStart              , "InstallStart"              },
             { InstallCompleted          , "InstallCompleted"          },
             { InstallFailed             , "InstallFailed"             },
-            { InstallFailedFallback     , "InstallFailedFallback"     }
+            { InstallFailedFallback     , "InstallFailedFallback"     },
+            { Activate                  , "Activate"                  },
+            { Cleanup                   , "Cleanup"                   },
+            { Rollback                  , "Rollback"                  }
         };
         // clang-format on
 
