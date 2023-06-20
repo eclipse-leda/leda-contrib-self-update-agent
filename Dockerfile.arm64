@@ -51,7 +51,16 @@ RUN cd /work \
 
 RUN cd /work \
     && cd build_arm64 \
-    && make install
+    && make install/strip
+
+RUN cd /work \
+    && aarch64-linux-gnu-strip dist_arm64/lib/lib* \
+    && aarch64-linux-gnu-strip /work/build_arm64/glib/gio/libgio-2.0.so.0 \
+    && aarch64-linux-gnu-strip /work/build_arm64/glib/gobject/libgobject-2.0.so.0 \
+    && aarch64-linux-gnu-strip /work/build_arm64/glib/glib/libglib-2.0.so.0 \
+    && aarch64-linux-gnu-strip /work/build_arm64/glib/gmodule/libgmodule-2.0.so.0 \
+    && aarch64-linux-gnu-strip /work/build_arm64/glib/subprojects/libffi/src/libffi.so.7 \
+    && aarch64-linux-gnu-strip /work/build_arm64/glib/subprojects/zlib-1.2.11/libz.so
 
 #Define RUNTIME environment, the final image
 FROM --platform=${TARGETPLATFORM} scratch as runtime
