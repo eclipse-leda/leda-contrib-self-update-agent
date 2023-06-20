@@ -41,7 +41,10 @@ list(FILTER SRCS EXCLUDE REGEX "main.cpp" )
 list(APPEND SRCS ${CMAKE_CURRENT_BINARY_DIR}/version.cpp)
 
 add_library(sua SHARED ${SRCS})
+set_target_properties(sua PROPERTIES LINK_FLAGS -s)
+
 add_executable(${PROJECT_NAME} ${SRCS} main.cpp)
+set_target_properties(${PROJECT_NAME} PROPERTIES LINK_FLAGS -s)
 
 link_directories(${CMAKE_BINARY_DIR}/3rdparty/curl/lib)
 

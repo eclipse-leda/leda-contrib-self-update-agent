@@ -68,7 +68,19 @@ runs:
         -DSUA_MEASURE_CODE_COVERAGE=NO \
         ..
       make -j
-      make install
+      make install/strip
+    shell: bash
+
+  - name: Strip binaries for amd64
+    if: ${{ inputs.arch == 'amd64' }}
+    run: |
+      strip dist_${{ inputs.arch }}/lib/lib*
+    shell: bash
+
+  - name: Strip binaries for arm64
+    if: ${{ inputs.arch == 'arm64' }}
+    run: |
+      aarch64-linux-gnu-strip dist_${{ inputs.arch }}/lib/lib*
     shell: bash
 
   - name: Build for amd64 with code-coverage enabled
