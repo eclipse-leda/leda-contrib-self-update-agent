@@ -92,9 +92,6 @@ runs:
     if: ${{ inputs.arch == 'amd64' }}
     run: |
       cd dist_${{ inputs.arch }}/utest
-      ls -la
-      chmod +x TestSelfUpdateAgent
-      uname -a
       file TestSelfUpdateAgent
       ./TestSelfUpdateAgent > ../../unit_tests_report_${{ inputs.arch }}.txt
     shell: bash
@@ -107,11 +104,13 @@ runs:
       distro: ubuntu_latest
       dockerRunArgs: |
         --volume "${PWD}:/sua"
+        --net=host
       shell: /bin/sh
+      install: |
+        apt-get -y update
+        apt-get -y install mosquitto-clients
       run: |
         cd /sua/dist_arm64/utest
-        ls -la ../lib
-        ldd TestSelfUpdateAgent
         LD_LIBRARY_PATH=../lib ./TestSelfUpdateAgent > ../../unit_tests_report_arm64.txt
 
   - name: Collect code-coverage for amd64
