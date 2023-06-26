@@ -45,11 +45,14 @@ Options:
 -h, --help      display this help and exit
 -i, --installer set install method 'download' to download update bundles and let Rauc install them,
                 'stream' to let Rauc install bundles directly from HTTP-server,
-                or 'dummy' for neither download nor installation (default is 'download')
--p, --path      path where downloaded update bundles will be stored (default is '/data/selfupdates')
--s, --server    MQTT broker server to connect (default is 'tcp://mosquitto:1883')
-                (has precedence over SUA_SERVER environment variable)
--c, --ca        path to certificate to verify connection with bundle server (default is '/etc/ssl/certs/selfupdateagent.crt')
+                or 'dummy' for neither download nor installation
+                (default is 'download')
+-p, --path      path where downloaded update bundles will be stored
+                (default is '/data/selfupdates')
+-s, --server    MQTT broker server to connect, has precedence over SUA_SERVER environment variable
+                (default is 'tcp://mosquitto:1883')
+-c, --ca        path to certificate to verify connection with bundle server
+                (default is '/etc/ssl/certs/selfupdateagent.crt')
 -v, --version   display version (Git hash and build number) used to build SUA and exit
 )";
 
