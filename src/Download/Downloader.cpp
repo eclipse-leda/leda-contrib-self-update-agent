@@ -36,9 +36,6 @@ namespace {
     bool             cancelled                   = false;
     int              progressNotificationLimiter = 0;
 
-    size_t        write_data(void* ptr, size_t size, size_t nmemb, FILE* stream);
-    sua::TechCode download(const char* url);
-
     struct progress {
         char*  unused;
         size_t size;
@@ -85,7 +82,7 @@ namespace {
         return written;
     }
 
-    sua::TechCode download(sua::Context & context, const char* url)
+    sua::TechCode download(const char* certificateFileName, const char* url)
     {
         CURLcode gres = curl_global_init(CURL_GLOBAL_ALL);
         if(gres != 0) {
@@ -119,7 +116,7 @@ namespace {
 
         curl_easy_setopt(easy_handle, CURLOPT_URL, url);
         curl_easy_getinfo(easy_handle, CURLINFO_RESPONSE_CODE, &response_code);
-        curl_easy_setopt(easy_handle, CURLOPT_CAINFO, context.certificateFileName.c_str());
+        curl_easy_setopt(easy_handle, CURLOPT_CAINFO, certificateFileName);
         curl_easy_setopt(easy_handle, CURLOPT_SSL_VERIFYPEER, 1);
         curl_easy_setopt(easy_handle, CURLOPT_WRITEFUNCTION, write_data);
         curl_easy_setopt(easy_handle, CURLOPT_WRITEDATA, fp);
@@ -162,7 +159,7 @@ namespace sua {
 
     TechCode Downloader::start(const std::string & input)
     {
-        return download(_context, input.c_str());
+        return download(_context.certificateFileName.c_str(), input.c_str());
     }
 
 } // namespace sua
