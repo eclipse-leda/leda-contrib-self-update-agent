@@ -52,7 +52,7 @@ Options:
 -s, --server    MQTT broker server to connect, has precedence over SUA_SERVER environment variable
                 (default is 'tcp://mosquitto:1883')
 -c, --ca        path to certificate to verify connection with bundle server
-                (default is '/etc/ssl/certs/selfupdateagent.crt')
+                (default is '/etc/ssl/certs/ca-certificates.crt')
 -v, --version   display version (Git hash and build number) used to build SUA and exit
 )";
 
@@ -61,7 +61,7 @@ int main(int argc, char* argv[])
     std::string server{"tcp://mosquitto:1883"};
     std::string installer{"download"};
     std::string hostPathToSelfupdateDir{"/data/selfupdates"};
-    std::string pathToCertificate{"/etc/ssl/certs/selfupdateagent.crt"};
+    std::string pathToCertificate{"/etc/ssl/certs/ca-certificates.crt"};
 
     const char * env_server = std::getenv("SUA_SERVER");
     if(env_server) {
