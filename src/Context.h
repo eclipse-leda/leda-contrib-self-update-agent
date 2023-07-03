@@ -57,7 +57,7 @@ namespace sua {
         std::shared_ptr<IBundleChecker>         bundleChecker;
         std::string                             updatesDirectory    = "/data/selfupdates";
         std::string                             tempFileName        = "/temp_file";
-        std::string                             certificateFileName = "/etc/ssl/certs/selfupdateagent.crt";
+        std::string                             certificateFileName = "/etc/ssl/certs/ca-certificates.crt";
         bool                                    downloadMode        = true;
         bool                                    fallbackMode        = false;
 

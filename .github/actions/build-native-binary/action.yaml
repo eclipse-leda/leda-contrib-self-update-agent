@@ -106,6 +106,7 @@ runs:
         -keyout /etc/ssl/private/selfupdateagent.key \
         -out /etc/ssl/certs/selfupdateagent.crt \
         -config utest/sua-certificate.config
+      sudo tee -a /etc/ssl/certs/ca-certificates.crt < /etc/ssl/certs/selfupdateagent.crt > /dev/null
     shell: bash
 
   - name: Install and configure apache2
