@@ -51,8 +51,11 @@ Options:
                 (default is '/data/selfupdates')
 -s, --server    MQTT broker server to connect, has precedence over SUA_SERVER environment variable
                 (default is 'tcp://mosquitto:1883')
--c, --ca        path to certificate to verify connection with bundle server
-                (default is '/etc/ssl/certs/ca-certificates.crt')
+-c, --ca-path   specifies directory containing CA certificates to verify connection with bundle server
+                (default is '/etc/ssl/certs')
+-f, --ca-file   path to certificate to verify connection with bundle server
+                if set supersedes value set by --ca-path
+                (default is '')
 -v, --version   display version (Git hash and build number) used to build SUA and exit
 )";
 
@@ -61,7 +64,8 @@ int main(int argc, char* argv[])
     std::string server{"tcp://mosquitto:1883"};
     std::string installer{"download"};
     std::string hostPathToSelfupdateDir{"/data/selfupdates"};
-    std::string pathToCertificate{"/etc/ssl/certs/ca-certificates.crt"};
+    std::string caPath{"/etc/ssl/certs"};
+    std::string caFile;
 
     const char * env_server = std::getenv("SUA_SERVER");
     if(env_server) {
@@ -119,13 +123,23 @@ int main(int argc, char* argv[])
                 continue;
             }
 
-            if(("-c" == opt) || ("--ca" == opt)) {
+            if(("-c" == opt) || ("--ca-path" == opt)) {
+                if(argValue.empty()) {
+                    std::cout << "Missing path to CA directory for '" << opt << "'" << std::endl
+                              << help_string << std::endl;
+                    return 1;
+                }
+                caPath = argValue;
+                continue;
+            }
+
+            if(("-f" == opt) || ("--ca-file" == opt)) {
                 if (argValue.empty()) {
                     std::cout << "Missing path to .crt for '" << opt << "'" << std::endl
                               << help_string << std::endl;
                     return 1;
                 }
-                pathToCertificate = argValue;
+                caFile = argValue;
                 continue;
             }
 
@@ -197,22 +211,24 @@ int main(int argc, char* argv[])
 
     sua::SelfUpdateAgent sua;
     sua::Context & ctx = sua.context();
-    ctx.certificateFileName = pathToCertificate;
-    ctx.updatesDirectory    = hostPathToSelfupdateDir;
-    ctx.stateMachine        = std::make_shared<sua::FSM>(sua.context());
-    ctx.installerAgent      = installerAgent;
-    ctx.downloadMode        = downloadMode;
-    ctx.downloaderAgent     = std::make_shared<sua::Downloader>(ctx);
-    ctx.messagingProtocol   = std::make_shared<sua::MqttMessagingProtocolJSON>();
-    ctx.bundleChecker       = std::make_shared<sua::BundleChecker>();
-    ctx.mqttProcessor       = std::make_shared<sua::MqttProcessor>(ctx);
+    ctx.caFile            = caFile;
+    ctx.caPath            = caPath;
+    ctx.updatesDirectory  = hostPathToSelfupdateDir;
+    ctx.stateMachine      = std::make_shared<sua::FSM>(sua.context());
+    ctx.installerAgent    = installerAgent;
+    ctx.downloadMode      = downloadMode;
+    ctx.downloaderAgent   = std::make_shared<sua::Downloader>(ctx);
+    ctx.messagingProtocol = std::make_shared<sua::MqttMessagingProtocolJSON>();
+    ctx.bundleChecker     = std::make_shared<sua::BundleChecker>();
+    ctx.mqttProcessor     = std::make_shared<sua::MqttProcessor>(ctx);
 
     sua::Logger::info("SUA build number       : '{}'", SUA_BUILD_NUMBER );
     sua::Logger::info("SUA commit hash        : '{}'", SUA_COMMIT_HASH  );
     sua::Logger::info("MQTT broker address    : '{}://{}:{}'", transport, conf.brokerHost, conf.brokerPort);
     sua::Logger::info("Install method         : '{}'", installer);
     sua::Logger::info("Updates directory      : '{}'", ctx.updatesDirectory);
-    sua::Logger::info("CA certificate         : '{}'", ctx.certificateFileName);
+    sua::Logger::info("CA directory           : '{}'", ctx.caPath);
+    sua::Logger::info("CA certificate         : '{}'", ctx.caFile);
 
     sua.init();
     sua.start(conf);
