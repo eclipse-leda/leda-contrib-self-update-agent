@@ -55,8 +55,8 @@ Options:
 -c, --ca-directory a directory containing CA certificates to verify connection with bundle server
                    (default is '{}')
 -f, --ca-filepath  file path to the CA certificate to verify connection with bundle server
-                   if set it supersedes the CA directory in --ca-directory (default is unset)
-                   (default is '{}')
+                   if set it supersedes the CA directory in --ca-directory
+                   (default is unset: '{}')
 -v, --version      display version (Git hash and build number) used to build SUA and exit
 )";
 
