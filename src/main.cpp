@@ -22,6 +22,7 @@
 #include "Mqtt/MqttProcessor.h"
 #include "Utils/BundleChecker.h"
 #include "Utils/ServerAddressParser.h"
+#include "Defaults.h"
 #include "SelfUpdateAgent.h"
 #include "Logger.h"
 #include "version.h"
@@ -30,7 +31,7 @@
 #include <iostream>
 #include <memory>
 
-const char * help_string = R"(
+const char * help_string_template = R"(
 Self Update Agent
 Perform an update of the system software.
 The system needs to be restarted manually for the update to take effect.
@@ -38,34 +39,35 @@ The system needs to be restarted manually for the update to take effect.
 Usage: sdv-self-update-agent [OPTIONS]
 
 Environment variables:
-SUA_SERVER    sets and overrides MQTT server address to connect
-              (default is 'tcp://mosquitto:1883')
+SUA_SERVER         sets and overrides MQTT server address to connect
+                   (default is '{}')
 
 Options:
--h, --help      display this help and exit
--i, --installer set install method 'download' to download update bundles and let Rauc install them,
-                'stream' to let Rauc install bundles directly from HTTP-server,
-                or 'dummy' for neither download nor installation
-                (default is 'download')
--p, --path      path where downloaded update bundles will be stored
-                (default is '/data/selfupdates')
--s, --server    MQTT broker server to connect, has precedence over SUA_SERVER environment variable
-                (default is 'tcp://mosquitto:1883')
--c, --ca-path   specifies directory containing CA certificates to verify connection with bundle server
-                (default is '/etc/ssl/certs')
--f, --ca-file   path to certificate to verify connection with bundle server
-                if set supersedes value set by --ca-path
-                (default is '')
--v, --version   display version (Git hash and build number) used to build SUA and exit
+-h, --help         display this help and exit
+-i, --installer    set install method 'download' to download update bundles and let Rauc install them,
+                   'stream' to let Rauc install bundles directly from HTTP-server,
+                   or 'dummy' for neither download nor installation
+                   (default is '{}')
+-p, --path         path where downloaded update bundles will be stored
+                   (default is '{}')
+-s, --server       MQTT broker server to connect, has precedence over SUA_SERVER environment variable
+                   (default is '{}')
+-c, --ca-directory a directory containing CA certificates to verify connection with bundle server
+                   (default is '{}')
+-f, --ca-filepath  file path to the CA certificate to verify connection with bundle server
+                   if set it supersedes the CA directory in --ca-directory (default is unset)
+                   (default is '{}')
+-v, --version      display version (Git hash and build number) used to build SUA and exit
 )";
 
 int main(int argc, char* argv[])
 {
-    std::string server{"tcp://mosquitto:1883"};
-    std::string installer{"download"};
-    std::string hostPathToSelfupdateDir{"/data/selfupdates"};
-    std::string caPath{"/etc/ssl/certs"};
-    std::string caFile;
+    std::string server                  = SUA_DEFAULT_MQTT_SERVER;
+    std::string installer               = SUA_DEFAULT_MODE;
+    std::string hostPathToSelfupdateDir = SUA_DEFAULT_TEMP_DIRECTORY;
+    std::string caDirectory             = SUA_DEFAULT_CA_DIRECTORY;
+    std::string caFilepath              = SUA_DEFAULT_CA_FILEPATH;
+    std::string help_string             = fmt::format(help_string_template, server, installer, hostPathToSelfupdateDir, server, caDirectory, caFilepath);
 
     const char * env_server = std::getenv("SUA_SERVER");
     if(env_server) {
@@ -129,7 +131,7 @@ int main(int argc, char* argv[])
                               << help_string << std::endl;
                     return 1;
                 }
-                caPath = argValue;
+                caDirectory = argValue;
                 continue;
             }
 
@@ -139,7 +141,7 @@ int main(int argc, char* argv[])
                               << help_string << std::endl;
                     return 1;
                 }
-                caFile = argValue;
+                caFilepath = argValue;
                 continue;
             }
 
@@ -154,9 +156,9 @@ int main(int argc, char* argv[])
 
     std::cout << "Self Update Agent:" << std::endl;
 
-    std::string transport = "tcp";
-    std::string host      = "mosquitto";
-    int         port      = 1883;
+    std::string transport;
+    std::string host;
+    int         port;
 
     try {
         sua::ServerAddressParser().parse(server, transport, host, port);
@@ -211,8 +213,8 @@ int main(int argc, char* argv[])
 
     sua::SelfUpdateAgent sua;
     sua::Context & ctx = sua.context();
-    ctx.caFile            = caFile;
-    ctx.caPath            = caPath;
+    ctx.caDirectory       = caDirectory;
+    ctx.caFilepath        = caFilepath;
     ctx.updatesDirectory  = hostPathToSelfupdateDir;
     ctx.stateMachine      = std::make_shared<sua::FSM>(sua.context());
     ctx.installerAgent    = installerAgent;
@@ -227,8 +229,8 @@ int main(int argc, char* argv[])
     sua::Logger::info("MQTT broker address    : '{}://{}:{}'", transport, conf.brokerHost, conf.brokerPort);
     sua::Logger::info("Install method         : '{}'", installer);
     sua::Logger::info("Updates directory      : '{}'", ctx.updatesDirectory);
-    sua::Logger::info("CA directory           : '{}'", ctx.caPath);
-    sua::Logger::info("CA certificate         : '{}'", ctx.caFile);
+    sua::Logger::info("CA directory           : '{}'", ctx.caDirectory);
+    sua::Logger::info("CA certificate         : '{}'", ctx.caFilepath);
 
     sua.init();
     sua.start(conf);

@@ -55,10 +55,10 @@ namespace sua {
         std::shared_ptr<IMqttMessagingProtocol> messagingProtocol;
         std::shared_ptr<IMqttProcessor>         mqttProcessor;
         std::shared_ptr<IBundleChecker>         bundleChecker;
-        std::string                             updatesDirectory = "/data/selfupdates";
+        std::string                             updatesDirectory;
         std::string                             tempFileName     = "/temp_file";
-        std::string                             caPath           = "/etc/ssl/certs";
-        std::string                             caFile           = "/etc/ssl/certs/ca-certificates.crt";
+        std::string                             caDirectory;
+        std::string                             caFilepath;
         bool                                    downloadMode     = true;
         bool                                    fallbackMode     = false;
 
