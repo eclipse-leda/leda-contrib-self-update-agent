@@ -164,7 +164,7 @@ namespace sua {
 
     TechCode Downloader::start(const std::string & input)
     {
-        return download(_context.caPath, _context.caFile, input.c_str());
+        return download(_context.caDirectory, _context.caFilepath, input.c_str());
     }
 
 } // namespace sua
