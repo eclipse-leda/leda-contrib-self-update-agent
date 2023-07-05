@@ -23,6 +23,7 @@
 #include "Mqtt/IMqttMessagingProtocol.h"
 #include "Mqtt/IMqttProcessor.h"
 #include "Utils/IBundleChecker.h"
+#include "Defaults.h"
 
 #include <memory>
 
@@ -55,10 +56,10 @@ namespace sua {
         std::shared_ptr<IMqttMessagingProtocol> messagingProtocol;
         std::shared_ptr<IMqttProcessor>         mqttProcessor;
         std::shared_ptr<IBundleChecker>         bundleChecker;
-        std::string                             updatesDirectory;
+        std::string                             updatesDirectory = SUA_DEFAULT_TEMP_DIRECTORY;
         std::string                             tempFileName     = "/temp_file";
-        std::string                             caDirectory;
-        std::string                             caFilepath;
+        std::string                             caDirectory      = SUA_DEFAULT_CA_DIRECTORY;
+        std::string                             caFilepath       = SUA_DEFAULT_CA_FILEPATH;
         bool                                    downloadMode     = true;
         bool                                    fallbackMode     = false;
 
