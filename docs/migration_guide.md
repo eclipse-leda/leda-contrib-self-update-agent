@@ -8,7 +8,7 @@ The communication protocol between SUA and backend was extended to support vehic
 Some fields are not relevant anymore meanwhile new were introduced. Below is a brief comparison between messages in YAML and in JSON format.
 
 ### Transition guide for current state message
-From the current state message in YAML payload there is only one field 'bundleVersion' which is relevant. The corresponding fields in JSON are 'version' in 'softwareNodes' for the device image. *NOTE*: actual name could differ depending on distro configuration.
+From the current state message in YAML payload there is only one field 'bundleVersion' which is relevant. The corresponding field in JSON variant is 'version' in 'softwareNodes' for the device image. *NOTE*: The actual name could differ depending on the distro configuration.
 ```
 apiVersion: sdv.eclipse.org/v1
 kind: SelfUpdateBundle
@@ -87,7 +87,7 @@ spec:
 ```
 
 ### Transition guide for state feedback
-Below there is an example for state feedback ('techCode' is optional and available only in case of failure). For transition to JSON format all three fields from 'state' section are important (except 'techCode') and their corresponding places in JSON are 'status' and 'message' in sections 'payload' and 'actions', and 'progress' in section 'actions'. The detailed list of the available payload status and action status can be found in [link](docs/bfb.md) because for vehicle orchestration more sub-states were introduced for fine-grained reporting of self-update progress.
+Below there is an example for state feedback ('techCode' is optional and available only in case of failure). For transition to JSON format all three fields from 'state' section are important (except 'techCode') and their corresponding places in JSON are 'status' and 'message' in sections 'payload' and 'actions', and 'progress' in section 'actions'. The detailed list of the available payload status and action status can be found in [link](docs/bfb.md) because for vehicle orchestration more sub-states were introduced for a fine-grained report of the self-update progress.
 ```
 apiVersion: sdv.eclipse.org/v1
 kind: SelfUpdateBundle
