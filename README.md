@@ -108,6 +108,7 @@ MQTT communication is done over 5 MQTT topics:
 | selfupdate/desiredstatefeedback | OUT | This message is being sent by SUA to share the current progress of the triggered update process. This is the *OUT* counterpart of *selfupdate/desiredstate* input message. |
 
 Detailed description of Update Agent API can be found here: [link](docs/bfb.md).
+Migration guide for users from old YAML payloads to new JSON format can be found here: [link](docs/migration_guide.md).
 
 # Checkout
 SUA links to some 3rd party libraries, which are fetched as submodules, therefore the cloning shall be performed with recursive option:
