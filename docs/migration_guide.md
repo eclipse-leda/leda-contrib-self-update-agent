@@ -1,14 +1,14 @@
 # Migration guide from YAML payloads to JSON (bfb) protocol
 
 ## Background
-Communication protocol between SUA and backend was extended to support vehicle orchestration for large quantities of devices. Key differences are:
+The communication protocol between SUA and backend was extended to support vehicle orchestration for large quantities of devices. Key differences are:
 * Transition from YAML to JSON
 * Fine-grained API (command-based approach instead of single-shot self-update)
 * Extension of statuses (for detailed reflection of success, progress or failure)
-Some fiels are not relevant anymore meanwhile new were introduced. Below is a brief comparison between YAML and JSON messages.
+Some fields are not relevant anymore meanwhile new were introduced. Below is a brief comparison between messages in YAML and in JSON format.
 
 ### Transition guide for current state message
-From the current state message in YAML payload there is only 1 field 'bundleVersion' which is relevant and corresponding field in JSON is 'version' in 'softwareNodes' for the device image (actual name could differ depending on distro configuration):
+From the current state message in YAML payload there is only one field 'bundleVersion' which is relevant. The corresponding fields in JSON are 'version' in 'softwareNodes' for the device image. *NOTE*: actual name could differ depending on distro configuration.
 ```
 apiVersion: sdv.eclipse.org/v1
 kind: SelfUpdateBundle
@@ -48,7 +48,7 @@ spec:
 ```
 
 ### Transition guide for desired state message
-For the desired state message there are 2 relevant fields 'bundleDownloadUrl' and 'bundleVersion' for take-over. The corresponding values are 'version' under the 'components' and 'value' inside the object with 'key'='image'. *NOTE*: There could be multiple entries inside 'components' array and 'config' section. Your implementation has to search for 'os-image' and 'image' values respectively.
+For the desired state message there are two relevant fields 'bundleDownloadUrl' and 'bundleVersion' for take-over. The corresponding values are 'version' under the 'components' and 'value' inside the object with 'key'='image'. *NOTE*: There could be multiple entries inside 'components' array and 'config' section. Your implementation has to search for 'os-image' and 'image' values respectively.
 ```
 apiVersion: "sdv.eclipse.org/v1"
 kind: SelfUpdateBundle
@@ -87,7 +87,7 @@ spec:
 ```
 
 ### Transition guide for state feedback
-Below the example for state feedback ('techCode' is optional and available only in case of failure). For transition to JSON format all 3 fields from 'state' section are important (except 'techCode') and their corresponding places in JSON are 'status' and 'message' in secions 'payload' and 'actions', and 'progress' in section 'actions'. Detailed list of available payload status and action status can be found in [link](docs/bfb.md) because for vehicles orchestration more sub-states were introduces for fine-grained reporting of self-update progress.
+Below there is an example for state feedback ('techCode' is optional and available only in case of failure). For transition to JSON format all three fields from 'state' section are important (except 'techCode') and their corresponding places in JSON are 'status' and 'message' in sections 'payload' and 'actions', and 'progress' in section 'actions'. The detailed list of the available payload status and action status can be found in [link](docs/bfb.md) because for vehicle orchestration more sub-states were introduced for fine-grained reporting of self-update progress.
 ```
 apiVersion: sdv.eclipse.org/v1
 kind: SelfUpdateBundle
