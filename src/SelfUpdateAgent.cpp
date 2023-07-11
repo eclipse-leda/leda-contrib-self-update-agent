@@ -61,31 +61,25 @@ namespace sua {
             { FotaEvent::Identify               , "Connected"       , "Connected"        , FotaEvent::BundleVersionUnchanged    },
             { FotaEvent::GetCurrentState        , "Connected"       , "SendCurrentState"},
             // from "Downloading"
-            { FotaEvent::ConnectivityLost       , "Downloading"     , "Uninitialized"   },
             { FotaEvent::DownloadStart          , "Downloading"     , "Installing"       , FotaEvent::DownloadSucceeded         },
             { FotaEvent::DownloadStart          , "Downloading"     , "Failed"           , FotaEvent::DownloadFailed            },
             { FotaEvent::Rollback               , "Downloading"     , "Idle"            },
             // from "Installing"
-            { FotaEvent::ConnectivityLost       , "Installing"      , "Uninitialized"   },
             { FotaEvent::InstallStart           , "Installing"      , "Installed"        , FotaEvent::InstallCompleted          },
             { FotaEvent::InstallStart           , "Installing"      , "Failed"           , FotaEvent::BundleVersionInconsistent },
             { FotaEvent::InstallStart           , "Installing"      , "Failed"           , FotaEvent::InstallFailed             },
             { FotaEvent::InstallStart           , "Installing"      , "Downloading"      , FotaEvent::InstallFailedFallback     },
             { FotaEvent::Rollback               , "Installing"      , "Idle"            },
             // from "Installed"
-            { FotaEvent::ConnectivityLost       , "Installed"       , "Uninitialized"   },
             { FotaEvent::Activate               , "Installed"       , "Activating"      },
             { FotaEvent::Rollback               , "Installed"       , "Idle"            },
             // from "Activating"
-            { FotaEvent::ConnectivityLost       , "Activating"      , "Uninitialized"   },
             { FotaEvent::Cleanup                , "Activating"      , "Cleaning"        },
             { FotaEvent::Rollback               , "Activating"      , "Idle"            },
             // from "Failed"
-            { FotaEvent::ConnectivityLost       , "Failed"          , "Uninitialized"   },
             { FotaEvent::Cleanup                , "Failed"          , "Cleaning"        },
             { FotaEvent::Rollback               , "Failed"          , "Idle"            },
             // from "Cleaning"
-            { FotaEvent::ConnectivityLost       , "Cleaning"        , "Uninitialized"   },
             { FotaEvent::Waiting                , "Cleaning"        , "Idle"            },
             // from "Idle"
             { FotaEvent::ConnectivityLost       , "Idle"            , "Uninitialized"   },
@@ -93,7 +87,6 @@ namespace sua {
             { FotaEvent::Identify               , "Idle"            , "Failed"           , FotaEvent::BundleVersionUnchanged    },
             { FotaEvent::GetCurrentState        , "Idle"            , "SendCurrentState"},
             // from "SendCurrentState"
-            { FotaEvent::ConnectivityLost       , "SendCurrentState", "Uninitialized"   },
             { FotaEvent::Waiting                , "SendCurrentState", "Idle"            },
         });
         _context.stateMachine->transitTo("Uninitialized");
