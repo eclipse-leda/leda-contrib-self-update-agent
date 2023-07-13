@@ -129,17 +129,23 @@ namespace {
                     sua::Logger::error("Invalid topic: '{}'", topic);
                 }
             } catch(const nlohmann::json::parse_error & e) {
+                // catch here if request is not a valid json (yaml or xml for example)
                 sua::Logger::error("Unable to parse desired state request (not a valid json?): '{}'", e.what());
             } catch(const nlohmann::json::exception& e) {
+                // catch here if request is incomplete (missing field)
+                // result is lost, extract activityId again and reply IdentificationFailed
                 ctx.desiredState.activityId = nlohmann::json::parse(message).at("activityId");
-                sua::Logger::error("Incomplete desired state request, unable to identify: '{}'", e.what());
+                sua::Logger::error("Incomplete desired state request, unable to identify (incomplete json?): '{}'", e.what());
                 mqtt->send(sua::IMqttProcessor::TOPIC_FEEDBACK, sua::MqttMessage::Identifying);
                 mqtt->send(sua::IMqttProcessor::TOPIC_FEEDBACK, sua::MqttMessage::IdentificationFailed, e.what());
             } catch(const std::logic_error & e) {
+                // catch here if request is valid json but activityId is empty
                 sua::Logger::error("Invalid desired state request: '{}'", e.what());
             } catch(const std::runtime_error & e) {
+                // catch here if request is incomplete (empty field)
+                // result is lost, extract activityId again and reply IdentificationFailed
                 ctx.desiredState.activityId = nlohmann::json::parse(message).at("activityId");
-                sua::Logger::error("Malformed desired state request, unable to identify: '{}'", topic, e.what());
+                sua::Logger::error("Malformed desired state request, unable to identify: '{}'", e.what());
                 mqtt->send(sua::IMqttProcessor::TOPIC_FEEDBACK, sua::MqttMessage::Identifying);
                 mqtt->send(sua::IMqttProcessor::TOPIC_FEEDBACK, sua::MqttMessage::IdentificationFailed, e.what());
             }
