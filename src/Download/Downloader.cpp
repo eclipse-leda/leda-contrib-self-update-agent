@@ -121,13 +121,14 @@ namespace {
         } else {
             curl_easy_setopt(easy_handle, CURLOPT_CAPATH, caPath.c_str());
         }
-        curl_easy_setopt(easy_handle, CURLOPT_SSL_VERIFYPEER, 1);
+        curl_easy_setopt(easy_handle, CURLOPT_SSL_VERIFYPEER, 1L);
         curl_easy_setopt(easy_handle, CURLOPT_WRITEFUNCTION, write_data);
         curl_easy_setopt(easy_handle, CURLOPT_WRITEDATA, fp);
         curl_easy_setopt(easy_handle, CURLOPT_FOLLOWLOCATION, 1L);
         curl_easy_setopt(easy_handle, CURLOPT_PROGRESSDATA, &data);
         curl_easy_setopt(easy_handle, CURLOPT_PROGRESSFUNCTION, progress_callback);
         curl_easy_setopt(easy_handle, CURLOPT_NOPROGRESS, 0);
+        curl_easy_setopt(easy_handle, CURLOPT_PROTOCOLS_STR, "https");
         CURLcode res = curl_easy_perform(easy_handle);
 
         sua::Logger::debug("curl_easy_perform ended with code = '{}'", res);
