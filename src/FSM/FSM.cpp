@@ -41,6 +41,8 @@ namespace sua {
 
     std::string FSM::activeState() const
     {
+        assert(_currentState != nullptr);
+
         return _currentState->name();
     }
 

@@ -596,6 +596,9 @@ namespace {
     {
         d.downloadProgressPercentage = 66;
 
+        ctx.desiredState.actionStatus  = "DOWNLOAD_FAILURE";
+        ctx.desiredState.actionMessage = "Download failed: test";
+
         const std::string result = ProtocolJSON().createMessage(ctx, sua::MqttMessage::DownloadFailed);
 
         // clang-format off
@@ -614,7 +617,7 @@ namespace {
                             },
                             "status": "DOWNLOAD_FAILURE",
                             "progress": 66,
-                            "message": "Download failed."
+                            "message": "Download failed: test"
                         }
                     ]
                 }

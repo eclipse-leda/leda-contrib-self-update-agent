@@ -20,14 +20,17 @@
 #include "TechCodes.h"
 
 #include <string>
+#include <tuple>
 
 namespace sua {
+
+    using DownloadResult = std::tuple<TechCode, std::string>;
 
     class IDownloader {
     public:
         virtual ~IDownloader() = default;
 
-        virtual TechCode start(const std::string & input) = 0;
+        virtual DownloadResult start(const std::string & input) = 0;
     };
 
 } // namespace sua

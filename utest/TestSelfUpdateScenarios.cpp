@@ -193,6 +193,10 @@ namespace {
             ctx().bundleChecker     = std::make_shared<sua::BundleChecker>();
         }
 
+        void TearDown() override {
+            mqttProcessor->stop();
+        }
+
         sua::SelfUpdateAgent sua;
 
         std::shared_ptr<MockFSM>           fsm;
@@ -287,7 +291,7 @@ namespace {
         sua.init();
         start();
 
-        EXPECT_CALL(*downloader, start(_)).WillOnce(Return(sua::TechCode::DownloadFailed));
+        EXPECT_CALL(*downloader, start(_)).WillOnce(Return(std::make_tuple(sua::TechCode::DownloadFailed, "")));
 
         triggerIdentify(BUNDLE_11, "1.1");
         trigger(COMMAND_DOWNLOAD);
@@ -411,7 +415,7 @@ namespace {
         EXPECT_EQ(sentMessages, expectedMessages);
     }
 
-    TEST_F(TestSelfUpdateScenarios, downloadFromHTTPFails_endsInFailedState)
+    TEST_F(TestSelfUpdateScenarios, downloadViaHttpFails_endsInFailedState)
     {
         expectedStates   = {"Uninitialized", "Connected", "Downloading", "Failed"};
         expectedMessages = {M::SystemVersion, M::Identifying, M::Identified, M::DownloadFailed};

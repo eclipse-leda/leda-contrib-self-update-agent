@@ -28,7 +28,7 @@ namespace sua {
 
         static const std::string EVENT_DOWNLOADING;
 
-        TechCode start(const std::string & input) override;
+        DownloadResult start(const std::string & input) override;
 
     private:
         class Context & _context;
