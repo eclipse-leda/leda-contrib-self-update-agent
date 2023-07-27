@@ -1,9 +1,12 @@
-license_choices:
-  repository_license_choices:
-  - given: "GPL-1.0-or-later OR Artistic-1.0"
-    choice: "GPL-1.0-or-later"
-  - given: "Artistic-1.0-Perl OR GPL-1.0-or-later"
-    choice: "Artistic-1.0-Perl"
+---
+repository:
+  config:
+    license_choices:
+      repository_license_choices:
+      - given: "GPL-1.0-or-later OR Artistic-1.0"
+        choice: "GPL-1.0-or-later"
+      - given: "Artistic-1.0-Perl OR GPL-1.0-or-later"
+        choice: "Artistic-1.0-Perl"
 excludes:
   paths:
   - pattern: "3rdparty/openssl/tlsfuzzer/**"
