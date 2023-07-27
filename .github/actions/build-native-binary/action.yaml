@@ -107,7 +107,7 @@ runs:
         -keyout /etc/ssl/private/selfupdateagent.key \
         -out /usr/share/ca-certificates/extra/selfupdateagent.crt \
         -subj '/CN=localhost' -extensions EXT -config utest/sua-certificate.config
-      echo "\nextra/selfupdateagent.crt" | sudo tee -a /etc/ca-certificates.conf > /dev/null
+      echo -e "\nextra/selfupdateagent.crt" | sudo tee -a /etc/ca-certificates.conf > /dev/null
       sudo update-ca-certificates
     shell: bash
 
