@@ -102,6 +102,7 @@ runs:
 
   - name: Generate SSL key and certificate
     run: |
+      sudo mkdir -p /usr/share/ca-certificates/extra
       sudo openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
         -keyout /etc/ssl/private/selfupdateagent.key \
         -out /usr/share/ca-certificates/extra/selfupdateagent.crt \
