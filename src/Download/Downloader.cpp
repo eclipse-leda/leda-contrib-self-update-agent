@@ -155,6 +155,7 @@ namespace {
             curl_easy_setopt(h, CURLOPT_CAPATH, caPath.c_str());
         }
         curl_easy_setopt(h, CURLOPT_SSL_VERIFYPEER, 1L);
+        curl_easy_setopt(h, CURLOPT_SSL_VERIFYHOST, 2L);
         curl_easy_setopt(h, CURLOPT_WRITEFUNCTION, write_data);
         curl_easy_setopt(h, CURLOPT_WRITEDATA, fp);
         curl_easy_setopt(h, CURLOPT_FOLLOWLOCATION, 1L);
@@ -175,7 +176,7 @@ namespace {
         if(http_code != 200) {
             auto e = curl_easy_strerror(res);
             sua::Logger::error(e);
-            return std::make_tuple(sua::TechCode::DownloadFailed, "");
+            return std::make_tuple(sua::TechCode::DownloadFailed, e);
         }
 
         return std::make_tuple(sua::TechCode::OK, "");

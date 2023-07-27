@@ -26,7 +26,7 @@ namespace {
         TestDownloaderViaUnsupportedProtocols,
         TestDownloaderP,
         ::testing::Values(
-            "ftp", "sftp", "smb", "smbs", "ldap", "ldaps"
+            "ftp", "http", "sftp", "smb", "smbs", "ldap", "ldaps"
         )
     );
 

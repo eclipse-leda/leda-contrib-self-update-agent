@@ -119,7 +119,7 @@ namespace {
                                         "config": [
                                             {
                                                 "key": "image",
-                                                "value": "{}://127.0.0.1/bundle"
+                                                "value": "{}://localhost/bundle"
                                             }
                                         ]
                                     }
