@@ -104,9 +104,9 @@ runs:
     run: |
       sudo openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
         -keyout /etc/ssl/private/selfupdateagent.key \
-        -out /etc/ssl/certs/selfupdateagent.crt \
-        -config utest/sua-certificate.config
-      echo "/etc/ssl/certs/selfupdateagent.crt" | sudo tee -a /etc/ca-certificates.conf > /dev/null
+        -out /usr/share/ca-certificates/extra/selfupdateagent.crt \
+        -subj '/CN=localhost' -extensions EXT -config utest/sua-certificate.config
+      echo "\nextra/selfupdateagent.crt" | sudo tee -a /etc/ca-certificates.conf > /dev/null
       sudo update-ca-certificates
     shell: bash
 
