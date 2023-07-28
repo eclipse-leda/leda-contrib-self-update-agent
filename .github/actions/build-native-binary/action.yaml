@@ -148,11 +148,14 @@ runs:
         --volume "${PWD}:/sua"
         --volume "/data/selfupdates:/data/selfupdates"
         --volume "/etc/ssl/certs:/etc/ssl/certs"
+        --volume "/usr/share/ca-certificates/extra:/usr/share/ca-certificates/extra"
         --net=host
       shell: /bin/sh
       install: |
         apt-get -y update
         apt-get -y install mosquitto-clients
+        echo -e "\nextra/selfupdateagent.crt" | tee -a /etc/ca-certificates.conf > /dev/null
+        update-ca-certificates
       run: |
         cd /sua/dist_arm64/utest
         LD_LIBRARY_PATH=../lib ./TestSelfUpdateAgent > ../../unit_tests_report_arm64.txt
