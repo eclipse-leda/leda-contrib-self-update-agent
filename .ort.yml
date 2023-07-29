@@ -1,13 +1,8 @@
-repository:
-  config:
-    license_choices:
-      repository_license_choices:
-      - given: "GPL-1.0-or-later OR Artistic-1.0"
-        choice: "GPL-1.0-or-later"
-      - given: "Artistic-1.0-Perl OR GPL-1.0-or-later"
-        choice: "Artistic-1.0-Perl"
 excludes:
   paths:
+  - pattern: "project.spdx.yml"
+    reason: "OTHER"
+    comment: "Configuration for Open Source Scan"
   - pattern: "3rdparty/openssl/tlsfuzzer/**"
     reason: "TEST_OF"
     comment: "Test suite for SSL & TLS, not included in production release."
