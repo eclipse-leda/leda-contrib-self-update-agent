@@ -102,11 +102,13 @@ runs:
 
   - name: Generate SSL key and certificate
     run: |
+      sudo mkdir -p /usr/share/ca-certificates/extra
       sudo openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
         -keyout /etc/ssl/private/selfupdateagent.key \
-        -out /etc/ssl/certs/selfupdateagent.crt \
-        -config utest/sua-certificate.config
-      sudo tee -a /etc/ssl/certs/ca-certificates.crt < /etc/ssl/certs/selfupdateagent.crt > /dev/null
+        -out /usr/share/ca-certificates/extra/selfupdateagent.crt \
+        -subj '/CN=localhost' -extensions EXT -config utest/sua-certificate.config
+      echo -e "\nextra/selfupdateagent.crt" | sudo tee -a /etc/ca-certificates.conf > /dev/null
+      sudo update-ca-certificates
     shell: bash
 
   - name: Install and configure apache2
@@ -145,13 +147,15 @@ runs:
       dockerRunArgs: |
         --volume "${PWD}:/sua"
         --volume "/data/selfupdates:/data/selfupdates"
-        --volume "/etc/ssl/certs:/etc/ssl/certs"
+        --volume "/usr/share/ca-certificates/extra:/usr/share/ca-certificates/extra"
         --net=host
       shell: /bin/sh
       install: |
         apt-get -y update
-        apt-get -y install mosquitto-clients
+        apt-get -y install mosquitto-clients ca-certificates
       run: |
+        echo "\nextra/selfupdateagent.crt" | tee -a /etc/ca-certificates.conf > /dev/null
+        update-ca-certificates
         cd /sua/dist_arm64/utest
         LD_LIBRARY_PATH=../lib ./TestSelfUpdateAgent > ../../unit_tests_report_arm64.txt
 

@@ -23,7 +23,7 @@
 
 class MockDownloader : public sua::IDownloader {
 public:
-    MOCK_METHOD(sua::TechCode, start, (const std::string & input), (override));
+    MOCK_METHOD(sua::DownloadResult, start, (const std::string & input), (override));
 };
 
 #endif

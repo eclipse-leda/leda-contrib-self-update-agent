@@ -102,7 +102,7 @@ namespace {
             std::this_thread::sleep_for(1s);
         }
 
-        void triggerIdentify(const std::string & bundle, const std::string & version) {
+        void triggerIdentify(const std::string & /*bundle*/, const std::string & version) {
             // clang-format off
             const std::string json = sua::jsonTemplate(R"(
                 {
@@ -119,7 +119,7 @@ namespace {
                                         "config": [
                                             {
                                                 "key": "image",
-                                                "value": "https://127.0.0.1/bundle"
+                                                "value": "{}://localhost/bundle"
                                             }
                                         ]
                                     }
@@ -131,7 +131,7 @@ namespace {
             )");
             // clang-format on
 
-            execute(sua::IMqttProcessor::TOPIC_IDENTIFY, fmt::format(json, version, bundle));
+            execute(sua::IMqttProcessor::TOPIC_IDENTIFY, fmt::format(json, version, downloadProtocol));
         }
 
         void trigger(const std::string & action) {
@@ -193,6 +193,10 @@ namespace {
             ctx().bundleChecker     = std::make_shared<sua::BundleChecker>();
         }
 
+        void TearDown() override {
+            mqttProcessor->stop();
+        }
+
         sua::SelfUpdateAgent sua;
 
         std::shared_ptr<MockFSM>           fsm;
@@ -201,6 +205,8 @@ namespace {
 
         std::string testBrokerHost = "localhost";
         int         testBrokerPort = 1883;
+
+        std::string downloadProtocol = "https";
 
         std::string bundleUnderTest;
 
@@ -285,7 +291,7 @@ namespace {
         sua.init();
         start();
 
-        EXPECT_CALL(*downloader, start(_)).WillOnce(Return(sua::TechCode::DownloadFailed));
+        EXPECT_CALL(*downloader, start(_)).WillOnce(Return(std::make_tuple(sua::TechCode::DownloadFailed, "")));
 
         triggerIdentify(BUNDLE_11, "1.1");
         trigger(COMMAND_DOWNLOAD);
@@ -404,6 +410,23 @@ namespace {
         trigger(COMMAND_UPDATE);
         trigger(COMMAND_ACTIVATE);
         trigger(COMMAND_CLEANUP);
+
+        EXPECT_EQ(visitedStates, expectedStates);
+        EXPECT_EQ(sentMessages, expectedMessages);
+    }
+
+    TEST_F(TestSelfUpdateScenarios, downloadViaHttpFails_endsInFailedState)
+    {
+        expectedStates   = {"Uninitialized", "Connected", "Downloading", "Failed"};
+        expectedMessages = {M::SystemVersion, M::Identifying, M::Identified, M::DownloadFailed};
+
+        downloadProtocol = "http";
+
+        sua.init();
+        start();
+
+        triggerIdentify(BUNDLE_11, "1.2");
+        trigger(COMMAND_DOWNLOAD);
 
         EXPECT_EQ(visitedStates, expectedStates);
         EXPECT_EQ(sentMessages, expectedMessages);

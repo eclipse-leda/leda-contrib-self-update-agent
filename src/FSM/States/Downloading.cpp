@@ -57,7 +57,7 @@ namespace sua {
             Logger::info("Downloading bundle: '{}'", ctx.desiredState.bundleDownloadUrl);
             const auto result = ctx.downloaderAgent->start(ctx.desiredState.bundleDownloadUrl);
 
-            if(result == TechCode::OK) {
+            if(std::get<0>(result) == TechCode::OK) {
                 Logger::info("Download progress: 100%");
                 send(ctx, IMqttProcessor::TOPIC_FEEDBACK, MqttMessage::Downloaded);
 
@@ -67,9 +67,9 @@ namespace sua {
                 return FotaEvent::DownloadSucceeded;
             } else {
                 Logger::error("Download failed.");
-                send(ctx, IMqttProcessor::TOPIC_FEEDBACK, MqttMessage::DownloadFailed);
                 ctx.desiredState.actionStatus  = "DOWNLOAD_FAILURE";
-                ctx.desiredState.actionMessage = "Download failed.";
+                ctx.desiredState.actionMessage = "Download failed: " + std::get<1>(result);
+                send(ctx, IMqttProcessor::TOPIC_FEEDBACK, MqttMessage::DownloadFailed);
                 return FotaEvent::DownloadFailed;
             }
         } else {

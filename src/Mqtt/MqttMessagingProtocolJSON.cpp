@@ -179,7 +179,7 @@ namespace sua {
         case MqttMessage::DownloadFailed:
             return writeFeedbackWithPayload(ctx.desiredState,
                 "DOWNLOAD_FAILURE", "Download failed.",
-                "DOWNLOAD_FAILURE", "Download failed.",
+                ctx.desiredState.actionStatus, ctx.desiredState.actionMessage,
                 message, ctx.desiredState.downloadProgressPercentage);
         case MqttMessage::VersionChecking:
             return writeFeedbackWithPayload(ctx.desiredState,

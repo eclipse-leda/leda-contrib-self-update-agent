@@ -1,5 +1,8 @@
 excludes:
   paths:
+  - pattern: "project.spdx.yml"
+    reason: "OTHER"
+    comment: "Configuration for Open Source Scan"
   - pattern: "3rdparty/openssl/tlsfuzzer/**"
     reason: "TEST_OF"
     comment: "Test suite for SSL & TLS, not included in production release."
@@ -36,6 +39,9 @@ excludes:
   - pattern: "3rdparty/curl/docs/**"
     reason: "DOCUMENTATION_OF"
     comment: "Code examples, not included in production release."
+  - pattern: "3rdparty/curl/tests/**"
+    reason: "TEST_OF"
+    comment: "curl tests, not included in production release."
   - pattern: "3rdparty/glib/gio/tests/**"
     reason: "TEST_OF"
     comment: "Tests of glib, not included in production release."
