@@ -135,7 +135,7 @@ runs:
     if: ${{ inputs.arch == 'amd64' }}
     run: |
       cd dist_${{ inputs.arch }}/utest
-      ./TestSelfUpdateAgent > ../../unit_tests_report_${{ inputs.arch }}.txt
+      ./TestSelfUpdateAgent > ../../unit_tests_report_${{ inputs.arch }}.txt --gtest_output=xml:../../unit_tests_report_${{ inputs.arch }}.xml
     shell: bash
 
   - uses: uraimo/run-on-arch-action@v2
@@ -157,7 +157,7 @@ runs:
         echo "\nextra/selfupdateagent.crt" | tee -a /etc/ca-certificates.conf > /dev/null
         update-ca-certificates
         cd /sua/dist_arm64/utest
-        LD_LIBRARY_PATH=../lib ./TestSelfUpdateAgent > ../../unit_tests_report_arm64.txt
+        LD_LIBRARY_PATH=../lib ./TestSelfUpdateAgent > ../../unit_tests_report_arm64.txt --gtest_output=xml:../../unit_tests_report_arm64.xml
 
   - name: Collect code-coverage for amd64
     if: ${{ inputs.arch == 'amd64' }}
