@@ -58,6 +58,7 @@ target_link_libraries(${PROJECT_NAME}
     glib_lib
     ffi_lib
     z_lib
+    intl_lib
     ${SUA_PLATFORM_LIBS}
     ssl_lib
     crypto_lib

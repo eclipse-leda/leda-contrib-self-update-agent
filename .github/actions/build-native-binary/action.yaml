@@ -135,7 +135,7 @@ runs:
     if: ${{ inputs.arch == 'amd64' }}
     run: |
       cd dist_${{ inputs.arch }}/utest
-      ./TestSelfUpdateAgent > ../../unit_tests_report_${{ inputs.arch }}.txt --gtest_output=xml:../../unit_tests_report_${{ inputs.arch }}.xml
+      LD_LIBRARY_PATH=../lib ./TestSelfUpdateAgent > ../../unit_tests_report_${{ inputs.arch }}.txt --gtest_output=xml:../../unit_tests_report_${{ inputs.arch }}.xml
     shell: bash
 
   - uses: uraimo/run-on-arch-action@v2
@@ -163,7 +163,7 @@ runs:
     if: ${{ inputs.arch == 'amd64' }}
     run: |
       cd dist_${{ inputs.arch }}_codecov/utest
-      ./TestSelfUpdateAgent
+      LD_LIBRARY_PATH=../lib ./TestSelfUpdateAgent
     shell: bash
 
   - name: Generate code-coverage report

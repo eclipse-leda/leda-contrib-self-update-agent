@@ -59,3 +59,9 @@ set_property(
     TARGET z_lib
     PROPERTY IMPORTED_LOCATION ${CMAKE_BINARY_DIR}/glib/subprojects/zlib-1.2.11/libz.so
 )
+
+add_library(intl_lib SHARED IMPORTED)
+set_property(
+    TARGET intl_lib
+    PROPERTY IMPORTED_LOCATION ${CMAKE_BINARY_DIR}/glib/subprojects/proxy-libintl/libintl.so
+)

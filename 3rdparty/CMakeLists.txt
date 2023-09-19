@@ -32,8 +32,9 @@ install(
     DESTINATION ${CMAKE_INSTALL_PREFIX}/lib
 )
 
-install(FILES ${CMAKE_BINARY_DIR}/glib/gio/libgio-2.0.so.0.7300.0             DESTINATION ${CMAKE_INSTALL_PREFIX}/lib RENAME libgio-2.0.so.0)
-install(FILES ${CMAKE_BINARY_DIR}/glib/glib/libglib-2.0.so.0.7300.0           DESTINATION ${CMAKE_INSTALL_PREFIX}/lib RENAME libglib-2.0.so.0)
-install(FILES ${CMAKE_BINARY_DIR}/glib/gmodule/libgmodule-2.0.so.0.7300.0     DESTINATION ${CMAKE_INSTALL_PREFIX}/lib RENAME libgmodule-2.0.so.0)
-install(FILES ${CMAKE_BINARY_DIR}/glib/gobject/libgobject-2.0.so.0.7300.0     DESTINATION ${CMAKE_INSTALL_PREFIX}/lib RENAME libgobject-2.0.so.0)
+install(FILES ${CMAKE_BINARY_DIR}/glib/gio/libgio-2.0.so.0.7800.0             DESTINATION ${CMAKE_INSTALL_PREFIX}/lib RENAME libgio-2.0.so.0)
+install(FILES ${CMAKE_BINARY_DIR}/glib/glib/libglib-2.0.so.0.7800.0           DESTINATION ${CMAKE_INSTALL_PREFIX}/lib RENAME libglib-2.0.so.0)
+install(FILES ${CMAKE_BINARY_DIR}/glib/gmodule/libgmodule-2.0.so.0.7800.0     DESTINATION ${CMAKE_INSTALL_PREFIX}/lib RENAME libgmodule-2.0.so.0)
+install(FILES ${CMAKE_BINARY_DIR}/glib/gobject/libgobject-2.0.so.0.7800.0     DESTINATION ${CMAKE_INSTALL_PREFIX}/lib RENAME libgobject-2.0.so.0)
 install(FILES ${CMAKE_BINARY_DIR}/glib/subprojects/libffi/src/libffi.so.7.1.0 DESTINATION ${CMAKE_INSTALL_PREFIX}/lib RENAME libffi.so.7)
+install(FILES ${CMAKE_BINARY_DIR}/glib/subprojects/proxy-libintl/libintl.so.8 DESTINATION ${CMAKE_INSTALL_PREFIX}/lib RENAME libintl.so.8)
