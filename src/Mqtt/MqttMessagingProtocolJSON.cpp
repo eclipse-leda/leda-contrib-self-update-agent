@@ -29,7 +29,7 @@ namespace sua {
 
     uint64_t MqttMessagingProtocolJSON::epochTime() const
     {
-        return std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+        return std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
     }
 
     Command MqttMessagingProtocolJSON::readCommand(const std::string & input)
