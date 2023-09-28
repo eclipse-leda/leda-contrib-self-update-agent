@@ -316,7 +316,7 @@ namespace sua {
                             "type": "APPLICATION"
                         },
                         {
-                            "id": "self-update:leda-deviceimage",
+                            "id": "self-update:os-image",
                             "version": "{}",
                             "name": "Official Leda device image",
                             "type": "IMAGE"
@@ -326,7 +326,7 @@ namespace sua {
                     "associations": [
                         {
                             "sourceId": "self-update-agent",
-                            "targetId": "self-update:leda-deviceimage"
+                            "targetId": "self-update:os-image"
                         }
                     ]
                 }
@@ -353,7 +353,7 @@ namespace sua {
                             "type": "APPLICATION"
                         },
                         {
-                            "id": "self-update:leda-deviceimage",
+                            "id": "self-update:os-image",
                             "version": "{}",
                             "name": "Official Leda device image",
                             "type": "IMAGE"
@@ -363,7 +363,7 @@ namespace sua {
                     "associations": [
                         {
                             "sourceId": "self-update-agent",
-                            "targetId": "self-update:leda-deviceimage"
+                            "targetId": "self-update:os-image"
                         }
                     ]
                 }
