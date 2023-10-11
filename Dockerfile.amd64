@@ -66,13 +66,13 @@ RUN cd /work \
 FROM --platform=${TARGETPLATFORM} scratch as runtime
 ARG TARGETPLATFORM
 COPY --from=build /work/dist_amd64/bin/sdv-self-update-agent /sua/bin/sdv-self-update-agent
-COPY --from=build /work/dist_amd64/lib/libpaho-mqttpp3.so.1 /sua/lib/
-COPY --from=build /work/dist_amd64/lib/libpaho-mqtt3a.so.1 /sua/lib/
-COPY --from=build /work/dist_amd64/lib/libpaho-mqtt3c.so.1 /sua/lib/
-COPY --from=build /work/dist_amd64/lib/libcurl.so     /sua/lib/
-COPY --from=build /work/dist_amd64/lib/libcrypto.so.3 /sua/lib/
-COPY --from=build /work/dist_amd64/lib/libssl.so.3    /sua/lib/
-COPY --from=build /work/dist_amd64/lib/libsua.so      /sua/lib/
+COPY --from=build /work/dist_amd64/lib/libpaho-mqttpp3.so.1  /sua/lib/
+COPY --from=build /work/dist_amd64/lib/libpaho-mqtt3a.so.1   /sua/lib/
+COPY --from=build /work/dist_amd64/lib/libpaho-mqtt3c.so.1   /sua/lib/
+COPY --from=build /work/dist_amd64/lib/libcurl.so.4.8.0      /sua/lib/libcurl.so.4
+COPY --from=build /work/dist_amd64/lib/libcrypto.so.3        /sua/lib/
+COPY --from=build /work/dist_amd64/lib/libssl.so.3           /sua/lib/
+COPY --from=build /work/dist_amd64/lib/libsua.so             /sua/lib/
 COPY --from=build /work/build_amd64/glib/gio/libgio-2.0.so.0          /sua/lib/
 COPY --from=build /work/build_amd64/glib/gobject/libgobject-2.0.so.0  /sua/lib/
 COPY --from=build /work/build_amd64/glib/glib/libglib-2.0.so.0        /sua/lib/
