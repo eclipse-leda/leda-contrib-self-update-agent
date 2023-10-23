@@ -68,10 +68,16 @@ int main(int argc, char* argv[])
     std::string caDirectory             = SUA_DEFAULT_CA_DIRECTORY;
     std::string caFilepath              = SUA_DEFAULT_CA_FILEPATH;
     std::string help_string             = fmt::format(help_string_template, server, installer, hostPathToSelfupdateDir, server, caDirectory, caFilepath);
+    int         messageDelay            = SUA_DEFAULT_MESSAGE_DELAY;
 
     const char * env_server = std::getenv("SUA_SERVER");
     if(env_server) {
         server = env_server;
+    }
+
+    const char * env_delay = std::getenv("SUA_MESSAGE_DELAY");
+    if(env_delay) {
+        messageDelay = std::stoi(env_delay);
     }
 
     if(argc > 1) {
@@ -223,6 +229,7 @@ int main(int argc, char* argv[])
     ctx.messagingProtocol = std::make_shared<sua::MqttMessagingProtocolJSON>();
     ctx.bundleChecker     = std::make_shared<sua::BundleChecker>();
     ctx.mqttProcessor     = std::make_shared<sua::MqttProcessor>(ctx);
+    ctx.messageDelay      = messageDelay;
 
     sua::Logger::info("SUA build number       : '{}'", SUA_BUILD_NUMBER );
     sua::Logger::info("SUA commit hash        : '{}'", SUA_COMMIT_HASH  );

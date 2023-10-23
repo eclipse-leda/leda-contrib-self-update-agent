@@ -27,5 +27,6 @@ extern const std::string SUA_DEFAULT_MODE;
 extern const std::string SUA_DEFAULT_TEMP_DIRECTORY;
 extern const std::string SUA_DEFAULT_CA_DIRECTORY;
 extern const std::string SUA_DEFAULT_CA_FILEPATH;
+extern const int         SUA_DEFAULT_MESSAGE_DELAY;
 
 #endif

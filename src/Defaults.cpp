@@ -24,3 +24,4 @@ const std::string SUA_DEFAULT_MODE           = "download";
 const std::string SUA_DEFAULT_TEMP_DIRECTORY = "/data/selfupdates";
 const std::string SUA_DEFAULT_CA_DIRECTORY   = "/etc/ssl/certs";
 const std::string SUA_DEFAULT_CA_FILEPATH    = "";
+const int         SUA_DEFAULT_MESSAGE_DELAY  = 5;

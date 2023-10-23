@@ -37,7 +37,14 @@ namespace sua {
         subscribe(Installer::EVENT_INSTALLING, [this, &ctx](const std::map<std::string, std::string>& payload) {
             ctx.desiredState.installProgressPercentage = std::stoi(payload.at("percentage"));
             Logger::info("Install progress: {}%", ctx.desiredState.installProgressPercentage);
-            send(ctx, IMqttProcessor::TOPIC_FEEDBACK, MqttMessage::Installing);
+
+            const auto now            = std::chrono::system_clock::now().time_since_epoch();
+            const auto now_in_seconds = std::chrono::duration_cast<std::chrono::seconds>(now).count();
+
+            if(now_in_seconds - _last_update > ctx.messageDelay) {
+                send(ctx, IMqttProcessor::TOPIC_FEEDBACK, MqttMessage::Installing);
+                _last_update = now_in_seconds;
+            }
         });
 
         std::string install_input;
