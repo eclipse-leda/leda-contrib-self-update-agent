@@ -56,9 +56,9 @@ namespace sua {
 
             Logger::info("Download progress: {}%", ctx.desiredState.downloadProgressPercentage);
 
-            if(now_in_seconds - _last_update > ctx.messageDelay) {
+            if((ctx.desiredState.downloadProgressPercentage == 100) || (now_in_seconds - _timeLastUpdate) >= ctx.feedbackInterval) {
                 send(ctx, IMqttProcessor::TOPIC_FEEDBACK, MqttMessage::Downloading);
-                _last_update = now_in_seconds;
+                _timeLastUpdate = now_in_seconds;
             }
         });
 

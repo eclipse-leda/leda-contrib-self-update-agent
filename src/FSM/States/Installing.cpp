@@ -21,6 +21,8 @@
 #include "Context.h"
 #include "Logger.h"
 
+#include <chrono>
+
 namespace sua {
 
     Installing::Installing()
@@ -41,9 +43,9 @@ namespace sua {
             const auto now            = std::chrono::system_clock::now().time_since_epoch();
             const auto now_in_seconds = std::chrono::duration_cast<std::chrono::seconds>(now).count();
 
-            if(now_in_seconds - _last_update > ctx.messageDelay) {
+            if((ctx.desiredState.installProgressPercentage == 100) || (now_in_seconds - _timeLastUpdate) >= ctx.feedbackInterval) {
                 send(ctx, IMqttProcessor::TOPIC_FEEDBACK, MqttMessage::Installing);
-                _last_update = now_in_seconds;
+                _timeLastUpdate = now_in_seconds;
             }
         });
 

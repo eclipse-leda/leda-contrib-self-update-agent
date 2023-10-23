@@ -34,7 +34,7 @@ namespace sua {
         FotaEvent body(Context& ctx) override;
 
     private:
-        long long _last_update = 0;
+        long long _timeLastUpdate = 0;
     };
 
 } // namespace sua

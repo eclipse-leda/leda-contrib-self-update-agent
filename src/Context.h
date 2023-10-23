@@ -62,7 +62,7 @@ namespace sua {
         std::string                             caFilepath       = SUA_DEFAULT_CA_FILEPATH;
         bool                                    downloadMode     = true;
         bool                                    fallbackMode     = false;
-        int                                     messageDelay     = SUA_DEFAULT_MESSAGE_DELAY;
+        int                                     feedbackInterval = SUA_DEFAULT_FEEDBACK_INTERVAL; // seconds
 
         DesiredState desiredState;
         CurrentState currentState;
