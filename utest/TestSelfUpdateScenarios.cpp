@@ -191,6 +191,8 @@ namespace {
 
             ctx().messagingProtocol = std::make_shared<sua::MqttMessagingProtocolJSON>();
             ctx().bundleChecker     = std::make_shared<sua::BundleChecker>();
+
+            ctx().feedbackInterval = 0;
         }
 
         void TearDown() override {
