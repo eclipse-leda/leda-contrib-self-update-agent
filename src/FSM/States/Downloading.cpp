@@ -22,6 +22,8 @@
 #include "FotaEvent.h"
 #include "Logger.h"
 
+#include <chrono>
+
 namespace sua {
 
     Downloading::Downloading()
@@ -49,8 +51,15 @@ namespace sua {
             ctx.desiredState.downloadBytesDownloaded    = std::stoll(payload.at("downloaded"));
             ctx.desiredState.downloadProgressPercentage = std::stoi(payload.at("percentage"));
 
+            const auto now            = std::chrono::system_clock::now().time_since_epoch();
+            const auto now_in_seconds = std::chrono::duration_cast<std::chrono::seconds>(now).count();
+
             Logger::info("Download progress: {}%", ctx.desiredState.downloadProgressPercentage);
-            send(ctx, IMqttProcessor::TOPIC_FEEDBACK, MqttMessage::Downloading);
+
+            if((ctx.desiredState.downloadProgressPercentage == 100) || (now_in_seconds - _timeLastUpdate) >= ctx.feedbackInterval) {
+                send(ctx, IMqttProcessor::TOPIC_FEEDBACK, MqttMessage::Downloading);
+                _timeLastUpdate = now_in_seconds;
+            }
         });
 
         if (true == ctx.downloadMode) {

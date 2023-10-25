@@ -32,6 +32,9 @@ namespace sua {
         void onEnter(Context& ctx) override;
 
         FotaEvent body(Context& ctx) override;
+
+    private:
+        long long _timeLastUpdate = 0;
     };
 
 } // namespace sua

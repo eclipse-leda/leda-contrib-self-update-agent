@@ -16,11 +16,12 @@
 
 #include "Defaults.h"
 
-const std::string SUA_DEFAULT_MQTT_PROTOCOL  = "tcp";
-const std::string SUA_DEFAULT_MQTT_HOST      = "mosquitto";
-const int         SUA_DEFAULT_MQTT_PORT      = 1883;
-const std::string SUA_DEFAULT_MQTT_SERVER    = "tcp://mosquitto:1883";
-const std::string SUA_DEFAULT_MODE           = "download";
-const std::string SUA_DEFAULT_TEMP_DIRECTORY = "/data/selfupdates";
-const std::string SUA_DEFAULT_CA_DIRECTORY   = "/etc/ssl/certs";
-const std::string SUA_DEFAULT_CA_FILEPATH    = "";
+const std::string SUA_DEFAULT_MQTT_PROTOCOL     = "tcp";
+const std::string SUA_DEFAULT_MQTT_HOST         = "mosquitto";
+const int         SUA_DEFAULT_MQTT_PORT         = 1883;
+const std::string SUA_DEFAULT_MQTT_SERVER       = "tcp://mosquitto:1883";
+const std::string SUA_DEFAULT_MODE              = "download";
+const std::string SUA_DEFAULT_TEMP_DIRECTORY    = "/data/selfupdates";
+const std::string SUA_DEFAULT_CA_DIRECTORY      = "/etc/ssl/certs";
+const std::string SUA_DEFAULT_CA_FILEPATH       = "";
+const int         SUA_DEFAULT_FEEDBACK_INTERVAL = 5;

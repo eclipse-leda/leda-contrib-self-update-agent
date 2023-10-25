@@ -21,6 +21,8 @@
 #include "Context.h"
 #include "Logger.h"
 
+#include <chrono>
+
 namespace sua {
 
     Installing::Installing()
@@ -37,7 +39,14 @@ namespace sua {
         subscribe(Installer::EVENT_INSTALLING, [this, &ctx](const std::map<std::string, std::string>& payload) {
             ctx.desiredState.installProgressPercentage = std::stoi(payload.at("percentage"));
             Logger::info("Install progress: {}%", ctx.desiredState.installProgressPercentage);
-            send(ctx, IMqttProcessor::TOPIC_FEEDBACK, MqttMessage::Installing);
+
+            const auto now            = std::chrono::system_clock::now().time_since_epoch();
+            const auto now_in_seconds = std::chrono::duration_cast<std::chrono::seconds>(now).count();
+
+            if((ctx.desiredState.installProgressPercentage == 100) || (now_in_seconds - _timeLastUpdate) >= ctx.feedbackInterval) {
+                send(ctx, IMqttProcessor::TOPIC_FEEDBACK, MqttMessage::Installing);
+                _timeLastUpdate = now_in_seconds;
+            }
         });
 
         std::string install_input;
