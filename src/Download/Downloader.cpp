@@ -165,7 +165,13 @@ namespace {
         curl_easy_setopt(h, CURLOPT_PROTOCOLS_STR, "https");
         CURLcode res = curl_easy_perform(h);
 
-        sua::Logger::debug("curl_easy_perform ended with code = '{}'", res);
+        const auto curl_status_message = fmt::format("curl_easy_perform ended with code = {} ({})", res, curl_easy_strerror(res));
+
+        if(res == CURLE_OK) {
+            sua::Logger::trace(curl_status_message);
+        } else {
+            sua::Logger::error(curl_status_message);
+        }
 
         long http_code = 0;
         curl_easy_getinfo(h, CURLINFO_RESPONSE_CODE, &http_code);
@@ -174,9 +180,7 @@ namespace {
 
         sua::Logger::debug("CURLINFO_RESPONSE_CODE = {}", http_code);
         if(http_code != 200) {
-            auto e = curl_easy_strerror(res);
-            sua::Logger::error(e);
-            return std::make_tuple(sua::TechCode::DownloadFailed, e);
+            return std::make_tuple(sua::TechCode::DownloadFailed, curl_easy_strerror(res));
         }
 
         return std::make_tuple(sua::TechCode::OK, "");
