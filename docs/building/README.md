@@ -40,24 +40,14 @@ sudo apt-get install python3 python3-pip python3-setuptools python3-wheel ninja-
 pip3 install meson
 ```
 
-## Build for amd64
+## Build for amd64 or for arm64
 
 ```
-./scripts/build_openssl_amd64.sh
-./scripts/build_glib_amd64.sh
-cd build_amd64
-cmake -DCMAKE_INSTALL_PREFIX=../dist_amd64 -DCMAKE_TOOLCHAIN_FILE=../cmake/linux/amd64/toolchain.cmake -DOPENSSL_ROOT_DIR=../build_amd64 -DOPENSSL_CRYPTO_LIBRARY=../build_amd64/lib/libcrypto.so ..
-make install
+./scripts/build.sh amd64
 ```
-
-## Build for aarch64 (Raspberry Pi)
-
+or
 ```
-./scripts/build_openssl_arm64.sh
-./scripts/build_glib_arm64.sh
-cd build_arm64
-cmake -DCMAKE_INSTALL_PREFIX=../dist_arm64 -DCMAKE_TOOLCHAIN_FILE=../cmake/linux/arm64/toolchain.cmake -DOPENSSL_ROOT_DIR=../build_arm64 -DOPENSSL_CRYPTO_LIBRARY=../build_arm64/lib/libcrypto.so ..
-make install
+./scripts/build.sh arm64
 ```
 
 ## Run
