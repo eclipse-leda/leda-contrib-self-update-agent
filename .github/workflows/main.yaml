@@ -135,3 +135,20 @@ jobs:
             ./artifact/code-coverage.tar.gz
             ./artifact/self-update-agent-amd64-build-${{ github.run_number }}.tar.gz
             ./artifact/self-update-agent-arm64-build-${{ github.run_number }}.tar.gz
+
+      - name: Upload artifacts to build results (make latest tag)
+        if: github.event_name == 'push'
+        uses: marvinpinto/action-automatic-releases@latest
+        with:
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          draft: false
+          prerelease: true
+          automatic_release_tag: latest
+          title: "Latest build (${{ github.run_number }})"
+          files: |
+            ./artifact/unit_tests_report_amd64.*
+            ./artifact/unit_tests_report_arm64.*
+            ./artifact/code-coverage.tar.gz
+            ./artifact/self-update-agent-amd64-build-${{ github.run_number }}.tar.gz
+            ./artifact/self-update-agent-arm64-build-${{ github.run_number }}.tar.gz
+
